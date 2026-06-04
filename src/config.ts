@@ -10,27 +10,49 @@ function optionalEnv(key: string, fallback: string): string {
   return process.env[key] ?? fallback;
 }
 
+// Determine network-aware defaults
+const network = optionalEnv("SOLANA_NETWORK", "devnet") as "devnet" | "mainnet-beta";
+
+function getJitoDefaults(net: "devnet" | "mainnet-beta") {
+  if (net === "devnet") {
+    return {
+      blockEngineUrl: "https://devnet.block-engine.jito.wtf",
+      rpcUrl: "https://devnet.block-engine.jito.wtf/api/v1",
+    };
+  } else {
+    return {
+      blockEngineUrl: "https://mainnet.block-engine.jito.wtf",
+      rpcUrl: "https://mainnet.block-engine.jito.wtf/api/v1",
+    };
+  }
+}
+
+const jitoDefaults = getJitoDefaults(network);
+
 export const config = {
   solana: {
     rpcUrl: optionalEnv(
       "SOLANA_RPC_URL",
-      "https://api.devnet.solana.com"
+      network === "devnet"
+        ? "https://api.devnet.solana.com"
+        : "https://api.mainnet-beta.solana.com"
     ),
     wsUrl: optionalEnv(
       "SOLANA_WS_URL",
-      "wss://api.devnet.solana.com"
+      network === "devnet"
+        ? "wss://api.devnet.solana.com"
+        : "wss://api.mainnet-beta.solana.com"
     ),
-    network: optionalEnv("SOLANA_NETWORK", "devnet") as "devnet" | "mainnet-beta",
+    network,
   },
   jito: {
     blockEngineUrl: optionalEnv(
       "JITO_BLOCK_ENGINE_URL",
-      "https://mainnet.block-engine.jito.wtf"
+      jitoDefaults.blockEngineUrl
     ),
-    // For devnet simulation we use the JSON-RPC endpoint
     rpcUrl: optionalEnv(
       "JITO_RPC_URL",
-      "https://mainnet.block-engine.jito.wtf/api/v1"
+      jitoDefaults.rpcUrl
     ),
   },
   yellowstone: {
