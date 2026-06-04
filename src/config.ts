@@ -10,7 +10,7 @@ function optionalEnv(key: string, fallback: string): string {
   return process.env[key] ?? fallback;
 }
 
-// Determine network-aware defaults
+// Determine network - default to devnet
 const network = optionalEnv("SOLANA_NETWORK", "devnet") as "devnet" | "mainnet-beta";
 
 function getJitoDefaults(net: "devnet" | "mainnet-beta") {

@@ -1,9 +1,7 @@
-// ─── Commitment levels ────────────────────────────────────────────────────────
-
+// Commitment levels
 export type CommitmentLevel = "processed" | "confirmed" | "finalized";
 
-// ─── Bundle lifecycle stages ──────────────────────────────────────────────────
-
+// Bundle lifecycle stages
 export type BundleStage =
   | "submitted"
   | "processed"
@@ -11,35 +9,32 @@ export type BundleStage =
   | "finalized"
   | "failed";
 
-// ─── Failure classifications ──────────────────────────────────────────────────
-
+// Failure classifications
 export type FailureReason =
   | "EXPIRED_BLOCKHASH"
   | "FEE_TOO_LOW"
   | "COMPUTE_EXCEEDED"
-  | "BUNDLE_DROPPED"       // Jito leader skipped slot
+  | "BUNDLE_DROPPED" // Jito leader skipped slot
   | "SIMULATION_FAILED"
   | "TIMEOUT"
   | "UNKNOWN";
 
-// ─── Per-stage timestamp record ───────────────────────────────────────────────
-
+// Per-stage timestamp record
 export interface StageRecord {
   stage: BundleStage;
   slot: number | null;
-  timestamp: number;        // unix ms
+  timestamp: number; // unix ms
   latencyFromPrevMs: number | null;
 }
 
-// ─── Full lifecycle log entry ─────────────────────────────────────────────────
-
+// Full lifecycle log entry
 export interface LifecycleEntry {
   runId: string;
   bundleId: string | null;
   signature: string | null;
   tipLamports: number;
   tipAccount: string;
-  submittedAt: number;       // unix ms
+  submittedAt: number; // unix ms
   stages: StageRecord[];
   finalStage: BundleStage;
   failure: FailureReason | null;
@@ -49,8 +44,7 @@ export interface LifecycleEntry {
   slotAtSubmission: number | null;
 }
 
-// ─── Slot stream event ────────────────────────────────────────────────────────
-
+// Slot stream event
 export interface SlotEvent {
   slot: number;
   parent: number;
@@ -58,8 +52,7 @@ export interface SlotEvent {
   timestamp: number;
 }
 
-// ─── Tip data from Jito ───────────────────────────────────────────────────────
-
+// Tip data from Jito
 export interface TipStats {
   p25Lamports: number;
   p50Lamports: number;
@@ -68,12 +61,11 @@ export interface TipStats {
   sampledAt: number;
 }
 
-// ─── AI agent inputs / outputs ────────────────────────────────────────────────
-
+// AI agent inputs / outputs
 export interface TipDecisionInput {
   tipStats: TipStats;
   currentSlot: number;
-  recentSlotTimes: number[];   // ms between recent slots
+  recentSlotTimes: number[]; // ms between recent slots
   previousTipLamports: number | null;
   previousOutcome: BundleStage | null;
 }
@@ -81,7 +73,7 @@ export interface TipDecisionInput {
 export interface TipDecision {
   tipLamports: number;
   reasoning: string;
-  confidenceScore: number;     // 0–1
+  confidenceScore: number; // 0-1
 }
 
 export interface RetryDecisionInput {
