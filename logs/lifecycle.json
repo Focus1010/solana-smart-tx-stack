@@ -432,5 +432,73 @@
     "retryCount": 1,
     "blockhashUsed": "HoZfLcpsrnX4pTsJwP944QsAXY645EP558NGG2vFBTzR",
     "slotAtSubmission": null
+  },
+  {
+    "runId": "DA7015E54DA2",
+    "bundleId": null,
+    "signature": null,
+    "tipLamports": 2000,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1780624662928,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": null,
+        "timestamp": 1780624662928,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1780624663306,
+        "latencyFromPrevMs": 378
+      },
+      {
+        "stage": "submitted",
+        "slot": null,
+        "timestamp": 1780624664860,
+        "latencyFromPrevMs": 1932
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "EXPIRED_BLOCKHASH",
+    "agentReasoning": "The blockhash has expired and needs to be refreshed before retrying with a competitive tip. | Using p50 as baseline due to normal network conditions.",
+    "retryCount": 1,
+    "blockhashUsed": "H9TxKQcV3w5cvywhRijn2NJhWtZSqehf5XFp5gZWZhV5",
+    "slotAtSubmission": null
+  },
+  {
+    "runId": "03CECBE5FFE1",
+    "bundleId": null,
+    "signature": null,
+    "tipLamports": 2000,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1780630828286,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": null,
+        "timestamp": 1780630828286,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1780630829582,
+        "latencyFromPrevMs": 1296
+      },
+      {
+        "stage": "submitted",
+        "slot": null,
+        "timestamp": 1780630831268,
+        "latencyFromPrevMs": 2982
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "EXPIRED_BLOCKHASH",
+    "agentReasoning": "The blockhash has expired and needs to be refreshed before retrying with a competitive tip. | Using p50 as baseline due to normal network conditions.",
+    "retryCount": 1,
+    "blockhashUsed": "R6AUTfyX9oqN3HMPnm92mwYctdPdyYR5gHf19MELtQk",
+    "slotAtSubmission": null
   }
 ]
