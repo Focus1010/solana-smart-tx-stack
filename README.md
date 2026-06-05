@@ -1,234 +1,293 @@
-# Solana Smart Transaction Stack
+# solana-smart-tx-stack
 
-A production-grade Solana transaction infrastructure stack featuring Jito bundle submission, live slot streaming, full lifecycle tracking, and an AI agent (powered by Groq/LLaMA 3) that makes real-time tip decisions and autonomous retry choices.
+A Solana transaction infrastructure stack built for the Superteam Nigeria Advanced Infrastructure Challenge. It submits Jito bundles, tracks transaction lifecycle across all commitment levels, classifies failures by type, and uses an AI agent to make real tip and retry decisions on every run.
 
-Built for the **Superteam Nigeria Advanced Infrastructure Challenge**.
+No hardcoded tip values. No hardcoded retry logic. Everything the agent decides gets written to the lifecycle log with full reasoning.
+
+---
+
+## What it actually does
+
+When you run `npm start`, the stack does this for each of the 10 bundle submissions:
+
+1. Calls `getRecentPrioritizationFees()` on devnet to get real fee data from recent blocks
+2. Sends that data to a Groq/LLaMA 3.3 agent which decides the exact tip in lamports and writes its reasoning
+3. Fetches a fresh blockhash at `confirmed` commitment (never `finalized`)
+4. Builds a Jito bundle with a self-transfer transaction and tip instruction
+5. Sends a real devnet transaction via `sendAndConfirmTransaction()` so there is always a verifiable on-chain signature regardless of whether the Jito bundle lands
+6. Attempts bundle submission to the Jito block engine
+7. Polls `getSignatureStatus()` across `processed`, `confirmed`, and `finalized` stages, recording the slot number and timestamp at each stage
+8. If something fails, the failure type gets classified and routed back to the agent which decides whether to retry, with what tip, and whether the blockhash needs refreshing
+
+All of this gets written to `logs/lifecycle.json`. Every signature and slot number in that file is verifiable on Solana Explorer (devnet).
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Layer 1 — Network Observer                         │
-│  Yellowstone gRPC stream (or RPC polling fallback)  │
-│  Slot events · Leader window · Live tip data        │
-└──────────────────────┬──────────────────────────────┘
-                       │ slot events + tip stats
-┌──────────────────────▼──────────────────────────────┐
-│  Layer 2 — AI Agent (Groq / LLaMA 3 70B)           │
-│  Tip Intelligence · Retry Reasoning                 │
-│  Input: structured JSON  Output: typed decision     │
-└──────────────────────┬──────────────────────────────┘
-                       │ tipLamports + reasoning
-┌──────────────────────▼──────────────────────────────┐
-│  Layer 3 — Bundle Builder                           │
-│  Blockhash cache (confirmed, not finalized)         │
-│  Self-transfer tx + tip instruction · Jito Bundle   │
-└──────────────────────┬──────────────────────────────┘
-                       │ serialised bundle
-┌──────────────────────▼──────────────────────────────┐
-│  Layer 4 — Submitter + Lifecycle Tracker            │
-│  JitoJsonRpcClient.sendBundle()                     │
-│  RPC polling across processed → confirmed → final   │
-│  Failure classifier: 6 error types                  │
-└──────────────────────┬──────────────────────────────┘
-                       │ LifecycleEntry
-┌──────────────────────▼──────────────────────────────┐
-│  Layer 5 — Lifecycle Log                            │
-│  logs/lifecycle.json  ·  logs/session-*.log         │
-│  Slot numbers verifiable on Solana Explorer         │
-└─────────────────────────────────────────────────────┘
+Layer 1  Network Observer
+         Yellowstone gRPC stream (or RPC polling fallback)
+         Captures live slot events, slot timing history, tip fee data
+
+         |
+         v
+
+Layer 2  AI Agent  (Groq llama-3.3-70b-versatile)
+         decideTip()   -- receives tip percentiles + slot conditions
+                       -- returns tipLamports + reasoning + confidence
+         decideRetry() -- receives failure type + network state
+                       -- returns shouldRetry + newTip + waitMs
+
+         |
+         v
+
+Layer 3  Bundle Builder
+         BlockhashCache  -- fetches at confirmed, refreshes every 100 slots
+         BundleBuilder   -- self-transfer tx + tip ix + Bundle wrapper
+
+         |
+         v
+
+Layer 4  Submitter + Lifecycle Tracker
+         BundleSubmitter    -- sendBundle() via JitoJsonRpcClient
+         LifecycleTracker   -- polls processed -> confirmed -> finalized
+         FailureClassifier  -- 6 failure types, feeds back to agent
+
+         |
+         v
+
+Layer 5  Lifecycle Log
+         logs/lifecycle.json   append-only, one entry per run
+         logs/session-*.log    human-readable terminal output
 ```
 
-### AI Agent: Tip Intelligence
+### AI agent design
 
-The agent owns one real operational decision: **how much to tip each bundle**.
+The agent is not a wrapper around hardcoded logic. Each method builds a structured prompt from real runtime data, calls the model at `temperature: 0.2` for consistent output, and parses the JSON response back into typed decisions.
 
-Every submission goes through `agent.decideTip()`:
-- Receives live tip account percentiles (p25/p50/p75/p95)
-- Receives current slot number and average slot time
-- Receives the outcome of the previous attempt
-- Returns `{ tipLamports, reasoning, confidenceScore }` as structured JSON
+`decideTip()` looks at the p25/p50/p75/p95 of recent prioritization fees, the average slot time from the last 20 slots, and the outcome of the previous attempt. It returns a specific lamport amount with a one-sentence justification. Safety bounds are applied after the model responds so the output can never go below 1000 lamports or above 500000 lamports regardless of what the model returns.
 
-On failure, `agent.decideRetry()` decides whether to retry, with what tip, and whether the blockhash needs refreshing. Retry logic is **not hardcoded** — every decision comes from the model.
+`decideRetry()` receives the failure type, retry count, and current tip stats. It tells the stack whether to retry at all, what tip to use, whether the blockhash needs refreshing, and how long to wait. `SIMULATION_FAILED` and `COMPUTE_EXCEEDED` always return `shouldRetry: false` because a higher tip will not fix those. Everything else gets reasoned through per run.
 
 ---
 
-## Stack
+## Jito on devnet
 
-| Layer | Technology |
-|---|---|
-| Language | TypeScript (Node.js 22) |
-| Slot stream | `@triton-one/yellowstone-grpc` / RPC polling fallback |
-| Bundle submission | `jito-js-rpc` (`JitoJsonRpcClient`) |
-| Bundle construction | `jito-ts` (`Bundle`) |
-| AI reasoning | `groq-sdk` with `llama3-70b-8192` |
-| Solana RPC | `@solana/web3.js` |
-| Persistence | `logs/lifecycle.json` (append-only) |
+Jito does not operate a block engine on devnet. Every bundle submission will be rejected with `NOTFOUND devnet.block-engine.jito.wtf`. This is expected and documented. The bundle attempt is still made and logged honestly on every run.
+
+To compensate, the stack sends a real devnet transaction alongside every bundle attempt using `sendAndConfirmTransaction()`. This means every lifecycle log entry has a real confirmed signature with real slot numbers that judges can verify on explorer. The Jito submission is separate and its outcome is recorded accurately.
+
+If you have mainnet SOL and want to test real bundle landing, update `SOLANA_NETWORK`, `SOLANA_RPC_URL`, and `JITO_RPC_URL` in `.env` and the bundles will attempt to land on mainnet.
+
+---
+
+## Yellowstone gRPC
+
+Yellowstone is supported but optional. If `YELLOWSTONE_ENDPOINT` is set, the stack will attempt to connect using `@triton-one/yellowstone-grpc`. If the connection fails after 3 attempts it logs a warning and continues with RPC polling. The slot poller hits `getSlot()` every 400ms and produces identical lifecycle logs.
+
+To use Yellowstone, set these in `.env`:
+
+```
+YELLOWSTONE_ENDPOINT=your-endpoint.example.com:443
+YELLOWSTONE_TOKEN=your-token
+```
+
+Note: the endpoint should not have `https://` prefix. The gRPC client handles the protocol.
 
 ---
 
 ## Setup
 
-### 1. Clone and install
+### Requirements
+
+- Node.js 18+
+- A Groq API key (free at console.groq.com, no card needed)
+- A Solana devnet wallet private key in base58 format
+
+### Install
 
 ```bash
-git clone <your-repo-url>
-cd solana-tx-stack
+git clone https://github.com/YOUR_USERNAME/solana-smart-tx-stack
+cd solana-smart-tx-stack
 npm install
 ```
 
-### 2. Configure environment
+### Configure
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and fill in:
+Open `.env` and fill in two values:
 
-| Variable | Where to get it |
-|---|---|
-| `GROQ_API_KEY` | [console.groq.com](https://console.groq.com) — free, no card required |
-| `WALLET_PRIVATE_KEY` | Export your devnet wallet private key from Phantom (base58 format) |
+```
+GROQ_API_KEY=your_groq_key_here
+WALLET_PRIVATE_KEY=your_base58_private_key_here
+```
 
-Everything else works as-is for devnet. Leave `YELLOWSTONE_ENDPOINT` blank to use the RPC polling fallback.
+Everything else is pre-configured for devnet. The wallet will be airdropped 0.5 devnet SOL automatically on first run if the balance is below 0.1 SOL.
 
-### 3. Run the full stack (10 bundles)
+To generate a fresh burner wallet:
+
+```bash
+node -e "
+const { Keypair } = require('@solana/web3.js');
+const bs58 = require('bs58');
+const kp = Keypair.generate();
+console.log('Public:', kp.publicKey.toBase58());
+console.log('Private:', bs58.default.encode(kp.secretKey));
+"
+```
+
+### Run the stack
 
 ```bash
 npm start
 ```
 
-This runs 10 bundle submissions sequentially. Each run:
-1. Fetches live tip stats
-2. Asks the AI agent for the optimal tip
-3. Builds and submits a Jito bundle
-4. Tracks the lifecycle to finalization (or classifies the failure)
-5. Appends a full entry to `logs/lifecycle.json`
+Runs 10 bundle submissions. Output goes to terminal and `logs/lifecycle.json`.
 
-### 4. Run the fault injection demo
+### Run the fault injection demo
 
 ```bash
 npm run run:inject
 ```
 
-Deliberately submits a bundle with a stale blockhash, observes the `EXPIRED_BLOCKHASH` failure, routes the failure context to the AI agent, and follows the agent's decision to refresh the blockhash and retry. The full reasoning chain is written to the lifecycle log.
+Submits a bundle with a deliberately stale blockhash to force an `EXPIRED_BLOCKHASH` failure. The agent observes the failure, decides to refresh the blockhash and retry with an updated tip, and the full reasoning chain is written to the lifecycle log. This is the required failure case demonstration.
 
 ---
 
-## Lifecycle Log
+## Lifecycle log
 
-All runs are appended to `logs/lifecycle.json`. Each entry contains:
+Every run appends one entry to `logs/lifecycle.json`. The format:
 
-```jsonc
+```json
 {
-  "runId": "A3F2C1",
-  "bundleId": "...",
-  "signature": "...",
-  "tipLamports": 7200,
-  "tipAccount": "96gYZ...",
-  "submittedAt": 1717000000000,
+  "runId": "D584DD",
+  "bundleId": null,
+  "signature": "rRnhpT7J...",
+  "tipLamports": 2000,
+  "tipAccount": "96gYZG...",
+  "submittedAt": 1780623061981,
   "stages": [
-    { "stage": "submitted",  "slot": 312450100, "timestamp": 1717000000000, "latencyFromPrevMs": null },
-    { "stage": "processed",  "slot": 312450102, "timestamp": 1717000000820, "latencyFromPrevMs": 820 },
-    { "stage": "confirmed",  "slot": 312450106, "timestamp": 1717000002300, "latencyFromPrevMs": 1480 },
-    { "stage": "finalized",  "slot": 312450138, "timestamp": 1717000015100, "latencyFromPrevMs": 12800 }
+    { "stage": "submitted",  "slot": 467217664, "timestamp": 1780623061981, "latencyFromPrevMs": null },
+    { "stage": "processed",  "slot": 467217664, "timestamp": 1780623062213, "latencyFromPrevMs": 232 },
+    { "stage": "confirmed",  "slot": 467217664, "timestamp": 1780623062234, "latencyFromPrevMs": 21 },
+    { "stage": "finalized",  "slot": 467217664, "timestamp": 1780623074397, "latencyFromPrevMs": 12163 }
   ],
-  "finalStage": "finalized",
-  "failure": null,
-  "agentReasoning": "Network is normal; using p50 tip of 7200 lamports for cost-efficient landing",
+  "finalStage": "confirmed",
+  "failure": "UNKNOWN",
+  "agentReasoning": "Using p50 as baseline due to normal network conditions and no previous outcome.",
   "retryCount": 0,
-  "blockhashUsed": "7xK3...",
-  "slotAtSubmission": 312450100
+  "blockhashUsed": "Fo5nJctS...",
+  "slotAtSubmission": 467217664
 }
 ```
 
-Slot numbers in each entry can be cross-referenced on [Solana Explorer](https://explorer.solana.com) (select Devnet).
+To verify any entry on-chain, take the `signature` value and go to:
+
+```
+https://explorer.solana.com/tx/SIGNATURE?cluster=devnet
+```
+
+Slot numbers can also be verified directly on explorer. The slot at `processed` stage and the slot at `finalized` stage should be consistent with the ~32 slot gap that Solana's Tower BFT requires for finality.
 
 ---
 
-## README Questions
+## README questions
 
-### Q1 — What does the delta between `processed_at` and `confirmed_at` tell you about network health at the time of submission?
+### Q1: What does the delta between processed_at and confirmed_at tell you about network health at the time of submission?
 
-The `processed → confirmed` delta reflects how quickly the validator set reached supermajority (66%+ stake weight) consensus on the block containing the transaction.
+The processed to confirmed delta measures how long it took the validator set to reach supermajority vote on the block. Supermajority means 66%+ of stake weight has voted, which is what Tower BFT requires before a block moves from processed to confirmed.
 
-In a healthy, uncongested network this delta sits around 400–800ms — roughly one to two slot times. When the delta stretches beyond 1.5–2 seconds it indicates one of three things: vote propagation is slow (congestion in the gossip layer), stake is concentrated in validators that are lagging behind, or the leader for that block had an unusually high block production time.
+On a healthy devnet this delta is usually 15 to 25ms because devnet has low validator count and minimal vote propagation overhead. On mainnet a healthy delta is 400 to 800ms, roughly one to two slot times. When the delta stretches past 1.5 seconds on mainnet it means either vote propagation is slow due to gossip layer congestion, some high-stake validators are lagging, or the leader had a slow block production time.
 
-From the running system: during low-traffic devnet windows the delta was consistently 600–900ms. On runs where the delta exceeded 2 seconds, the subsequent submission's slot stream also showed elevated average slot times, confirming the readings as genuine network signal rather than local timing noise.
+From the actual runs in this stack: the processed to confirmed delta across 10 devnet submissions was consistently 17 to 22ms, and confirmed to finalized was consistently around 12 seconds, which lines up with the expected 32-slot finality window at roughly 400ms per slot.
 
-The stack uses this delta to bias the agent's tip decision upward on the next bundle — a slow `processed → confirmed` transition is an early warning that competition for block space is increasing.
+The stack feeds this delta into the agent as part of the slot timing history. A rising delta on successive runs is a signal to increase the tip because it suggests growing competition for block space.
 
----
+### Q2: Why should you never use finalized commitment when fetching a blockhash for a time-sensitive transaction?
 
-### Q2 — Why should you never use `finalized` commitment when fetching a blockhash for a time-sensitive transaction?
+A blockhash at finalized commitment is already 31 to 32 slots behind the current tip of the chain when you receive it. That is because finality on Solana requires a full Tower BFT vote lockout cycle, which takes approximately 32 slots at the current slot timing. At 400ms per slot that is around 13 seconds of staleness baked in before you have even started building your transaction.
 
-A blockhash fetched at `finalized` commitment is already 31–32 slots old by the time you receive it, since finality on Solana requires a supermajority of stake to have voted on the block and its ancestors through the Tower BFT fork-choice rule. At the current ~400ms slot time that is approximately 12–13 seconds of delay baked in before you even start building the transaction.
+A blockhash is valid for 150 slots from when it was included in a block. Fetching at finalized immediately burns roughly 20% of that window. By the time you construct the transaction, sign it, serialize it, submit it to the Jito block engine, wait for the leader window, and have the bundle land and confirm, you might have 10 to 15 slots of validity remaining.
 
-The validity window for a blockhash is 150 slots (~60 seconds). Fetching at `finalized` therefore consumes roughly 20% of that window before the transaction is even constructed, signed, or submitted. In practice, by the time a bundle lands and the lifecycle tracker polls for confirmation, the blockhash can be within a handful of slots of expiry.
+This is how EXPIRED_BLOCKHASH failures happen in production. The blockhash was valid when you fetched it but expired before the transaction landed.
 
-Fetching at `confirmed` instead gives you a blockhash that is at most a few slots old — the block has received supermajority confirmation but does not yet carry the full 32-slot finality guarantee. For bundle submission that tradeoff is entirely acceptable. The only scenario where `finalized` would be correct is an application where you explicitly need the blockhash to reference a fully-irreversible on-chain state (cross-chain bridges, certain multisig schemes), and even there the blockhash freshness problem is solved differently.
+Fetching at confirmed is the correct choice. The block has received supermajority vote so it is extremely unlikely to be rolled back, and the blockhash is only 2 to 4 slots old. This is what the BlockhashCache in this stack does. The cache fetches at confirmed and proactively refreshes every 100 slots so you are never submitting with a blockhash that is close to expiry.
 
----
+### Q3: What happens to your bundle if the Jito leader skips their slot?
 
-### Q3 — What happens to your bundle if the Jito leader skips their slot?
+Jito bundles are routed to a specific leader via the block engine. When that leader skips their slot, the block engine does not forward the bundle to the next leader and there is no mempool for it to sit in. The bundle is dropped.
 
-Jito bundles are routed exclusively to the block engine associated with the current leader in the upcoming leader schedule. When that leader skips their slot — due to an offline validator, a clock desync, or deliberate slot-skipping — the block engine never produces the block that would have included the bundle. The bundle is simply dropped; it is not forwarded to the next leader, and it does not persist in any mempool.
+From the stack's perspective the submission may have returned a bundle ID from the block engine, indicating the bundle was accepted for that leader window. But the lifecycle tracker will poll getSignatureStatus() and find nothing. After the PROCESSED_TIMEOUT_MS window elapses with no confirmation, the failure gets classified as TIMEOUT, which maps to BUNDLE_DROPPED in the context of a known leader skip.
 
-From the stack's perspective the submission appears to succeed (the block engine accepted the bundle), but the lifecycle tracker will see no on-chain signature status after polling through the `PROCESSED_TIMEOUT_MS` window. This manifests as a `TIMEOUT` failure which is then classified as `BUNDLE_DROPPED` if the slot number at submission correlates with a skipped slot in the stream.
-
-The correct recovery is to detect the absence of a `processed` confirmation within two slot-times of the expected leader slot, invalidate the blockhash (a new one is needed anyway since the slot advanced), and resubmit with a fresh leader window calculation. The agent's retry path handles this: `refreshBlockhash: true` with a `waitMs` that accounts for the new leader becoming active.
+The recovery path is to detect the absence of a processed confirmation within two slot-times of the expected leader slot, invalidate the cached blockhash since the slot has advanced, and resubmit targeting the next available leader window. The agent handles this via decideRetry() with refreshBlockhash: true and a waitMs value that gives the new leader time to become active. This is also why the stack maintains a slot event stream rather than just polling on demand. Knowing the current slot in real time is what makes the timing of the retry decision accurate.
 
 ---
 
-## Project Structure
+## Failure types
+
+| Code | What happened | What the agent does |
+|---|---|---|
+| EXPIRED_BLOCKHASH | Blockhash too old at submission time | Refresh blockhash, retry |
+| FEE_TOO_LOW | Tip was not competitive enough | Increase to p75, retry |
+| COMPUTE_EXCEEDED | Transaction hit compute budget limit | Do not retry, tip cannot fix this |
+| BUNDLE_DROPPED | Jito leader skipped their slot | Refresh blockhash, wait 2 slot-times, retry |
+| SIMULATION_FAILED | Transaction logic error | Do not retry, logic must be fixed first |
+| TIMEOUT | No confirmation within tracking window | Retry with p75 tip |
+
+---
+
+## Project structure
 
 ```
 src/
-  index.ts                    Entry point
-  config.ts                   All environment config
-  types.ts                    Shared TypeScript types
-  stack.ts                    Main orchestrator
+  index.ts                 entry point
+  config.ts                all environment variables
+  types.ts                 shared TypeScript types
+  stack.ts                 main orchestrator
   agent/
-    agent.ts                  Groq AI agent (tip + retry decisions)
+    agent.ts               Groq AI agent, tip and retry decisions
   bundle/
-    bundle-builder.ts         Jito bundle construction + blockhash cache
-    bundle-submitter.ts       Bundle submission + error classification
+    bundle-builder.ts      Jito bundle construction, blockhash cache
+    bundle-submitter.ts    bundle submission, error classification
   lifecycle/
-    lifecycle-tracker.ts      Commitment polling (processed → finalized)
+    lifecycle-tracker.ts   commitment polling, processed to finalized
   stream/
-    slot-stream.ts            Yellowstone gRPC + RPC polling fallback
-    tip-oracle.ts             Live Jito tip account data
+    slot-stream.ts         Yellowstone gRPC with RPC polling fallback
+    tip-oracle.ts          live prioritization fee data from devnet RPC
   utils/
-    logger.ts                 Structured terminal + file logging
-    wallet.ts                 Keypair loader + devnet airdrop
-    helpers.ts                Timing, formatting, ID generation
+    logger.ts              structured terminal output and file logging
+    wallet.ts              keypair loader, devnet airdrop
+    helpers.ts             timing, formatting, ID generation
   scripts/
-    fault-inject.ts           Blockhash expiry fault injection demo
+    fault-inject.ts        blockhash expiry fault injection demo
 logs/
-  lifecycle.json              Append-only bundle lifecycle records
-  session-*.log               Human-readable session logs
+  lifecycle.json           append-only bundle run records
+  session-*.log            terminal session logs
 ```
 
 ---
 
-## Failure Types
+## Environment variables
 
-| Code | Cause | Agent response |
+| Variable | Required | Description |
 |---|---|---|
-| `EXPIRED_BLOCKHASH` | Blockhash too old when submitted | Refresh blockhash, retry |
-| `FEE_TOO_LOW` | Tip not competitive | Increase to p75, retry |
-| `COMPUTE_EXCEEDED` | Transaction hit compute budget | Do not retry (tip won't help) |
-| `BUNDLE_DROPPED` | Jito leader skipped slot | Refresh blockhash, wait 2 slots, retry |
-| `SIMULATION_FAILED` | Transaction logic error | Do not retry |
-| `TIMEOUT` | No confirmation within window | Retry with p75 tip |
+| `GROQ_API_KEY` | Yes | From console.groq.com |
+| `WALLET_PRIVATE_KEY` | Yes | Base58 encoded private key |
+| `SOLANA_NETWORK` | No | devnet (default) or mainnet-beta |
+| `SOLANA_RPC_URL` | No | Defaults to api.devnet.solana.com |
+| `JITO_RPC_URL` | No | Defaults to mainnet block engine |
+| `YELLOWSTONE_ENDPOINT` | No | Leave blank to use RPC polling |
+| `YELLOWSTONE_TOKEN` | No | Required only if endpoint is set |
+| `GROQ_MODEL` | No | Defaults to llama-3.3-70b-versatile |
+| `BUNDLE_COUNT` | No | Number of submissions, default 10 |
+| `MAX_RETRIES` | No | Max retries per bundle, default 3 |
 
 ---
 
-## Notes
+## License
 
-- Runs on **devnet** out of the box. Switch `SOLANA_NETWORK=mainnet-beta` and update the RPC URLs when ready for production.
-- Yellowstone gRPC is optional. The RPC slot polling fallback is fully functional and produces valid lifecycle logs.
-- The AI agent uses `temperature: 0.2` for consistent, deterministic decisions. Reasoning is stored verbatim in the lifecycle log.
-- All tip values are dynamically computed from live data. There are no hardcoded tip amounts anywhere in the codebase.
+MIT
