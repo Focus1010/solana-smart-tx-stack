@@ -4,6 +4,7 @@ A Solana transaction infrastructure stack built for the Superteam Nigeria Advanc
 
 Everything the agent decides gets written to the lifecycle log with full reasoning.
 
+Documentation: https://dynamic-epoch-c90.notion.site/Smart-Transaction-Stack-Architecture-Document-7096777828574fe790d521c345184284
 ---
 
 ## What it actually does
