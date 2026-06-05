@@ -1,1 +1,402 @@
-[]
+[
+  {
+    "runId": "4964621850CE",
+    "bundleId": null,
+    "signature": "5F1Qh9VjHin2nq3arAjmmmDv989As8ATf9xSgWgnHCYXxmSv7HSYfHbi77E1ZK6ijvv84FaVXVr7dpS8mvt8s2st",
+    "tipLamports": 5000,
+    "tipAccount": "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+    "submittedAt": 1780617959061,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204169,
+        "timestamp": 1780617959061,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204172,
+        "timestamp": 1780617959436,
+        "latencyFromPrevMs": 375
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204172,
+        "timestamp": 1780617959456,
+        "latencyFromPrevMs": 20
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204172,
+        "timestamp": 1780617970811,
+        "latencyFromPrevMs": 11355
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "5C3BtE1bAc3GnDQtphvcGZnYCcxx5fcvHDQa5UXC39zg",
+    "slotAtSubmission": 467204169
+  },
+  {
+    "runId": "5746FF8D8A90",
+    "bundleId": null,
+    "signature": "3iSXXHPY1movfNJ1hjL1Aw1JuA2SZKcAKSctzJdQhucN5nTTBQsYAH91TMmKFBiXC1RoKKzWJ1PTBeYNBi2hnySM",
+    "tipLamports": 5000,
+    "tipAccount": "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+    "submittedAt": 1780617974590,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204211,
+        "timestamp": 1780617974590,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204214,
+        "timestamp": 1780617974656,
+        "latencyFromPrevMs": 66
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204214,
+        "timestamp": 1780617974675,
+        "latencyFromPrevMs": 19
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204214,
+        "timestamp": 1780617986857,
+        "latencyFromPrevMs": 12182
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "5C3BtE1bAc3GnDQtphvcGZnYCcxx5fcvHDQa5UXC39zg",
+    "slotAtSubmission": 467204211
+  },
+  {
+    "runId": "93DDF2D6CD1E",
+    "bundleId": null,
+    "signature": "67DkaoL4QvqG6aXTThk73xoaY1bVyK4Y8EaWYUJHK5pWf57U5qL11SN96dYDS4Vi8XN3vWw9FxCbcb28qp7GPSH9",
+    "tipLamports": 5000,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1780617990720,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204253,
+        "timestamp": 1780617990720,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204256,
+        "timestamp": 1780617990783,
+        "latencyFromPrevMs": 63
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204256,
+        "timestamp": 1780617990802,
+        "latencyFromPrevMs": 19
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204256,
+        "timestamp": 1780618002965,
+        "latencyFromPrevMs": 12163
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the tip to ensure bundle priority.",
+    "retryCount": 0,
+    "blockhashUsed": "5C3BtE1bAc3GnDQtphvcGZnYCcxx5fcvHDQa5UXC39zg",
+    "slotAtSubmission": 467204253
+  },
+  {
+    "runId": "CAEF81EC5CF4",
+    "bundleId": null,
+    "signature": "5Hy93h84mFGHxA9dh8knc7QHXPJZtUyh9Z4kt9qVfSxBgkVJ7fpAHuvn38pb719yYTXWKaQMpCiZMdu1bKW1jRLi",
+    "tipLamports": 5000,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1780618007152,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204296,
+        "timestamp": 1780618007152,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204300,
+        "timestamp": 1780618007386,
+        "latencyFromPrevMs": 234
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204300,
+        "timestamp": 1780618007405,
+        "latencyFromPrevMs": 19
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204300,
+        "timestamp": 1780618019606,
+        "latencyFromPrevMs": 12201
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip to ensure bundle priority.",
+    "retryCount": 0,
+    "blockhashUsed": "5gyGNtHMkybMkXpf5xa4D3G1bJX5bsENEsoj8vYLWyNs",
+    "slotAtSubmission": 467204296
+  },
+  {
+    "runId": "618625335E89",
+    "bundleId": null,
+    "signature": "4oKYLuh2foTKCi7a4PT5bB5nMVxCTdQGkfFyr7xzGUqC3nGxHBX6aS3NwsDwSyTZ6DRAe8V2qFF4yfiUjDRiiLV6",
+    "tipLamports": 5000,
+    "tipAccount": "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+    "submittedAt": 1780618023282,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204341,
+        "timestamp": 1780618023282,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204343,
+        "timestamp": 1780618023576,
+        "latencyFromPrevMs": 294
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204343,
+        "timestamp": 1780618023593,
+        "latencyFromPrevMs": 17
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204343,
+        "timestamp": 1780618035772,
+        "latencyFromPrevMs": 12179
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "5gyGNtHMkybMkXpf5xa4D3G1bJX5bsENEsoj8vYLWyNs",
+    "slotAtSubmission": 467204341
+  },
+  {
+    "runId": "62CBAEB4FF4B",
+    "bundleId": null,
+    "signature": "553otV95EWLs3mC9Pd63agU4PCDhQKipRtrUm9KoBD223cAEpg7GyxpCwk5L5JXUkTLJdHrr4MnWhHeGbH8PBxuo",
+    "tipLamports": 5000,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1780618039513,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204383,
+        "timestamp": 1780618039513,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204386,
+        "timestamp": 1780618039647,
+        "latencyFromPrevMs": 134
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204386,
+        "timestamp": 1780618039665,
+        "latencyFromPrevMs": 18
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204386,
+        "timestamp": 1780618051847,
+        "latencyFromPrevMs": 12182
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "5gyGNtHMkybMkXpf5xa4D3G1bJX5bsENEsoj8vYLWyNs",
+    "slotAtSubmission": 467204383
+  },
+  {
+    "runId": "AD73D8FD9F9F",
+    "bundleId": null,
+    "signature": "bxSXkwveSxjMHpZXFpad4HSEWn7rJEQ6iCSYh9GKtYBcjPZzW1BWs6j8UqaZ2u5d8YQ9jbKt3t9sX27SQmYjUE3",
+    "tipLamports": 5000,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1780618055642,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204425,
+        "timestamp": 1780618055642,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204428,
+        "timestamp": 1780618055681,
+        "latencyFromPrevMs": 39
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204428,
+        "timestamp": 1780618055699,
+        "latencyFromPrevMs": 18
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204428,
+        "timestamp": 1780618067855,
+        "latencyFromPrevMs": 12156
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "Fprk3mq4AE52d89j78QVMkNuQWBfmZ4oYAuUfRgM8Ks",
+    "slotAtSubmission": 467204425
+  },
+  {
+    "runId": "4B2F7B809EC2",
+    "bundleId": null,
+    "signature": "4yVHiL9GJZJBBqYEzrj7F26PXDxjAdzb3UQi8UqVvDvDL2G9z7hyzAYeotDz7TsQv4bmXc8Kz9JucDbMhcUK7pb8",
+    "tipLamports": 5000,
+    "tipAccount": "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+    "submittedAt": 1780618071674,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204468,
+        "timestamp": 1780618071674,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204471,
+        "timestamp": 1780618071833,
+        "latencyFromPrevMs": 159
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204471,
+        "timestamp": 1780618071851,
+        "latencyFromPrevMs": 18
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204471,
+        "timestamp": 1780618084004,
+        "latencyFromPrevMs": 12153
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "Fprk3mq4AE52d89j78QVMkNuQWBfmZ4oYAuUfRgM8Ks",
+    "slotAtSubmission": 467204468
+  },
+  {
+    "runId": "6883C7875AF1",
+    "bundleId": null,
+    "signature": "2iNUPFA97ayFVdV4Bmz6UjZeaLCZxyCRCHQdXePzw98uZrncvMU7BqFnjHKmCTEttA7c1V5km3Gu5QshRoQ91esW",
+    "tipLamports": 5000,
+    "tipAccount": "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+    "submittedAt": 1780618088002,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204511,
+        "timestamp": 1780618088002,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204515,
+        "timestamp": 1780618088037,
+        "latencyFromPrevMs": 35
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204515,
+        "timestamp": 1780618088054,
+        "latencyFromPrevMs": 17
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204515,
+        "timestamp": 1780618100280,
+        "latencyFromPrevMs": 12226
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "Network is congested, so using p75 as the baseline tip.",
+    "retryCount": 0,
+    "blockhashUsed": "Fprk3mq4AE52d89j78QVMkNuQWBfmZ4oYAuUfRgM8Ks",
+    "slotAtSubmission": 467204511
+  },
+  {
+    "runId": "67C4C4805CC1",
+    "bundleId": null,
+    "signature": "5Di41vRKVu23UQd5jVbnw8gASShPDoZaKrxqXswMcwEkjTxcxqxK7A1Xm3povcQg4zAygs78t9UwepkzzuGPg7yp",
+    "tipLamports": 5000,
+    "tipAccount": "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+    "submittedAt": 1780618104133,
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 467204555,
+        "timestamp": 1780618104133,
+        "latencyFromPrevMs": null
+      },
+      {
+        "stage": "processed",
+        "slot": 467204557,
+        "timestamp": 1780618104445,
+        "latencyFromPrevMs": 312
+      },
+      {
+        "stage": "confirmed",
+        "slot": 467204557,
+        "timestamp": 1780618104462,
+        "latencyFromPrevMs": 17
+      },
+      {
+        "stage": "finalized",
+        "slot": 467204557,
+        "timestamp": 1780618116619,
+        "latencyFromPrevMs": 12157
+      }
+    ],
+    "finalStage": "confirmed",
+    "failure": "UNKNOWN",
+    "agentReasoning": "The network is congested, so using p75 as the tip to ensure bundle priority.",
+    "retryCount": 0,
+    "blockhashUsed": "4gfnDrnBEPjiJkiyWSGMEoeihLXUcCndH9513ZBcM3YD",
+    "slotAtSubmission": 467204555
+  }
+]
