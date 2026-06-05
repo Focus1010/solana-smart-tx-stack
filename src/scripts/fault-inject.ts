@@ -33,7 +33,7 @@ function makeStaleTxBase64(payer: Keypair): string {
   const tx = new Transaction();
 
   // Use an obviously stale blockhash string (valid base58, invalid on-chain)
-  tx.recentBlockhash = "1111111111111111111111111111111111111111111";
+  tx.recentBlockhash = "11111111111111111111111111111111";
   tx.feePayer        = payer.publicKey;
 
   tx.add(

@@ -1,6 +1,0 @@
-2026-06-04T23:54:45.150Z [INFO ] Loading wallet…
-2026-06-04T23:54:45.208Z [INFO ] Wallet loaded: F3zJDCAaxvuF31spte7wmvL1odaKzAR9dJbpnbSfRxsW
-2026-06-04T23:54:45.380Z [INFO ] [stack] Network: devnet
-2026-06-04T23:54:45.384Z [INFO ] [stack] Payer:   F3zJDCAaxvuF...RxsW
-2026-06-04T23:54:45.384Z [INFO ] [stream] Connecting to Yellowstone (attempt 1)…
-2026-06-04T23:54:45.385Z [WARN ] [stream] Connection lost: Client not connected. Call connect() first
