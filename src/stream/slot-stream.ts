@@ -41,13 +41,16 @@ export class SlotStream extends EventEmitter {
   async start(): Promise<void> {
     if (!config.yellowstone.endpoint) {
       await this.logger.warn(
-        "YELLOWSTONE_ENDPOINT not set — slot stream will use RPC polling fallback"
+        "[stream] YELLOWSTONE_ENDPOINT not set — use SlotPoller instead"
       );
       return;
     }
 
     this.running = true;
-    this.connectWithRetry();
+    // Run in background so a connection failure does not crash the process
+    this.connectWithRetry().catch(async (err) => {
+      await this.logger.warn("[stream] Yellowstone stream terminated: " + String(err));
+    });
   }
 
   stop(): void {
@@ -68,6 +71,16 @@ export class SlotStream extends EventEmitter {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         await this.logger.warn(`[stream] Connection lost: ${msg}`);
+
+        // After 3 failed attempts, stop trying and let the stack run without it
+        if (attempt >= 3) {
+          await this.logger.warn(
+            "[stream] Giving up on Yellowstone after 3 attempts — stack will continue without it"
+          );
+          this.running = false;
+          return;
+        }
+
         this.emit("error", err);
       }
 
@@ -85,6 +98,13 @@ export class SlotStream extends EventEmitter {
       config.yellowstone.token || undefined,
       { "grpc.max_receive_message_length": 64 * 1024 * 1024 } as any
     );
+
+    try {
+      await this.client.connect();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Yellowstone connect() failed: ${msg}. Check your endpoint and token.`);
+    }
 
     const request: SubscribeRequest = {
       slots: { solana: { filterByCommitment: true } },
@@ -105,10 +125,9 @@ export class SlotStream extends EventEmitter {
       stream.on("data", (data: any) => {
         if (!data?.slot) return;
 
-        const slot  = Number(data.slot.slot);
-        const now   = Date.now();
+        const slot = Number(data.slot.slot);
+        const now  = Date.now();
 
-        // Track slot timing history
         if (this.slotTimestamps.length >= this.MAX_SLOT_HISTORY) {
           this.slotTimestamps.shift();
         }
