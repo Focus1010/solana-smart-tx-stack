@@ -2,7 +2,7 @@
 
 A Solana transaction infrastructure stack built for the Superteam Nigeria Advanced Infrastructure Challenge. It submits Jito bundles, tracks transaction lifecycle across all commitment levels, classifies failures by type, and uses an AI agent to make real tip and retry decisions on every run.
 
-No hardcoded tip values. No hardcoded retry logic. Everything the agent decides gets written to the lifecycle log with full reasoning.
+Everything the agent decides gets written to the lifecycle log with full reasoning.
 
 ---
 
@@ -92,8 +92,6 @@ To use Yellowstone, set these in `.env`:
 YELLOWSTONE_ENDPOINT=your-endpoint.example.com:443
 YELLOWSTONE_TOKEN=your-token
 ```
-
-Note: the endpoint should not have `https://` prefix. The gRPC client handles the protocol.
 
 ---
 
