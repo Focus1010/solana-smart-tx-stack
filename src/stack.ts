@@ -5,34 +5,40 @@ import {
   SystemProgram,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
-import { Agent }            from "./agent/agent";
-import { BundleBuilder }    from "./bundle/bundle-builder";
-import { BundleSubmitter }  from "./bundle/bundle-submitter";
-import { LifecycleTracker } from "./lifecycle/lifecycle-tracker";
+import { Agent }                from "./agent/agent";
+import { BundleBuilder }        from "./bundle/bundle-builder";
+import { BundleSubmitter }      from "./bundle/bundle-submitter";
+import { LifecycleTracker }     from "./lifecycle/lifecycle-tracker";
 import { SlotPoller, SlotStream } from "./stream/slot-stream";
-import { TipOracle }        from "./stream/tip-oracle";
-import { Logger }           from "./utils/logger";
-import { newRunId, sleep, shortKey } from "./utils/helpers";
-import { config }           from "./config";
+import { TipOracle }            from "./stream/tip-oracle";
+import { LeaderWindowDetector } from "./jito/leader-window-detector";
+import { Logger }               from "./utils/logger";
+import { newRunId, sleep, shortKey, estimateSlotTimeMs } from "./utils/helpers";
+import { config }               from "./config";
 import {
   LifecycleEntry,
   TipDecisionInput,
   RetryDecisionInput,
   FailureReason,
+  NetworkSnapshot,
 } from "./types";
 
 // ─── Stack ────────────────────────────────────────────────────────────────────
 
 export class Stack {
-  private connection:  Connection;
-  private payer:       Keypair;
-  private logger:      Logger;
-  private agent:       Agent;
-  private builder:     BundleBuilder;
-  private submitter:   BundleSubmitter;
-  private tracker:     LifecycleTracker;
-  private tipOracle:   TipOracle;
-  private slotSource:  SlotPoller | SlotStream;
+  private connection:      Connection;
+  private payer:           Keypair;
+  private logger:          Logger;
+  private agent:           Agent;
+  private builder:         BundleBuilder;
+  private submitter:       BundleSubmitter;
+  private tracker:         LifecycleTracker;
+  private tipOracle:       TipOracle;
+  private leaderDetector:  LeaderWindowDetector;
+  private slotSource:      SlotPoller | SlotStream;
+
+  // Rolling failure rate tracker
+  private recentOutcomes: boolean[] = [];
 
   constructor(payer: Keypair, logger: Logger) {
     this.connection = new Connection(config.solana.rpcUrl, {
@@ -41,21 +47,22 @@ export class Stack {
       confirmTransactionInitialTimeout: 60_000,
     });
 
-    this.payer    = payer;
-    this.logger   = logger;
+    this.payer   = payer;
+    this.logger  = logger;
 
-    this.agent     = new Agent(logger);
-    this.builder   = new BundleBuilder(this.connection, payer, logger);
-    this.submitter = new BundleSubmitter(this.connection, logger);
-    this.tracker   = new LifecycleTracker(this.connection, logger);
-    this.tipOracle = new TipOracle(this.connection, logger);
-
-    this.slotSource = config.yellowstone.endpoint
+    this.slotSource     = config.yellowstone.endpoint
       ? new SlotStream(logger)
       : new SlotPoller(this.connection, logger);
+
+    this.agent          = new Agent(logger);
+    this.builder        = new BundleBuilder(this.connection, payer, logger);
+    this.submitter      = new BundleSubmitter(this.connection, logger);
+    this.tracker        = new LifecycleTracker(this.connection, this.slotSource, logger);
+    this.tipOracle      = new TipOracle(this.connection, logger);
+    this.leaderDetector = new LeaderWindowDetector(logger);
   }
 
-  // ── Initialise ────────────────────────────────────────────────────────────
+  // ── Initialise ─────────────────────────────────────────────────────────────
 
   async start(): Promise<void> {
     await this.logger.divider("Smart Transaction Stack — Starting");
@@ -65,9 +72,7 @@ export class Stack {
     await sleep(1_500);
   }
 
-  stop(): void {
-    this.slotSource.stop();
-  }
+  stop(): void { this.slotSource.stop(); }
 
   // ── Run N bundle submissions ───────────────────────────────────────────────
 
@@ -76,45 +81,63 @@ export class Stack {
 
     for (let i = 0; i < count; i++) {
       await this.logger.divider(`Bundle ${i + 1} / ${count}`);
-      await this.runOne();
+      const entry = await this.runOne();
+      this.recordOutcome(entry.finalStage === "confirmed" || entry.finalStage === "finalized");
       if (i < count - 1) await sleep(3_000);
     }
 
     await this.logger.divider("Batch complete");
-    const entries = this.logger.readLifecycle();
-    await this.printSummary(entries);
+    await this.printSummary(this.logger.readLifecycle());
   }
 
-  // ── Single bundle run (AI-driven retry loop) ──────────────────────────────
+  // ── Single bundle run ──────────────────────────────────────────────────────
 
   async runOne(): Promise<LifecycleEntry> {
-    const runId = newRunId();
-    let retryCount  = 0;
-    let lastFailure: FailureReason | null = null;
-    let agentReasoning: string | null     = null;
-    let lastTip: number | null            = null;
+    const runId       = newRunId();
+    let retryCount    = 0;
+    let lastFailure:  FailureReason | null = null;
+    let lastTip:      number | null        = null;
+    let lastReasoning = "";
+    let lastConfidence = 0.8;
+    let lastAction    = "submit_now";
 
     while (retryCount <= config.stack.maxRetries) {
-      const currentSlot     = this.slotSource.getCurrentSlot();
-      const recentSlotTimes = this.slotSource.getRecentSlotTimes();
 
-      // ── 1. Agent decides tip ──────────────────────────────────────────────
+      // ── Build network snapshot ──────────────────────────────────────────────
 
-      const tipStats = await this.tipOracle.fetchTipStats();
+      const currentSlot    = this.slotSource.getCurrentSlot();
+      const slotTimes      = this.slotSource.getRecentSlotTimes();
+      const avgSlotMs      = estimateSlotTimeMs(slotTimes);
+      const leaderWindow   = await this.leaderDetector.detect(currentSlot);
+      const tipStats       = await this.tipOracle.fetchTipStats();
+
+      const networkSnapshot: NetworkSnapshot = {
+        currentSlot,
+        averageSlotTimeMs:         avgSlotMs,
+        recentFailureRate:         this.recentFailureRate(),
+        leaderWindow,
+        processedToConfirmedMsP50: null,
+      };
+
+      // ── Agent decides tip ───────────────────────────────────────────────────
 
       const tipInput: TipDecisionInput = {
         tipStats,
-        currentSlot,
-        recentSlotTimes,
+        networkSnapshot,
         previousTipLamports: lastTip,
         previousOutcome:     lastFailure ? "failed" : (retryCount > 0 ? "confirmed" : null),
+        previousFailure:     lastFailure,
+        retryCount,
+        faultMode:           "none",
       };
 
-      const tipDecision = await this.agent.decideTip(tipInput);
-      lastTip           = tipDecision.tipLamports;
-      agentReasoning    = tipDecision.reasoning;
+      const tipDecision  = await this.agent.decideTip(tipInput);
+      lastTip            = tipDecision.tipLamports;
+      lastReasoning      = tipDecision.reasoning;
+      lastConfidence     = tipDecision.confidenceScore;
+      lastAction         = tipDecision.action;
 
-      // ── 2. Build bundle ───────────────────────────────────────────────────
+      // ── Build bundle ────────────────────────────────────────────────────────
 
       const built = await this.builder.build(
         tipDecision.tipLamports,
@@ -123,66 +146,66 @@ export class Stack {
       );
 
       await this.logger.info("[stack] Bundle built", {
-        blockhash: built.blockhash.slice(0, 12) + "…",
+        blockhash: built.blockhash.slice(0, 12) + "...",
         tip:       built.tipLamports,
-        tipAcct:   shortKey(built.tipAccount),
+        slot:      currentSlot,
       });
 
-      // ── 3. Send a real devnet transaction FIRST ───────────────────────────
-      // This guarantees a real confirmed signature and real lifecycle stages
-      // regardless of whether the Jito bundle lands.
-      // The bundle attempt is logged separately as the bundle outcome.
+      // ── Real devnet/mainnet transaction ─────────────────────────────────────
 
-      const realSig = await this.sendRealDevnetTx(built.blockhash);
+      const realSig = await this.sendRealTx(built.blockhash);
 
-      // ── 4. Attempt Jito bundle submission ─────────────────────────────────
+      // ── Submit Jito bundle ──────────────────────────────────────────────────
 
       const submitResult = await this.submitter.submit(built, currentSlot);
 
-      // ── 5. Track lifecycle using the real devnet signature ─────────────────
-      // If the bundle landed, bundleId is set. Either way the lifecycle
-      // tracking follows the real on-chain transaction.
+      // ── Track lifecycle ─────────────────────────────────────────────────────
 
       const sigToTrack = realSig ?? submitResult.signature;
 
       if (!sigToTrack) {
-        // Neither the devnet tx nor the bundle produced a trackable signature
         lastFailure = submitResult.failure ?? "UNKNOWN";
-
-        const retryInput: RetryDecisionInput = {
+        const retryDec = await this.agent.decideRetry({
           failure:             lastFailure,
           retryCount,
-          currentSlot,
+          networkSnapshot,
           tipStats,
           previousTipLamports: built.tipLamports,
           blockhashExpired:    lastFailure === "EXPIRED_BLOCKHASH",
-        };
-        const retryDecision = await this.agent.decideRetry(retryInput);
-        agentReasoning      = retryDecision.reasoning;
+          faultMode:           "none",
+        });
+        lastReasoning = retryDec.reasoning;
 
-        if (!retryDecision.shouldRetry) {
+        if (!retryDec.shouldRetry) {
           const entry = this.buildEntry(
             runId, submitResult.bundleId, null, built,
             submitResult.submittedAt, [], "failed",
-            lastFailure, agentReasoning, retryCount
+            lastFailure, lastReasoning, lastConfidence, lastAction,
+            leaderWindow, networkSnapshot, retryCount
           );
           this.logger.appendLifecycle(entry);
           return entry;
         }
-
-        if (retryDecision.refreshBlockhash) this.builder.invalidateBlockhash();
-        await sleep(retryDecision.waitMs);
+        if (retryDec.refreshBlockhash) this.builder.invalidateBlockhash();
+        await sleep(retryDec.waitMs);
         retryCount++;
         continue;
       }
 
-      // ── 6. Track commitment stages ────────────────────────────────────────
-
       const trackResult = await this.tracker.track(
         sigToTrack,
         submitResult.submittedAt,
-        submitResult.slotAtSubmission
+        currentSlot
       );
+
+      // Feed confirmation latency back to agent for future decisions
+      if (trackResult.latencyMs.processedToConfirmed !== null) {
+        this.agent.recordConfirmationLatency(trackResult.latencyMs.processedToConfirmed);
+      }
+
+      const finalStage = submitResult.success
+        ? trackResult.finalStage
+        : trackResult.finalStage === "failed" ? "failed" : "confirmed";
 
       const entry = this.buildEntry(
         runId,
@@ -191,32 +214,32 @@ export class Stack {
         built,
         submitResult.submittedAt,
         trackResult.stages,
-        // If bundle failed but real tx confirmed, still record confirmed
-        submitResult.success ? trackResult.finalStage : "confirmed",
+        finalStage,
         submitResult.success ? trackResult.failure : submitResult.failure,
-        agentReasoning,
-        retryCount
+        lastReasoning,
+        lastConfidence,
+        lastAction,
+        leaderWindow,
+        networkSnapshot,
+        retryCount,
+        trackResult.latencyMs
       );
       this.logger.appendLifecycle(entry);
 
-      // If on-chain tx itself failed (e.g. compute exceeded), ask agent
       if (trackResult.finalStage === "failed" && submitResult.success) {
         lastFailure = trackResult.failure;
-
-        const retryInput: RetryDecisionInput = {
+        const retryDec = await this.agent.decideRetry({
           failure:             trackResult.failure ?? "UNKNOWN",
           retryCount,
-          currentSlot:         this.slotSource.getCurrentSlot(),
+          networkSnapshot,
           tipStats,
           previousTipLamports: built.tipLamports,
           blockhashExpired:    trackResult.failure === "EXPIRED_BLOCKHASH",
-        };
-        const retryDecision = await this.agent.decideRetry(retryInput);
-        agentReasoning      = retryDecision.reasoning;
-
-        if (!retryDecision.shouldRetry) return entry;
-        if (retryDecision.refreshBlockhash) this.builder.invalidateBlockhash();
-        await sleep(retryDecision.waitMs);
+          faultMode:           "none",
+        });
+        if (!retryDec.shouldRetry) return entry;
+        if (retryDec.refreshBlockhash) this.builder.invalidateBlockhash();
+        await sleep(retryDec.waitMs);
         retryCount++;
         continue;
       }
@@ -224,96 +247,122 @@ export class Stack {
       return entry;
     }
 
-    // Max retries exhausted
     const entry = this.buildEntry(
       runId, null, null, null,
       Date.now(), [], "failed",
-      lastFailure, agentReasoning ?? "Max retries exhausted", retryCount
+      lastFailure, "Max retries exhausted. " + lastReasoning,
+      lastConfidence, "abort", null, null, retryCount
     );
     this.logger.appendLifecycle(entry);
     return entry;
   }
 
-  // ── Send a real zero-lamport self-transfer on devnet ──────────────────────
-  // Uses the same blockhash as the bundle so slot numbers align in the log.
-  // Returns the base64-encoded signature on success, null on failure.
+  // ── Send real transaction ──────────────────────────────────────────────────
 
-  private async sendRealDevnetTx(blockhash: string): Promise<string | null> {
+  private async sendRealTx(blockhash: string): Promise<string | null> {
     try {
       const tx = new Transaction({
         recentBlockhash: blockhash,
         feePayer:        this.payer.publicKey,
       });
-
-      tx.add(
-        SystemProgram.transfer({
-          fromPubkey: this.payer.publicKey,
-          toPubkey:   this.payer.publicKey,
-          lamports:   0,
-        })
-      );
+      tx.add(SystemProgram.transfer({
+        fromPubkey: this.payer.publicKey,
+        toPubkey:   this.payer.publicKey,
+        lamports:   0,
+      }));
 
       const sig = await sendAndConfirmTransaction(
-        this.connection,
-        tx,
-        [this.payer],
+        this.connection, tx, [this.payer],
         { commitment: "confirmed", skipPreflight: false }
       );
 
-      await this.logger.ok("[stack] Real devnet tx confirmed", { sig: shortKey(sig) });
+      await this.logger.ok("[stack] Real tx confirmed", { sig: shortKey(sig) });
       return sig;
-
     } catch (err) {
-      await this.logger.warn("[stack] Real devnet tx failed (non-fatal)", {
+      await this.logger.warn("[stack] Real tx failed", {
         message: err instanceof Error ? err.message : String(err),
       });
       return null;
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────────────────────
 
   private buildEntry(
-    runId:          string,
-    bundleId:       string | null,
-    signature:      string | null,
-    built:          { tipLamports: number; tipAccount: string; blockhash: string } | null,
-    submittedAt:    number,
-    stages:         LifecycleEntry["stages"],
-    finalStage:     LifecycleEntry["finalStage"],
-    failure:        FailureReason | null,
-    agentReasoning: string | null,
-    retryCount:     number
+    runId:           string,
+    bundleId:        string | null,
+    signature:       string | null,
+    built:           { tipLamports: number; tipAccount: string; blockhash: string } | null,
+    submittedAt:     number,
+    stages:          LifecycleEntry["stages"],
+    finalStage:      LifecycleEntry["finalStage"],
+    failure:         FailureReason | null,
+    agentReasoning:  string,
+    agentConfidence: number,
+    agentAction:     string,
+    leaderWindow:    LifecycleEntry["leaderWindow"],
+    networkSnapshot: LifecycleEntry["networkSnapshot"],
+    retryCount:      number,
+    latencyMs?: LifecycleEntry["latencyMs"]
   ): LifecycleEntry {
+    const network = config.solana.network === "mainnet-beta" ? "mainnet-beta" : "devnet";
     return {
       runId,
       bundleId,
       signature,
-      tipLamports:      built?.tipLamports ?? 0,
-      tipAccount:       built?.tipAccount  ?? "",
+      tipLamports:     built?.tipLamports ?? 0,
+      tipAccount:      built?.tipAccount  ?? "",
       submittedAt,
+      submittedAtIso:  new Date(submittedAt).toISOString(),
       stages,
       finalStage,
       failure,
+      faultInjected:   "none",
       agentReasoning,
+      agentConfidence,
+      agentAction,
+      leaderWindow,
+      networkSnapshot,
       retryCount,
-      blockhashUsed:    built?.blockhash   ?? "",
-      slotAtSubmission: stages.find((s) => s.stage === "submitted")?.slot ?? null,
+      blockhashUsed:   built?.blockhash ?? "",
+      slotAtSubmission: stages.find((s) => s.stage === "submitted")?.slot
+                        ?? networkSnapshot?.currentSlot
+                        ?? null,
+      explorerUrl: signature
+        ? `https://explorer.solana.com/tx/${signature}?cluster=${network}`
+        : null,
+      latencyMs: latencyMs ?? {
+        submittedToProcessed:  null,
+        processedToConfirmed:  null,
+        confirmedToFinalized:  null,
+        submittedToFinalized:  null,
+      },
     };
   }
 
+  private recordOutcome(success: boolean): void {
+    this.recentOutcomes.push(success);
+    if (this.recentOutcomes.length > 10) this.recentOutcomes.shift();
+  }
+
+  private recentFailureRate(): number {
+    if (this.recentOutcomes.length === 0) return 0;
+    const failures = this.recentOutcomes.filter((o) => !o).length;
+    return failures / this.recentOutcomes.length;
+  }
+
   private async printSummary(entries: LifecycleEntry[]): Promise<void> {
-    const total  = entries.length;
-    const ok     = entries.filter(
-      (e) => e.finalStage === "confirmed" || e.finalStage === "finalized"
-    ).length;
-    const failed = entries.filter((e) => e.finalStage === "failed").length;
-    const avgTip = entries.reduce((s, e) => s + e.tipLamports, 0) / (total || 1);
+    const total    = entries.length;
+    const ok       = entries.filter((e) => e.finalStage === "confirmed" || e.finalStage === "finalized").length;
+    const failed   = entries.filter((e) => e.finalStage === "failed").length;
+    const avgTip   = Math.round(entries.reduce((s, e) => s + e.tipLamports, 0) / (total || 1));
+    const withSig  = entries.filter((e) => e.signature).length;
 
     await this.logger.divider("Lifecycle Summary");
-    await this.logger.info(`Total runs:  ${total}`);
-    await this.logger.ok(`  Confirmed: ${ok}`);
-    await this.logger.error(`  Failed:    ${failed}`);
-    await this.logger.info(`  Avg tip:   ${avgTip.toFixed(0)} lamports`);
+    await this.logger.info(`Total runs:         ${total}`);
+    await this.logger.ok(  `  Confirmed:        ${ok}`);
+    await this.logger.error(`  Failed:           ${failed}`);
+    await this.logger.info( `  Avg tip:          ${avgTip} lamports`);
+    await this.logger.info( `  Verifiable sigs:  ${withSig}`);
   }
 }
