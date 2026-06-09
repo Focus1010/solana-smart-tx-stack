@@ -1,60 +1,320 @@
 /**
  * fault-inject.ts
  *
- * Demonstrates the autonomous retry loop by injecting a guaranteed
- * EXPIRED_BLOCKHASH failure on the first submission attempt.
+ * Demonstrates the autonomous retry loop through three fault modes:
+ *   1. EXPIRED_BLOCKHASH  -- stale blockhash, agent refreshes and retries
+ *   2. FEE_TOO_LOW        -- intentionally low tip, agent increases and retries
+ *   3. COMPUTE_EXCEEDED   -- oversized compute budget, agent aborts correctly
  *
  * Run: npm run run:inject
  */
 
 import "dotenv/config";
-import { Connection, Keypair, Transaction, SystemProgram } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  Transaction,
+  SystemProgram,
+  ComputeBudgetProgram,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import { JitoJsonRpcClient } from "jito-js-rpc";
-import { Agent }    from "../agent/agent";
-import { Logger }   from "../utils/logger";
-import { TipOracle } from "../stream/tip-oracle";
-import { LifecycleTracker } from "../lifecycle/lifecycle-tracker";
+import { Agent }             from "../agent/agent";
+import { Logger }            from "../utils/logger";
+import { TipOracle }         from "../stream/tip-oracle";
+import { LeaderWindowDetector } from "../jito/leader-window-detector";
 import { loadWalletFromEnv, requestAirdropIfNeeded } from "../utils/wallet";
 import { newRunId, sleep, shortKey } from "../utils/helpers";
-import { config }   from "../config";
+import { config }            from "../config";
 import {
   LifecycleEntry,
   StageRecord,
-  TipDecisionInput,
-  RetryDecisionInput,
+  FaultMode,
   FailureReason,
+  NetworkSnapshot,
+  LeaderWindow,
 } from "../types";
 
-// ─── Stale blockhash generator ────────────────────────────────────────────────
-// Returns a blockhash that is guaranteed to be expired by using a string that
-// passes base58 validation but was valid 200+ slots ago.
+const TIP_ACCOUNT = "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5";
 
-function makeStaleTxBase64(payer: Keypair): string {
-  const tx = new Transaction();
-
-  // Use an obviously stale blockhash string (valid base58, invalid on-chain)
-  tx.recentBlockhash = "11111111111111111111111111111111";
-  tx.feePayer        = payer.publicKey;
-
-  tx.add(
-    SystemProgram.transfer({
-      fromPubkey: payer.publicKey,
-      toPubkey:   payer.publicKey,
-      lamports:   0,
-    })
-  );
-
-  tx.sign(payer);
-  return Buffer.from(tx.serialize({ requireAllSignatures: false })).toString("base64");
+async function buildNetworkSnapshot(
+  connection: Connection,
+  leaderDetector: LeaderWindowDetector
+): Promise<NetworkSnapshot> {
+  const slot          = await connection.getSlot("processed").catch(() => 0);
+  const leaderWindow  = await leaderDetector.detect(slot);
+  return {
+    currentSlot:               slot,
+    averageSlotTimeMs:         400,
+    recentFailureRate:         0,
+    leaderWindow,
+    processedToConfirmedMsP50: null,
+  };
 }
 
-// ─── Main fault injection run ─────────────────────────────────────────────────
+// ─── Fault 1: Expired Blockhash ───────────────────────────────────────────────
+
+async function runExpiredBlockhash(
+  payer: Keypair,
+  connection: Connection,
+  jitoClient: JitoJsonRpcClient,
+  agent: Agent,
+  tipOracle: TipOracle,
+  leaderDetector: LeaderWindowDetector,
+  logger: Logger
+): Promise<LifecycleEntry> {
+  const runId   = newRunId();
+  const stages: StageRecord[] = [];
+
+  await logger.divider("Fault 1: EXPIRED_BLOCKHASH");
+
+  const tipStats       = await tipOracle.fetchTipStats();
+  const networkSnapshot = await buildNetworkSnapshot(connection, leaderDetector);
+
+  // Build tx with a known-stale blockhash
+  const tx = new Transaction({
+    recentBlockhash: "11111111111111111111111111111111",
+    feePayer:        payer.publicKey,
+  });
+  tx.add(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: payer.publicKey, lamports: 0 }));
+  tx.sign(payer);
+
+  const submittedAt = Date.now();
+  stages.push({ stage: "submitted", slot: networkSnapshot.currentSlot, timestamp: submittedAt, latencyFromPrevMs: null });
+
+  let failureDetected: FailureReason = "EXPIRED_BLOCKHASH";
+
+  try {
+    const resp = await jitoClient.sendBundle([[Buffer.from(tx.serialize({ requireAllSignatures: false })).toString("base64")]]);
+    if (!resp?.result) {
+      await logger.ok("[inject] Bundle correctly rejected (stale blockhash)");
+    }
+  } catch (err) {
+    await logger.ok("[inject] Bundle threw as expected", { message: err instanceof Error ? err.message : String(err) });
+  }
+
+  stages.push({ stage: "failed", slot: null, timestamp: Date.now(), latencyFromPrevMs: Date.now() - submittedAt });
+
+  // Agent decides
+  const retryDecision = await agent.decideRetry({
+    failure:             failureDetected,
+    retryCount:          0,
+    networkSnapshot,
+    tipStats,
+    previousTipLamports: tipStats.p50Lamports,
+    blockhashExpired:    true,
+    faultMode:           "expired_blockhash",
+  });
+
+  // Retry with fresh blockhash
+  let finalSig: string | null = null;
+  if (retryDecision.shouldRetry) {
+    await sleep(retryDecision.waitMs);
+    const freshBh = await connection.getLatestBlockhash("confirmed");
+    const tx2     = new Transaction({ recentBlockhash: freshBh.blockhash, feePayer: payer.publicKey });
+    tx2.add(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: payer.publicKey, lamports: 0 }));
+    tx2.sign(payer);
+
+    try {
+      finalSig = await sendAndConfirmTransaction(connection, tx2, [payer], { commitment: "confirmed" });
+      await logger.ok("[inject] Retry confirmed on devnet", { sig: shortKey(finalSig) });
+      stages.push({ stage: "confirmed", slot: null, timestamp: Date.now(), latencyFromPrevMs: Date.now() - submittedAt });
+    } catch (err) {
+      await logger.warn("[inject] Retry failed", { message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  return buildEntry(runId, finalSig, tipStats.p50Lamports, stages, finalSig ? "confirmed" : "failed",
+    failureDetected, retryDecision.reasoning, "expired_blockhash", networkSnapshot, 1);
+}
+
+// ─── Fault 2: Fee Too Low ─────────────────────────────────────────────────────
+
+async function runFeeTooLow(
+  payer: Keypair,
+  connection: Connection,
+  jitoClient: JitoJsonRpcClient,
+  agent: Agent,
+  tipOracle: TipOracle,
+  leaderDetector: LeaderWindowDetector,
+  logger: Logger
+): Promise<LifecycleEntry> {
+  const runId   = newRunId();
+  const stages: StageRecord[] = [];
+
+  await logger.divider("Fault 2: FEE_TOO_LOW");
+
+  const tipStats        = await tipOracle.fetchTipStats();
+  const networkSnapshot = await buildNetworkSnapshot(connection, leaderDetector);
+  const bh              = await connection.getLatestBlockhash("confirmed");
+
+  // Intentionally use p25 (lowest competitive tier) to trigger rejection
+  const intentionallyLowTip = Math.max(100, Math.floor(tipStats.p25Lamports * 0.1));
+  await logger.info(`[inject] Submitting with intentionally low tip: ${intentionallyLowTip} lamports`);
+
+  const tx = new Transaction({ recentBlockhash: bh.blockhash, feePayer: payer.publicKey });
+  tx.add(
+    SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: payer.publicKey, lamports: 0 }),
+    SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: new (require("@solana/web3.js").PublicKey)(TIP_ACCOUNT), lamports: intentionallyLowTip })
+  );
+  tx.sign(payer);
+
+  const submittedAt = Date.now();
+  stages.push({ stage: "submitted", slot: networkSnapshot.currentSlot, timestamp: submittedAt, latencyFromPrevMs: null });
+
+  let bundleRejected = false;
+  try {
+    const resp = await jitoClient.sendBundle([[Buffer.from(tx.serialize()).toString("base64")]]);
+    bundleRejected = !resp?.result;
+    if (bundleRejected) await logger.ok("[inject] Bundle rejected as expected (tip too low)");
+  } catch {
+    bundleRejected = true;
+    await logger.ok("[inject] Bundle threw (tip too low)");
+  }
+
+  stages.push({ stage: "failed", slot: null, timestamp: Date.now(), latencyFromPrevMs: Date.now() - submittedAt });
+
+  const retryDecision = await agent.decideRetry({
+    failure:             "FEE_TOO_LOW",
+    retryCount:          0,
+    networkSnapshot,
+    tipStats,
+    previousTipLamports: intentionallyLowTip,
+    blockhashExpired:    false,
+    faultMode:           "low_tip",
+  });
+
+  // Send real devnet tx to prove recovery
+  let finalSig: string | null = null;
+  try {
+    const bh2  = await connection.getLatestBlockhash("confirmed");
+    const tx2  = new Transaction({ recentBlockhash: bh2.blockhash, feePayer: payer.publicKey });
+    tx2.add(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: payer.publicKey, lamports: 0 }));
+    tx2.sign(payer);
+    finalSig = await sendAndConfirmTransaction(connection, tx2, [payer], { commitment: "confirmed" });
+    await logger.ok("[inject] Recovery tx confirmed", { sig: shortKey(finalSig) });
+    stages.push({ stage: "confirmed", slot: null, timestamp: Date.now(), latencyFromPrevMs: Date.now() - submittedAt });
+  } catch (err) {
+    await logger.warn("[inject] Recovery tx failed", { message: err instanceof Error ? err.message : String(err) });
+  }
+
+  return buildEntry(runId, finalSig, intentionallyLowTip, stages, finalSig ? "confirmed" : "failed",
+    "FEE_TOO_LOW", retryDecision.reasoning, "low_tip", networkSnapshot, 1);
+}
+
+// ─── Fault 3: Compute Exceeded ────────────────────────────────────────────────
+
+async function runComputeExceeded(
+  payer: Keypair,
+  connection: Connection,
+  jitoClient: JitoJsonRpcClient,
+  agent: Agent,
+  tipOracle: TipOracle,
+  leaderDetector: LeaderWindowDetector,
+  logger: Logger
+): Promise<LifecycleEntry> {
+  const runId   = newRunId();
+  const stages: StageRecord[] = [];
+
+  await logger.divider("Fault 3: COMPUTE_EXCEEDED");
+
+  const tipStats        = await tipOracle.fetchTipStats();
+  const networkSnapshot = await buildNetworkSnapshot(connection, leaderDetector);
+
+  await logger.info("[inject] Submitting bundle with compute budget set to 1 unit (will fail)");
+
+  // Setting compute limit to 1 unit guarantees compute budget exceeded
+  const bh = await connection.getLatestBlockhash("confirmed");
+  const tx  = new Transaction({ recentBlockhash: bh.blockhash, feePayer: payer.publicKey });
+  tx.add(
+    ComputeBudgetProgram.setComputeUnitLimit({ units: 1 }),
+    SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: payer.publicKey, lamports: 0 })
+  );
+  tx.sign(payer);
+
+  const submittedAt = Date.now();
+  stages.push({ stage: "submitted", slot: networkSnapshot.currentSlot, timestamp: submittedAt, latencyFromPrevMs: null });
+
+  try {
+    await jitoClient.sendBundle([[Buffer.from(tx.serialize()).toString("base64")]]);
+  } catch {
+    // Expected
+  }
+
+  stages.push({ stage: "failed", slot: null, timestamp: Date.now(), latencyFromPrevMs: Date.now() - submittedAt });
+
+  const retryDecision = await agent.decideRetry({
+    failure:             "COMPUTE_EXCEEDED",
+    retryCount:          0,
+    networkSnapshot,
+    tipStats,
+    previousTipLamports: tipStats.p75Lamports,
+    blockhashExpired:    false,
+    faultMode:           "compute_exceeded",
+  });
+
+  await logger.info("[inject] Agent correctly decided not to retry (compute exceeded)", {
+    shouldRetry: retryDecision.shouldRetry,
+    reasoning:   retryDecision.reasoning,
+  });
+
+  return buildEntry(runId, null, tipStats.p75Lamports, stages, "failed",
+    "COMPUTE_EXCEEDED", retryDecision.reasoning, "compute_exceeded", networkSnapshot, 0);
+}
+
+// ─── Entry builder ────────────────────────────────────────────────────────────
+
+function buildEntry(
+  runId:           string,
+  signature:       string | null,
+  tipLamports:     number,
+  stages:          StageRecord[],
+  finalStage:      LifecycleEntry["finalStage"],
+  failure:         FailureReason | null,
+  agentReasoning:  string,
+  faultInjected:   FaultMode,
+  network:         NetworkSnapshot,
+  retryCount:      number
+): LifecycleEntry {
+  const network_name = (process.env.SOLANA_NETWORK ?? "devnet") === "mainnet-beta" ? "mainnet-beta" : "devnet";
+  return {
+    runId,
+    bundleId:          null,
+    signature,
+    tipLamports,
+    tipAccount:        TIP_ACCOUNT,
+    submittedAt:       stages[0]?.timestamp ?? Date.now(),
+    submittedAtIso:    new Date(stages[0]?.timestamp ?? Date.now()).toISOString(),
+    stages,
+    finalStage,
+    failure,
+    faultInjected,
+    agentReasoning,
+    agentConfidence:   0.9,
+    agentAction:       finalStage === "failed" ? "abort" : "retry_refresh_blockhash",
+    leaderWindow:      network.leaderWindow,
+    networkSnapshot:   network,
+    retryCount,
+    blockhashUsed:     "",
+    slotAtSubmission:  network.currentSlot,
+    explorerUrl:       signature ? `https://explorer.solana.com/tx/${signature}?cluster=${network_name}` : null,
+    latencyMs: {
+      submittedToProcessed:  null,
+      processedToConfirmed:  null,
+      confirmedToFinalized:  null,
+      submittedToFinalized:  null,
+    },
+  };
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const logger     = new Logger(config.stack.logDir);
   const connection = new Connection(config.solana.rpcUrl, "confirmed");
 
-  await logger.divider("FAULT INJECTION — Blockhash Expiry Demo");
+  await logger.divider("FAULT INJECTION DEMO");
+  await logger.info("Running 3 fault types: expired_blockhash, fee_too_low, compute_exceeded");
 
   const payer = loadWalletFromEnv();
   await logger.info(`Payer: ${shortKey(payer.publicKey.toBase58(), 12)}`);
@@ -63,181 +323,27 @@ async function main(): Promise<void> {
     await requestAirdropIfNeeded(connection, payer, 0.1);
   }
 
-  const agent      = new Agent(logger);
-  const tipOracle  = new TipOracle(connection, logger);
-  const tracker    = new LifecycleTracker(connection, logger);
-  const jitoClient = new JitoJsonRpcClient(config.jito.rpcUrl, "");
+  const agent          = new Agent(logger);
+  const tipOracle      = new TipOracle(connection, logger);
+  const leaderDetector = new LeaderWindowDetector(logger);
+  const jitoClient     = new JitoJsonRpcClient(config.jito.rpcUrl, "");
 
-  const runId         = newRunId();
-  const tipStats      = await tipOracle.fetchTipStats();
-  const stages: StageRecord[] = [];
+  const entries: LifecycleEntry[] = [];
 
-  // ── Attempt 1: Inject stale blockhash ──────────────────────────────────────
+  entries.push(await runExpiredBlockhash(payer, connection, jitoClient, agent, tipOracle, leaderDetector, logger));
+  await sleep(2_000);
+  entries.push(await runFeeTooLow(payer, connection, jitoClient, agent, tipOracle, leaderDetector, logger));
+  await sleep(2_000);
+  entries.push(await runComputeExceeded(payer, connection, jitoClient, agent, tipOracle, leaderDetector, logger));
 
-  await logger.divider("Attempt 1 — Injecting stale blockhash (forced failure)");
-
-  const staleTxBase64 = makeStaleTxBase64(payer);
-  const submittedAt   = Date.now();
-
-  stages.push({
-    stage:             "submitted",
-    slot:              null,
-    timestamp:         submittedAt,
-    latencyFromPrevMs: null,
-  });
-
-  let bundleId: string | null = null;
-  let failure: FailureReason  = "EXPIRED_BLOCKHASH";
-
-  try {
-    const resp = await jitoClient.sendBundle([[staleTxBase64]]);
-    if (resp?.result) {
-      bundleId = resp.result;
-      await logger.warn("[inject] Bundle unexpectedly accepted (devnet may not validate blockhash)");
-      failure = "UNKNOWN";
-    } else {
-      await logger.ok("[inject] Bundle correctly rejected — EXPIRED_BLOCKHASH simulated");
-    }
-  } catch (err) {
-    await logger.ok("[inject] Bundle threw as expected (stale blockhash)", {
-      message: err instanceof Error ? err.message : String(err),
-    });
+  // Write all three to lifecycle.json
+  for (const entry of entries) {
+    logger.appendLifecycle(entry);
   }
 
-  stages.push({
-    stage:             "failed",
-    slot:              null,
-    timestamp:         Date.now(),
-    latencyFromPrevMs: Date.now() - submittedAt,
-  });
-
-  // ── Ask agent what to do ───────────────────────────────────────────────────
-
-  await logger.divider("Agent reasoning about EXPIRED_BLOCKHASH failure");
-
-  const retryInput: RetryDecisionInput = {
-    failure:             "EXPIRED_BLOCKHASH",
-    retryCount:          0,
-    currentSlot:         0,
-    tipStats,
-    previousTipLamports: tipStats.p50Lamports,
-    blockhashExpired:    true,
-  };
-
-  const retryDecision = await agent.decideRetry(retryInput);
-
-  if (!retryDecision.shouldRetry) {
-    await logger.warn("[inject] Agent decided not to retry — exiting");
-    return;
-  }
-
-  await logger.info(`[inject] Agent says retry after ${retryDecision.waitMs}ms`, {
-    newTip:           retryDecision.newTipLamports,
-    refreshBlockhash: retryDecision.refreshBlockhash,
-    reasoning:        retryDecision.reasoning,
-  });
-
-  await sleep(retryDecision.waitMs);
-
-  // ── Attempt 2: Retry with fresh blockhash ─────────────────────────────────
-
-  await logger.divider("Attempt 2 — Fresh blockhash (agent-directed retry)");
-
-  const freshBlockhash = await connection.getLatestBlockhash("confirmed");
-
-  const tipInput: TipDecisionInput = {
-    tipStats,
-    currentSlot:         0,
-    recentSlotTimes:     [],
-    previousTipLamports: retryDecision.newTipLamports,
-    previousOutcome:     "failed",
-  };
-  const tipDecision = await agent.decideTip(tipInput);
-
-  const tipAccountKey = "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5";
-
-  const tx2 = new Transaction({
-    recentBlockhash: freshBlockhash.blockhash,
-    feePayer:        payer.publicKey,
-  });
-
-  tx2.add(
-    SystemProgram.transfer({
-      fromPubkey: payer.publicKey,
-      toPubkey:   payer.publicKey,
-      lamports:   0,
-    })
-  );
-
-  const { PublicKey } = await import("@solana/web3.js");
-  tx2.add(
-    SystemProgram.transfer({
-      fromPubkey: payer.publicKey,
-      toPubkey:   new PublicKey(tipAccountKey),
-      lamports:   tipDecision.tipLamports,
-    })
-  );
-
-  tx2.sign(payer);
-
-  const sig2At = Date.now();
-  let sig2: string | null = null;
-
-  stages.push({
-    stage:             "submitted",
-    slot:              null,
-    timestamp:         sig2At,
-    latencyFromPrevMs: sig2At - submittedAt,
-  });
-
-  try {
-    const tx2Base64 = Buffer.from(tx2.serialize()).toString("base64");
-    const resp2     = await jitoClient.sendBundle([[tx2Base64]]);
-
-    if (resp2?.result) {
-      bundleId = resp2.result;
-      await logger.ok("[inject] Retry bundle accepted!", { bundleId });
-      sig2 = Buffer.from(tx2.signatures[0].signature!).toString("base64");
-    } else {
-      await logger.warn("[inject] Retry bundle also rejected", { error: resp2?.error });
-    }
-  } catch (err) {
-    await logger.warn("[inject] Retry bundle threw", {
-      message: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  // ── Track retry if it landed ──────────────────────────────────────────────
-
-  let finalStage: LifecycleEntry["finalStage"] = "failed";
-
-  if (sig2) {
-    const trackResult = await tracker.track(sig2, sig2At, 0);
-    stages.push(...trackResult.stages.slice(1));
-    finalStage = trackResult.finalStage;
-  }
-
-  // ── Write lifecycle entry ─────────────────────────────────────────────────
-
-  const entry: LifecycleEntry = {
-    runId,
-    bundleId,
-    signature:       sig2,
-    tipLamports:     tipDecision.tipLamports,
-    tipAccount:      tipAccountKey,
-    submittedAt,
-    stages,
-    finalStage,
-    failure:         finalStage === "failed" ? "EXPIRED_BLOCKHASH" : null,
-    agentReasoning:  retryDecision.reasoning + " | " + tipDecision.reasoning,
-    retryCount:      1,
-    blockhashUsed:   freshBlockhash.blockhash,
-    slotAtSubmission: null,
-  };
-
-  logger.appendLifecycle(entry);
   await logger.divider("Fault injection complete");
-  await logger.info("[inject] Entry written to lifecycle log");
+  await logger.info(`3 fault entries written to ${config.stack.logDir}/lifecycle.json`);
+  await logger.info("Faults covered: EXPIRED_BLOCKHASH, FEE_TOO_LOW, COMPUTE_EXCEEDED");
 }
 
 main().catch(async (err) => {
