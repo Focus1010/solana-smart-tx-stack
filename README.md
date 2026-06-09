@@ -33,7 +33,7 @@ No hardcoded tip values. No hardcoded retry logic. No RPC polling for commitment
 | PASS | Blockhash at confirmed (never finalized) | `src/bundle/bundle-builder.ts` BlockhashCache |
 | PASS | Clean AI / stack separation | `src/agent/` vs `src/stack.ts` |
 | PASS | Open source with license | `LICENSE` (MIT) |
-| PASS | Architecture document | `ARCHITECTURE.md` + Notion public URL |
+| PASS | Architecture document | Notion public URL |
 | PASS | Verification report | `evidence/verification-report.md` |
 
 ---
