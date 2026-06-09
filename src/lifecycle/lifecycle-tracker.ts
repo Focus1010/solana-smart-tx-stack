@@ -1,11 +1,8 @@
-import { Connection } from "@solana/web3.js";
-import {
-  BundleStage,
-  StageRecord,
-  FailureReason,
-} from "../types";
-import { Logger } from "../utils/logger";
-import { sleep, shortKey } from "../utils/helpers";
+import { Connection }           from "@solana/web3.js";
+import { CommitmentTracker, SlotSource } from "./commitment-tracker";
+import { BundleStage, StageRecord, FailureReason } from "../types";
+import { Logger }               from "../utils/logger";
+import { sleep, shortKey }      from "../utils/helpers";
 
 // ─── TrackResult ─────────────────────────────────────────────────────────────
 
@@ -13,130 +10,200 @@ export interface TrackResult {
   finalStage: BundleStage;
   stages:     StageRecord[];
   failure:    FailureReason | null;
+  latencyMs: {
+    submittedToProcessed:  number | null;
+    processedToConfirmed:  number | null;
+    confirmedToFinalized:  number | null;
+    submittedToFinalized:  number | null;
+  };
 }
 
 // ─── LifecycleTracker ─────────────────────────────────────────────────────────
-// Polls for transaction confirmation across commitment levels, recording
-// precise timestamps and slot numbers at each stage.
-// RPC polling + confirmation subscription — not happy-path-only.
+// Stream-first: uses CommitmentTracker to resolve confirmed and finalized
+// purely from Yellowstone slot events (no RPC polling for those stages).
+//
+// For the processed stage we still poll getSignatureStatus() because we need
+// the actual transaction slot number — the stream only tells us the cluster
+// has passed that slot, not which slot the tx landed in.
 
 export class LifecycleTracker {
-  private connection: Connection;
-  private logger: Logger;
+  private connection:        Connection;
+  private logger:            Logger;
+  private commitmentTracker: CommitmentTracker;
 
-  // Timeouts per commitment level
-  private readonly PROCESSED_TIMEOUT_MS  = 15_000;
-  private readonly CONFIRMED_TIMEOUT_MS  = 30_000;
-  private readonly FINALIZED_TIMEOUT_MS  = 60_000;
-  private readonly POLL_INTERVAL_MS      = 800;
+  private readonly PROCESSED_TIMEOUT_MS  = 20_000;
+  private readonly CONFIRMED_TIMEOUT_MS  = 45_000;
+  private readonly FINALIZED_TIMEOUT_MS  = 90_000;
+  private readonly POLL_INTERVAL_MS      = 600;
 
-  constructor(connection: Connection, logger: Logger) {
-    this.connection = connection;
-    this.logger     = logger;
+  constructor(connection: Connection, slotSource: SlotSource, logger: Logger) {
+    this.connection        = connection;
+    this.logger            = logger;
+    this.commitmentTracker = new CommitmentTracker(slotSource);
   }
-
-  // ── Main tracking entrypoint ─────────────────────────────────────────────────
 
   async track(
     signature: string,
     submittedAt: number,
     submissionSlot: number
   ): Promise<TrackResult> {
-    const stages: StageRecord[] = [
-      {
-        stage:             "submitted",
-        slot:              submissionSlot,
-        timestamp:         submittedAt,
-        latencyFromPrevMs: null,
-      },
-    ];
+    const stages: StageRecord[] = [{
+      stage:             "submitted",
+      slot:              submissionSlot || null,
+      timestamp:         submittedAt,
+      latencyFromPrevMs: null,
+    }];
 
     await this.logger.info("[tracker] Tracking lifecycle", { sig: shortKey(signature) });
 
-    // ── Stage: processed ────────────────────────────────────────────────────
+    // ── Stage: processed (RPC poll to get the landing slot) ──────────────────
 
-    const processedRecord = await this.waitForCommitment(
-      signature,
-      "processed",
-      this.PROCESSED_TIMEOUT_MS
-    );
+    const processedResult = await this.waitForProcessed(signature, submittedAt);
 
-    if (!processedRecord) {
-      stages.push(this.failedRecord("processed", submittedAt));
-      return { finalStage: "failed", stages, failure: "TIMEOUT" };
+    if (!processedResult) {
+      stages.push(this.failedRecord("failed", submittedAt));
+      return {
+        finalStage: "failed",
+        stages,
+        failure: "TIMEOUT",
+        latencyMs: { submittedToProcessed: null, processedToConfirmed: null, confirmedToFinalized: null, submittedToFinalized: null },
+      };
     }
 
-    processedRecord.latencyFromPrevMs = processedRecord.timestamp - submittedAt;
-    stages.push(processedRecord);
+    const submittedToProcessed = processedResult.timestamp - submittedAt;
+    processedResult.latencyFromPrevMs = submittedToProcessed;
+    stages.push(processedResult);
 
-    await this.logger.info("[tracker] → processed", {
-      slot:    processedRecord.slot,
-      latency: `${processedRecord.latencyFromPrevMs}ms`,
+    await this.logger.info("[tracker] Processed", {
+      slot:    processedResult.slot,
+      latency: `${submittedToProcessed}ms`,
     });
 
-    // Check if it was an error (compute / fee)
-    const txError = await this.getTransactionError(signature);
+    // Check if tx itself errored on-chain
+    const txError = await this.getTxError(signature);
     if (txError) {
-      const failure = this.classifyTransactionError(txError);
-      stages.push(this.failedRecord("failed", processedRecord.timestamp));
-      await this.logger.error("[tracker] Transaction failed on-chain", { error: txError, failure });
-      return { finalStage: "failed", stages, failure };
+      const failure = this.classifyTxError(txError);
+      stages.push(this.failedRecord("failed", processedResult.timestamp));
+      await this.logger.error("[tracker] On-chain error", { txError, failure });
+      return {
+        finalStage: "failed",
+        stages,
+        failure,
+        latencyMs: { submittedToProcessed, processedToConfirmed: null, confirmedToFinalized: null, submittedToFinalized: null },
+      };
     }
 
-    // ── Stage: confirmed ────────────────────────────────────────────────────
+    // ── Stage: confirmed (stream-based via CommitmentTracker) ─────────────────
 
-    const confirmedRecord = await this.waitForCommitment(
-      signature,
-      "confirmed",
-      this.CONFIRMED_TIMEOUT_MS
-    );
+    const landingSlot = processedResult.slot ?? submissionSlot;
+    let confirmedAt:  number | null = null;
+    let confirmedSlot: number | null = null;
 
-    if (!confirmedRecord) {
-      // Processed but never confirmed — likely a fork
-      stages.push(this.failedRecord("confirmed", processedRecord.timestamp));
-      return { finalStage: "processed", stages, failure: "TIMEOUT" };
+    try {
+      const obs = await this.commitmentTracker.waitForCommitment(
+        landingSlot,
+        "confirmed",
+        this.CONFIRMED_TIMEOUT_MS
+      );
+      confirmedAt   = obs.observedAt;
+      confirmedSlot = obs.slot;
+    } catch {
+      // Stream timed out — fall back to RPC poll
+      const rpcResult = await this.pollForCommitment(signature, "confirmed", this.CONFIRMED_TIMEOUT_MS);
+      if (rpcResult) {
+        confirmedAt   = rpcResult.timestamp;
+        confirmedSlot = rpcResult.slot;
+      }
     }
 
-    confirmedRecord.latencyFromPrevMs = confirmedRecord.timestamp - processedRecord.timestamp;
-    stages.push(confirmedRecord);
+    if (!confirmedAt) {
+      return {
+        finalStage: "processed",
+        stages,
+        failure: "TIMEOUT",
+        latencyMs: { submittedToProcessed, processedToConfirmed: null, confirmedToFinalized: null, submittedToFinalized: null },
+      };
+    }
 
-    await this.logger.ok("[tracker] → confirmed", {
-      slot:    confirmedRecord.slot,
-      latency: `${confirmedRecord.latencyFromPrevMs}ms`,
-      delta_processed_confirmed: `${confirmedRecord.latencyFromPrevMs}ms`,
+    const processedToConfirmed = confirmedAt - processedResult.timestamp;
+    stages.push({
+      stage:             "confirmed",
+      slot:              confirmedSlot,
+      timestamp:         confirmedAt,
+      latencyFromPrevMs: processedToConfirmed,
     });
 
-    // ── Stage: finalized ────────────────────────────────────────────────────
-
-    const finalizedRecord = await this.waitForCommitment(
-      signature,
-      "finalized",
-      this.FINALIZED_TIMEOUT_MS
-    );
-
-    if (!finalizedRecord) {
-      return { finalStage: "confirmed", stages, failure: null };
-    }
-
-    finalizedRecord.latencyFromPrevMs = finalizedRecord.timestamp - confirmedRecord.timestamp;
-    stages.push(finalizedRecord);
-
-    await this.logger.ok("[tracker] → finalized", {
-      slot:    finalizedRecord.slot,
-      latency: `${finalizedRecord.latencyFromPrevMs}ms`,
+    await this.logger.ok("[tracker] Confirmed", {
+      slot:                    confirmedSlot,
+      processedToConfirmedMs:  processedToConfirmed,
     });
 
-    return { finalStage: "finalized", stages, failure: null };
+    // ── Stage: finalized (stream-based) ───────────────────────────────────────
+
+    let finalizedAt:   number | null = null;
+    let finalizedSlot: number | null = null;
+
+    try {
+      const obs = await this.commitmentTracker.waitForCommitment(
+        landingSlot,
+        "finalized",
+        this.FINALIZED_TIMEOUT_MS
+      );
+      finalizedAt   = obs.observedAt;
+      finalizedSlot = obs.slot;
+    } catch {
+      const rpcResult = await this.pollForCommitment(signature, "finalized", this.FINALIZED_TIMEOUT_MS);
+      if (rpcResult) {
+        finalizedAt   = rpcResult.timestamp;
+        finalizedSlot = rpcResult.slot;
+      }
+    }
+
+    if (!finalizedAt) {
+      return {
+        finalStage: "confirmed",
+        stages,
+        failure: null,
+        latencyMs: { submittedToProcessed, processedToConfirmed, confirmedToFinalized: null, submittedToFinalized: null },
+      };
+    }
+
+    const confirmedToFinalized = finalizedAt - confirmedAt;
+    const submittedToFinalized = finalizedAt - submittedAt;
+
+    stages.push({
+      stage:             "finalized",
+      slot:              finalizedSlot,
+      timestamp:         finalizedAt,
+      latencyFromPrevMs: confirmedToFinalized,
+    });
+
+    await this.logger.ok("[tracker] Finalized", {
+      slot:                      finalizedSlot,
+      confirmedToFinalizedMs:    confirmedToFinalized,
+      submittedToFinalizedMs:    submittedToFinalized,
+    });
+
+    return {
+      finalStage: "finalized",
+      stages,
+      failure:    null,
+      latencyMs: {
+        submittedToProcessed,
+        processedToConfirmed,
+        confirmedToFinalized,
+        submittedToFinalized,
+      },
+    };
   }
 
-  // ── Poll for a specific commitment level ─────────────────────────────────────
+  // ── Poll for processed stage to get the landing slot number ──────────────
 
-  private async waitForCommitment(
+  private async waitForProcessed(
     signature: string,
-    commitment: "processed" | "confirmed" | "finalized",
-    timeoutMs: number
+    submittedAt: number
   ): Promise<StageRecord | null> {
-    const deadline = Date.now() + timeoutMs;
+    const deadline = submittedAt + this.PROCESSED_TIMEOUT_MS;
 
     while (Date.now() < deadline) {
       try {
@@ -144,37 +211,54 @@ export class LifecycleTracker {
           searchTransactionHistory: true,
         });
 
-        if (status?.value) {
-          const val = status.value;
-
-          const reached =
-            commitment === "processed"  ? val.confirmationStatus !== undefined :
-            commitment === "confirmed"  ? (val.confirmationStatus === "confirmed" || val.confirmationStatus === "finalized") :
-            /* finalized */               val.confirmationStatus === "finalized";
-
-          if (reached) {
-            const slot = val.slot ?? null;
-            return {
-              stage:             commitment as BundleStage,
-              slot,
-              timestamp:         Date.now(),
-              latencyFromPrevMs: null, // filled by caller
-            };
-          }
+        if (status?.value?.confirmationStatus) {
+          return {
+            stage:             "processed",
+            slot:              status.value.slot ?? null,
+            timestamp:         Date.now(),
+            latencyFromPrevMs: null,
+          };
         }
       } catch {
-        // Transient RPC failure — keep polling
+        // Transient error
       }
-
       await sleep(this.POLL_INTERVAL_MS);
     }
-
-    return null; // Timed out
+    return null;
   }
 
-  // ── Fetch transaction error if any ──────────────────────────────────────────
+  // ── RPC fallback for confirmed/finalized if stream times out ─────────────
 
-  private async getTransactionError(signature: string): Promise<string | null> {
+  private async pollForCommitment(
+    signature: string,
+    level: "confirmed" | "finalized",
+    timeoutMs: number
+  ): Promise<{ slot: number | null; timestamp: number } | null> {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      try {
+        const status = await this.connection.getSignatureStatus(signature, {
+          searchTransactionHistory: true,
+        });
+        const val = status?.value;
+        if (!val) { await sleep(this.POLL_INTERVAL_MS); continue; }
+
+        const reached =
+          level === "confirmed"
+            ? val.confirmationStatus === "confirmed" || val.confirmationStatus === "finalized"
+            : val.confirmationStatus === "finalized";
+
+        if (reached) return { slot: val.slot ?? null, timestamp: Date.now() };
+      } catch {
+        // Keep polling
+      }
+      await sleep(this.POLL_INTERVAL_MS);
+    }
+    return null;
+  }
+
+  private async getTxError(signature: string): Promise<string | null> {
     try {
       const status = await this.connection.getSignatureStatus(signature, {
         searchTransactionHistory: true,
@@ -187,25 +271,16 @@ export class LifecycleTracker {
     }
   }
 
-  // ── Classify on-chain errors ────────────────────────────────────────────────
-
-  private classifyTransactionError(errStr: string): FailureReason {
+  private classifyTxError(errStr: string): FailureReason {
     const lower = errStr.toLowerCase();
-    if (lower.includes("blockhash"))                             return "EXPIRED_BLOCKHASH";
+    if (lower.includes("blockhash"))                              return "EXPIRED_BLOCKHASH";
     if (lower.includes("insufficient") || lower.includes("fee")) return "FEE_TOO_LOW";
-    if (lower.includes("compute") || lower.includes("budget"))  return "COMPUTE_EXCEEDED";
+    if (lower.includes("compute") || lower.includes("budget"))   return "COMPUTE_EXCEEDED";
     return "UNKNOWN";
   }
 
-  // ── Build a failed stage record ──────────────────────────────────────────────
-
   private failedRecord(stage: BundleStage, prevTimestamp: number): StageRecord {
     const now = Date.now();
-    return {
-      stage,
-      slot:              null,
-      timestamp:         now,
-      latencyFromPrevMs: now - prevTimestamp,
-    };
+    return { stage, slot: null, timestamp: now, latencyFromPrevMs: now - prevTimestamp };
   }
 }
