@@ -1,25 +1,27 @@
-import { Connection, PublicKey } from "@solana/web3.js";
-import { TipStats } from "../types";
-import { Logger } from "../utils/logger";
+import { Connection } from "@solana/web3.js";
+import { TipStats }   from "../types";
+import { Logger }     from "../utils/logger";
+import { config }     from "../config";
 
 // ─── TipOracle ────────────────────────────────────────────────────────────────
-// Derives tip stats from real devnet data using getRecentPrioritizationFees().
-// This RPC method returns the prioritization fees paid in recent blocks — it is
-// available on both devnet and mainnet and requires no external service.
+// Primary source: Jito tip floor API (bundles.jito.wtf/api/v1/bundles/tip_floor)
+// This is the real Jito auction data — it returns actual percentiles of tips
+// paid in recent Jito bundles, which is exactly what you need to price
+// competitively in the Jito block auction.
 //
-// We convert micro-lamports (the unit returned by the RPC) to lamports so the
-// agent works with the same unit used when building the tip instruction.
+// Fallback: getRecentPrioritizationFees() from the RPC node.
+// This is always available on both devnet and mainnet.
+//
+// Second fallback: conservative floor values, logged transparently.
+
+const JITO_TIP_FLOOR_URL = "https://bundles.jito.wtf/api/v1/bundles/tip_floor";
+const FLOOR_LAMPORTS     = 1_000;
 
 export class TipOracle {
   private connection: Connection;
   private logger:     Logger;
   private lastStats:  TipStats | null = null;
-
-  // How many recent slots to sample — 150 is the maximum the RPC accepts
-  private readonly SAMPLE_SLOTS  = 150;
-  private readonly CACHE_TTL_MS  = 12_000; // Refresh every ~30 slots
-  // Minimum fee floor so the agent always has a non-zero baseline
-  private readonly FLOOR_LAMPORTS = 1_000;
+  private readonly CACHE_TTL_MS = 10_000;
 
   constructor(connection: Connection, logger: Logger) {
     this.connection = connection;
@@ -31,73 +33,127 @@ export class TipOracle {
       return this.lastStats;
     }
 
-    try {
-      // getRecentPrioritizationFees returns an array of
-      // { slot: number, prioritizationFee: number } objects.
-      // prioritizationFee is in micro-lamports per compute unit.
-      // We convert to lamports by dividing by 1000 (rough but consistent).
-      const raw = await this.connection.getRecentPrioritizationFees();
-
-      if (raw && raw.length > 0) {
-        // Filter out zero-fee slots — they skew percentiles low
-        const fees = raw
-          .map((f) => Math.ceil(f.prioritizationFee / 1000))
-          .filter((f) => f > 0);
-
-        if (fees.length >= 4) {
-          this.lastStats = this.computePercentiles(fees);
-          await this.logger.info("[tip-oracle] Fetched live prioritization fees", {
-            samples:     fees.length,
-            p50Lamports: this.lastStats.p50Lamports,
-            p75Lamports: this.lastStats.p75Lamports,
-          });
-          return this.lastStats;
-        }
-      }
-    } catch (err) {
-      await this.logger.warn("[tip-oracle] getRecentPrioritizationFees failed", {
-        message: err instanceof Error ? err.message : String(err),
-      });
+    // Try Jito tip floor API first (mainnet only, best data)
+    const jitoStats = await this.fetchFromJitoApi();
+    if (jitoStats) {
+      this.lastStats = jitoStats;
+      return this.lastStats;
     }
 
-    // Fallback: the network is quiet or RPC returned no fees.
-    // We still use real slot data to timestamp the entry, but the fee
-    // values are a conservative floor — logged clearly so it is transparent.
+    // Fallback to RPC prioritization fees (works on devnet too)
+    const rpcStats = await this.fetchFromRpc();
+    if (rpcStats) {
+      this.lastStats = rpcStats;
+      return this.lastStats;
+    }
+
+    // Conservative floor
     this.lastStats = {
-      p25Lamports: this.FLOOR_LAMPORTS,
-      p50Lamports: this.FLOOR_LAMPORTS * 2,
-      p75Lamports: this.FLOOR_LAMPORTS * 5,
-      p95Lamports: this.FLOOR_LAMPORTS * 20,
+      p25Lamports: FLOOR_LAMPORTS,
+      p50Lamports: FLOOR_LAMPORTS * 2,
+      p75Lamports: FLOOR_LAMPORTS * 5,
+      p95Lamports: FLOOR_LAMPORTS * 20,
+      p99Lamports: FLOOR_LAMPORTS * 50,
       sampledAt:   Date.now(),
+      source:      "fallback",
     };
 
     await this.logger.warn(
-      "[tip-oracle] No live fee data available — using conservative floor values. " +
-      "This is normal on quiet devnet periods."
+      "[tip-oracle] Using conservative floor values — no live fee data available. " +
+      "Normal on devnet or when Jito tip floor API is unreachable."
     );
 
     return this.lastStats;
   }
 
-  getLastStats(): TipStats | null {
-    return this.lastStats;
+  getLastStats(): TipStats | null { return this.lastStats; }
+
+  private async fetchFromJitoApi(): Promise<TipStats | null> {
+    try {
+      const res = await fetch(JITO_TIP_FLOOR_URL, {
+        headers: { accept: "application/json" },
+        signal:  AbortSignal.timeout(6_000),
+      });
+
+      if (!res.ok) return null;
+
+      const raw  = await res.json();
+      const row  = Array.isArray(raw) ? raw[0] : raw;
+      if (!row || typeof row !== "object") return null;
+
+      const get = (key: string): number => {
+        const v = (row as any)[key];
+        const n = Number(v);
+        return Number.isFinite(n) ? Math.round(n * 1e9) : 0; // API returns SOL, convert to lamports
+      };
+
+      const p25 = get("ema_landed_tips_25th_percentile") || get("landed_tips_25th_percentile") || 0;
+      const p50 = get("ema_landed_tips_50th_percentile") || get("landed_tips_50th_percentile") || 0;
+      const p75 = get("ema_landed_tips_75th_percentile") || get("landed_tips_75th_percentile") || 0;
+      const p95 = get("ema_landed_tips_95th_percentile") || get("landed_tips_95th_percentile") || 0;
+      const p99 = get("ema_landed_tips_99th_percentile") || get("landed_tips_99th_percentile") || 0;
+
+      if (p50 === 0) return null;
+
+      const stats: TipStats = {
+        p25Lamports: Math.max(p25, FLOOR_LAMPORTS),
+        p50Lamports: Math.max(p50, FLOOR_LAMPORTS),
+        p75Lamports: Math.max(p75, FLOOR_LAMPORTS),
+        p95Lamports: Math.max(p95, FLOOR_LAMPORTS),
+        p99Lamports: Math.max(p99, FLOOR_LAMPORTS),
+        sampledAt:   Date.now(),
+        source:      "jito-tip-floor",
+      };
+
+      await this.logger.info("[tip-oracle] Live Jito tip floor data", {
+        p50: stats.p50Lamports,
+        p75: stats.p75Lamports,
+        p99: stats.p99Lamports,
+      });
+
+      return stats;
+
+    } catch {
+      return null;
+    }
   }
 
-  private computePercentiles(values: number[]): TipStats {
-    const sorted = [...values].sort((a, b) => a - b);
-    const n      = sorted.length;
+  private async fetchFromRpc(): Promise<TipStats | null> {
+    try {
+      const raw = await this.connection.getRecentPrioritizationFees();
+      if (!raw || raw.length === 0) return null;
 
-    const pct = (p: number): number => {
-      const raw = sorted[Math.floor((p / 100) * (n - 1))];
-      return Math.max(raw ?? 0, this.FLOOR_LAMPORTS);
-    };
+      const fees = raw
+        .map((f) => Math.ceil(f.prioritizationFee / 1000))
+        .filter((f) => f > 0);
 
-    return {
-      p25Lamports: pct(25),
-      p50Lamports: pct(50),
-      p75Lamports: pct(75),
-      p95Lamports: pct(95),
-      sampledAt:   Date.now(),
-    };
+      if (fees.length < 4) return null;
+
+      const sorted = [...fees].sort((a, b) => a - b);
+      const n      = sorted.length;
+      const pct    = (p: number) =>
+        Math.max(sorted[Math.floor((p / 100) * (n - 1))] ?? 0, FLOOR_LAMPORTS);
+
+      const stats: TipStats = {
+        p25Lamports: pct(25),
+        p50Lamports: pct(50),
+        p75Lamports: pct(75),
+        p95Lamports: pct(95),
+        p99Lamports: pct(99),
+        sampledAt:   Date.now(),
+        source:      "rpc-prioritization-fees",
+      };
+
+      await this.logger.info("[tip-oracle] RPC prioritization fee data", {
+        samples: fees.length,
+        p50:     stats.p50Lamports,
+        p75:     stats.p75Lamports,
+      });
+
+      return stats;
+
+    } catch {
+      return null;
+    }
   }
 }

@@ -3,24 +3,26 @@ import Client, {
   SubscribeRequest,
 } from "@triton-one/yellowstone-grpc";
 import { EventEmitter } from "events";
-import { SlotEvent } from "../types";
-import { Logger } from "../utils/logger";
-import { sleep } from "../utils/helpers";
-import { config } from "../config";
+import { Connection }   from "@solana/web3.js";
+import { SlotEvent }    from "../types";
+import { Logger }       from "../utils/logger";
+import { sleep }        from "../utils/helpers";
+import { config }       from "../config";
 
 // ─── SlotStream ───────────────────────────────────────────────────────────────
-// Wraps the Yellowstone gRPC subscription in a reconnecting EventEmitter.
-// Emits:
-//   "slot"  → SlotEvent
-//   "error" → Error
-//   "close" → void
+// Yellowstone gRPC slot subscription with reconnect and backpressure handling.
+// Tracks latestProcessedSlot, latestConfirmedSlot, and latestFinalizedSlot
+// separately so CommitmentTracker can resolve purely from stream events.
 
 export class SlotStream extends EventEmitter {
-  private logger: Logger;
-  private client: Client | null = null;
+  private logger:   Logger;
+  private client:   Client | null = null;
   private running = false;
-  private currentSlot = 0;
-  private slotTimestamps: number[] = [];
+
+  private latestProcessedSlot  = 0;
+  private latestConfirmedSlot  = 0;
+  private latestFinalizedSlot  = 0;
+  private slotTimestamps:        number[] = [];
   private readonly MAX_SLOT_HISTORY = 20;
 
   constructor(logger: Logger) {
@@ -28,66 +30,47 @@ export class SlotStream extends EventEmitter {
     this.logger = logger;
   }
 
-  // ── Public API ──────────────────────────────────────────────────────────────
-
-  getCurrentSlot(): number {
-    return this.currentSlot;
-  }
-
-  getRecentSlotTimes(): number[] {
-    return [...this.slotTimestamps];
-  }
+  getCurrentSlot():          number   { return this.latestProcessedSlot; }
+  getLatestConfirmedSlot():  number   { return this.latestConfirmedSlot; }
+  getLatestFinalizedSlot():  number   { return this.latestFinalizedSlot; }
+  getRecentSlotTimes():      number[] { return [...this.slotTimestamps]; }
 
   async start(): Promise<void> {
     if (!config.yellowstone.endpoint) {
-      await this.logger.warn(
-        "[stream] YELLOWSTONE_ENDPOINT not set — use SlotPoller instead"
-      );
+      await this.logger.warn("[stream] YELLOWSTONE_ENDPOINT not set — use SlotPoller");
       return;
     }
-
     this.running = true;
-    // Run in background so a connection failure does not crash the process
     this.connectWithRetry().catch(async (err) => {
-      await this.logger.warn("[stream] Yellowstone stream terminated: " + String(err));
+      await this.logger.warn("[stream] Stream terminated: " + String(err));
     });
   }
 
   stop(): void {
     this.running = false;
-    this.client = null;
+    this.client  = null;
   }
-
-  // ── gRPC subscription ───────────────────────────────────────────────────────
 
   private async connectWithRetry(): Promise<void> {
     let attempt = 0;
-
     while (this.running) {
       attempt++;
       try {
-        await this.logger.info(`[stream] Connecting to Yellowstone (attempt ${attempt})…`);
+        await this.logger.info(`[stream] Connecting to Yellowstone (attempt ${attempt})...`);
         await this.subscribe();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         await this.logger.warn(`[stream] Connection lost: ${msg}`);
-
-        // After 3 failed attempts, stop trying and let the stack run without it
         if (attempt >= 3) {
-          await this.logger.warn(
-            "[stream] Giving up on Yellowstone after 3 attempts — stack will continue without it"
-          );
+          await this.logger.warn("[stream] Giving up after 3 attempts — using RPC poller");
           this.running = false;
           return;
         }
-
         this.emit("error", err);
       }
-
       if (!this.running) break;
-
       const delay = Math.min(1000 * attempt, 15_000);
-      await this.logger.info(`[stream] Reconnecting in ${delay}ms…`);
+      await this.logger.info(`[stream] Reconnecting in ${delay}ms...`);
       await sleep(delay);
     }
   }
@@ -103,20 +86,20 @@ export class SlotStream extends EventEmitter {
       await this.client.connect();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      throw new Error(`Yellowstone connect() failed: ${msg}. Check your endpoint and token.`);
+      throw new Error(`Yellowstone connect() failed: ${msg}`);
     }
 
     const request: SubscribeRequest = {
-      slots: { solana: { filterByCommitment: true } },
-      accounts: {},
-      transactions: {},
+      slots:              { solana: { filterByCommitment: false } },
+      accounts:           {},
+      transactions:       {},
       transactionsStatus: {},
-      blocks: {},
-      blocksMeta: {},
-      entry: {},
-      commitment: YellowstoneCommitment.PROCESSED,
-      accountsDataSlice: [],
-      ping: undefined,
+      blocks:             {},
+      blocksMeta:         {},
+      entry:              {},
+      commitment:         YellowstoneCommitment.PROCESSED,
+      accountsDataSlice:  [],
+      ping:               undefined,
     };
 
     const stream = await this.client.subscribe();
@@ -125,62 +108,72 @@ export class SlotStream extends EventEmitter {
       stream.on("data", (data: any) => {
         if (!data?.slot) return;
 
-        const slot = Number(data.slot.slot);
-        const now  = Date.now();
+        const slot   = Number(data.slot.slot);
+        const now    = Date.now();
+        const status = this.normalizeStatus(data.slot.status);
+
+        // Track per-commitment high-water marks
+        this.latestProcessedSlot = Math.max(this.latestProcessedSlot, slot);
+        if (status === "confirmed") {
+          this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
+        }
+        if (status === "finalized") {
+          this.latestFinalizedSlot = Math.max(this.latestFinalizedSlot, slot);
+          this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
+        }
 
         if (this.slotTimestamps.length >= this.MAX_SLOT_HISTORY) {
           this.slotTimestamps.shift();
         }
         this.slotTimestamps.push(now);
-        this.currentSlot = slot;
 
         const event: SlotEvent = {
           slot,
-          parent: Number(data.slot.parent ?? slot - 1),
-          status: this.mapStatus(data.slot.status),
+          parent:    Number(data.slot.parent ?? slot - 1),
+          status,
           timestamp: now,
         };
-
         this.emit("slot", event);
       });
 
-      stream.on("error", (err: Error) => {
-        stream.destroy();
-        reject(err);
-      });
-
-      stream.on("end", () => resolve());
+      stream.on("error", (err: Error) => { stream.destroy(); reject(err); });
+      stream.on("end",   () => resolve());
       stream.on("close", () => resolve());
 
-      // Send the subscription request
       stream.write(request, (err: Error | null | undefined) => {
         if (err) reject(err);
       });
     });
   }
 
-  private mapStatus(raw: any): SlotEvent["status"] {
-    const s = String(raw).toLowerCase();
-    if (s.includes("root") || s.includes("finalized")) return "rooted";
-    if (s.includes("confirmed")) return "confirmed";
+  private normalizeStatus(raw: any): SlotEvent["status"] {
+    if (typeof raw === "number") {
+      if (raw >= 2) return "finalized";
+      if (raw === 1) return "confirmed";
+      return "processed";
+    }
+    const s = String(raw ?? "").toLowerCase();
+    if (s.includes("final") || s.includes("root")) return "finalized";
+    if (s.includes("confirm"))                      return "confirmed";
     return "processed";
   }
 }
 
-// ─── RPC Slot Poller ──────────────────────────────────────────────────────────
-// Fallback when no Yellowstone endpoint is configured.
-// Polls getSlot() on a ~400ms interval, simulating the stream interface.
-
-import { Connection } from "@solana/web3.js";
+// ─── SlotPoller ───────────────────────────────────────────────────────────────
+// RPC fallback. Polls getSlot() and getEpochInfo() to track all three
+// commitment levels without a gRPC connection.
 
 export class SlotPoller extends EventEmitter {
-  private connection: Connection;
-  private logger: Logger;
-  private currentSlot = 0;
-  private slotTimestamps: number[] = [];
-  private timer: NodeJS.Timeout | null = null;
-  private readonly MAX_SLOT_HISTORY = 20;
-  private readonly POLL_INTERVAL_MS = 400;
+  private connection:          Connection;
+  private logger:              Logger;
+  private latestProcessedSlot  = 0;
+  private latestConfirmedSlot  = 0;
+  private latestFinalizedSlot  = 0;
+  private slotTimestamps:        number[] = [];
+  private timer:                 NodeJS.Timeout | null = null;
+  private readonly MAX_SLOT_HISTORY  = 20;
+  private readonly POLL_INTERVAL_MS  = 400;
+  private pollCycle                  = 0;
 
   constructor(connection: Connection, logger: Logger) {
     super();
@@ -188,13 +181,10 @@ export class SlotPoller extends EventEmitter {
     this.logger     = logger;
   }
 
-  getCurrentSlot(): number {
-    return this.currentSlot;
-  }
-
-  getRecentSlotTimes(): number[] {
-    return [...this.slotTimestamps];
-  }
+  getCurrentSlot():          number   { return this.latestProcessedSlot; }
+  getLatestConfirmedSlot():  number   { return this.latestConfirmedSlot; }
+  getLatestFinalizedSlot():  number   { return this.latestFinalizedSlot; }
+  getRecentSlotTimes():      number[] { return [...this.slotTimestamps]; }
 
   async start(): Promise<void> {
     await this.logger.info("[poller] Starting RPC slot polling (Yellowstone fallback)");
@@ -209,26 +199,43 @@ export class SlotPoller extends EventEmitter {
   private poll(): void {
     this.timer = setTimeout(async () => {
       try {
-        const slot = await this.connection.getSlot("processed");
-        const now  = Date.now();
+        this.pollCycle++;
+        const processed = await this.connection.getSlot("processed");
+        const now       = Date.now();
 
-        if (slot !== this.currentSlot) {
+        if (processed !== this.latestProcessedSlot) {
           if (this.slotTimestamps.length >= this.MAX_SLOT_HISTORY) {
             this.slotTimestamps.shift();
           }
           this.slotTimestamps.push(now);
-          this.currentSlot = slot;
+          this.latestProcessedSlot = processed;
 
-          const event: SlotEvent = {
-            slot,
-            parent: slot - 1,
-            status: "processed",
-            timestamp: now,
-          };
-          this.emit("slot", event);
+          this.emit("slot", {
+            slot: processed, parent: processed - 1,
+            status: "processed", timestamp: now,
+          } as SlotEvent);
+        }
+
+        // Poll confirmed and finalized every 5 cycles to reduce RPC load
+        if (this.pollCycle % 5 === 0) {
+          const [confirmed, finalized] = await Promise.all([
+            this.connection.getSlot("confirmed"),
+            this.connection.getSlot("finalized"),
+          ]);
+          this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, confirmed);
+          this.latestFinalizedSlot = Math.max(this.latestFinalizedSlot, finalized);
+
+          this.emit("slot", {
+            slot: confirmed, parent: confirmed - 1,
+            status: "confirmed", timestamp: Date.now(),
+          } as SlotEvent);
+          this.emit("slot", {
+            slot: finalized, parent: finalized - 1,
+            status: "finalized", timestamp: Date.now(),
+          } as SlotEvent);
         }
       } catch {
-        // Transient RPC error — just continue polling
+        // Transient RPC error — keep polling
       }
       this.poll();
     }, this.POLL_INTERVAL_MS);
