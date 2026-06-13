@@ -15,11 +15,18 @@ export type BundleStage =
 
 export type FailureReason =
   | "EXPIRED_BLOCKHASH"
+  | "BLOCKHASH_NOT_FOUND"
   | "FEE_TOO_LOW"
   | "COMPUTE_EXCEEDED"
   | "BUNDLE_DROPPED"
-  | "SIMULATION_FAILED"
   | "LEADER_SKIPPED"
+  | "SIMULATION_FAILED"
+  | "INSTRUCTION_ERROR"
+  | "ACCOUNT_IN_USE"
+  | "ACCOUNT_NOT_FOUND"
+  | "INSUFFICIENT_FUNDS"
+  | "RATE_LIMITED"
+  | "STREAM_DIVERGENCE"
   | "TIMEOUT"
   | "UNKNOWN";
 
@@ -31,76 +38,154 @@ export type FaultMode =
   | "low_tip"
   | "compute_exceeded";
 
+// ─── Recovery paths ───────────────────────────────────────────────────────────
+
+export type RecoveryPath =
+  | "retry_refresh_blockhash"
+  | "retry_increase_tip"
+  | "retry_same_tip"
+  | "hold_and_wait"
+  | "abort";
+
 // ─── Per-stage timestamp record ───────────────────────────────────────────────
 
 export interface StageRecord {
-  stage: BundleStage;
-  slot: number | null;
-  timestamp: number;
+  stage:             BundleStage;
+  slot:              number | null;
+  timestamp:         number;
   latencyFromPrevMs: number | null;
 }
 
 // ─── Leader window snapshot ───────────────────────────────────────────────────
 
 export interface LeaderWindow {
-  observedAt: string;
-  currentSlot: number;
+  observedAt:           string;
+  currentSlot:          number;
   slotsUntilJitoLeader: number | null;
-  nextLeaderIdentity: string | null;
-  isJitoLeaderWindow: boolean;
+  nextLeaderIdentity:   string | null;
+  isJitoLeaderWindow:   boolean;
 }
 
-// ─── Network snapshot (fed to agent) ─────────────────────────────────────────
+// ─── Network conditions (captured at a specific point in time) ────────────────
+
+export interface NetworkConditions {
+  capturedAt:               string;
+  blockProductionRateMs:    number;
+  processedToConfirmedP50:  number | null;
+  processedToConfirmedP90:  number | null;
+  recentPrioritizationFees: {
+    p25: number;
+    p50: number;
+    p75: number;
+    p95: number;
+    p99: number;
+  };
+  slotSkipRate:      number;
+  recentFailureRate: number;
+
+  // Derived proxies. Each is computed directly from real observations made by
+  // this stack (slot timing, fee percentiles, run outcomes). None are sourced
+  // from external "public metrics" or hardcoded estimates. See
+  // network-state-observer.ts for the exact derivation of each value.
+  bundleLandingRate:     number; // 1 - recentFailureRate, from this stack's own runs
+  feeDispersionRatio:    number; // p95/p25 fee ratio, a congestion proxy
+  validatorLoadProxy:    number; // derived from slotSkipRate, 0.0-1.0
+}
+
+// ─── Delta between submission-time and confirmation-time conditions ───────────
+
+export interface NetworkConditionsDelta {
+  blockProductionRateDeltaMs: number;
+  prioritizationFeeDelta: {
+    p50: number;
+    p75: number;
+  };
+  processedToConfirmedDeltaMs: number | null;
+  validatorLoadProxyDelta:     number;
+  bundleLandingRateDelta:      number;
+}
+
+// ─── Network snapshot fed to agent on every run ───────────────────────────────
 
 export interface NetworkSnapshot {
-  currentSlot: number;
-  averageSlotTimeMs: number;
-  recentFailureRate: number;
-  leaderWindow: LeaderWindow;
+  currentSlot:               number;
+  averageSlotTimeMs:         number;
+  recentFailureRate:         number;
+  leaderWindow:              LeaderWindow;
   processedToConfirmedMsP50: number | null;
+  processedToConfirmedMsP90: number | null;
+  conditions:                NetworkConditions;
+}
+
+// ─── Failure classification with recovery recommendation ─────────────────────
+
+export interface FailureClassification {
+  type:         FailureReason;
+  confidence:   number;
+  rootCause:    string;
+  recoveryPath: RecoveryPath;
+  waitMs:       number;
+  reasoning:    string;
+}
+
+// ─── Trigger event context (Marinade or manual) ───────────────────────────────
+
+export interface TriggerEvent {
+  type:       "marinade_staking" | "manual" | "scheduled";
+  metadata:   Record<string, unknown>;
+  detectedAt: string;
 }
 
 // ─── Full lifecycle log entry ─────────────────────────────────────────────────
 
 export interface LifecycleEntry {
-  runId: string;
-  bundleId: string | null;
-  signature: string | null;
-  tipLamports: number;
-  tipAccount: string;
-  submittedAt: number;
-  submittedAtIso: string;
-  stages: StageRecord[];
-  finalStage: BundleStage;
-  failure: FailureReason | null;
-  faultInjected: FaultMode;
-  agentReasoning: string;
-  agentConfidence: number;
-  agentAction: string;
-  leaderWindow: LeaderWindow | null;
-  networkSnapshot: NetworkSnapshot | null;
-  retryCount: number;
-  blockhashUsed: string;
+  runId:            string;
+  bundleId:         string | null;
+  signature:        string | null;
+  tipLamports:      number;
+  tipAccount:       string;
+  submittedAt:      number;
+  submittedAtIso:   string;
+  stages:           StageRecord[];
+  finalStage:       BundleStage;
+  failure:          FailureReason | null;
+  faultInjected:    FaultMode;
+  agentReasoning:   string;
+  agentConfidence:  number;
+  agentAction:      string;
+  leaderWindow:     LeaderWindow | null;
+  networkSnapshot:  NetworkSnapshot | null;
+
+  // Conditions at two specific points for delta analysis
+  networkConditionsAtSubmission:    NetworkConditions | null;
+  networkConditionsAtConfirmation:  NetworkConditions | null;
+  deltaFromSubmissionToConfirmation: NetworkConditionsDelta | null;
+
+  // Optional trigger context (set when Marinade-triggered)
+  triggerEvent:    TriggerEvent | null;
+
+  retryCount:      number;
+  blockhashUsed:   string;
   slotAtSubmission: number | null;
-  explorerUrl: string | null;
+  explorerUrl:     string | null;
   latencyMs: {
-    submittedToProcessed: number | null;
-    processedToConfirmed: number | null;
-    confirmedToFinalized: number | null;
-    submittedToFinalized: number | null;
+    submittedToProcessed:  number | null;
+    processedToConfirmed:  number | null;
+    confirmedToFinalized:  number | null;
+    submittedToFinalized:  number | null;
   };
 }
 
 // ─── Slot stream event ────────────────────────────────────────────────────────
 
 export interface SlotEvent {
-  slot: number;
-  parent: number;
-  status: "processed" | "confirmed" | "finalized" | "rooted";
+  slot:      number;
+  parent:    number;
+  status:    "processed" | "confirmed" | "finalized" | "dead";
   timestamp: number;
 }
 
-// ─── Tip data ─────────────────────────────────────────────────────────────────
+// ─── Tip stats ────────────────────────────────────────────────────────────────
 
 export interface TipStats {
   p25Lamports: number;
@@ -108,49 +193,50 @@ export interface TipStats {
   p75Lamports: number;
   p95Lamports: number;
   p99Lamports: number;
-  sampledAt: number;
-  source: "jito-tip-floor" | "rpc-prioritization-fees" | "fallback";
+  sampledAt:   number;
+  source:      "jito-tip-floor" | "rpc-prioritization-fees" | "fallback";
 }
 
 // ─── AI agent inputs / outputs ────────────────────────────────────────────────
 
 export interface TipDecisionInput {
-  tipStats: TipStats;
-  networkSnapshot: NetworkSnapshot;
+  tipStats:            TipStats;
+  networkSnapshot:     NetworkSnapshot;
   previousTipLamports: number | null;
-  previousOutcome: BundleStage | null;
-  previousFailure: FailureReason | null;
-  retryCount: number;
-  faultMode: FaultMode;
+  previousOutcome:     BundleStage | null;
+  previousFailure:     FailureReason | null;
+  retryCount:          number;
+  faultMode:           FaultMode;
 }
 
 export interface TipDecision {
-  tipLamports: number;
-  reasoning: string;
-  action: string;
-  confidenceScore: number;
+  tipLamports:                number;
+  reasoning:                  string;
+  action:                     string;
+  confidenceScore:            number;
   landingProbabilityEstimate: number;
-  selectedPercentile: number;
-  congestionMultiplier: number;
-  leaderUrgencyMultiplier: number;
+  selectedPercentile:         number;
+  congestionMultiplier:       number;
+  leaderUrgencyMultiplier:    number;
 }
 
 export interface RetryDecisionInput {
-  failure: FailureReason;
-  retryCount: number;
-  networkSnapshot: NetworkSnapshot;
-  tipStats: TipStats;
+  failure:             FailureReason;
+  classification:      FailureClassification;
+  retryCount:          number;
+  networkSnapshot:     NetworkSnapshot;
+  tipStats:            TipStats;
   previousTipLamports: number;
-  blockhashExpired: boolean;
-  faultMode: FaultMode;
+  blockhashExpired:    boolean;
+  faultMode:           FaultMode;
 }
 
 export interface RetryDecision {
-  shouldRetry: boolean;
-  action: string;
-  newTipLamports: number;
-  reasoning: string;
+  shouldRetry:      boolean;
+  action:           RecoveryPath;
+  newTipLamports:   number;
+  reasoning:        string;
   refreshBlockhash: boolean;
-  waitMs: number;
-  confidenceScore: number;
+  waitMs:           number;
+  confidenceScore:  number;
 }
