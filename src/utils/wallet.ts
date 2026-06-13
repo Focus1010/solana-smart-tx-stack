@@ -20,7 +20,7 @@ export function loadWalletFromEnv(): Keypair {
     return Keypair.fromSecretKey(bytes);
   }
 
-  // bs58 decode — standard Phantom / Solana CLI export format
+  // bs58 decode -- standard Phantom / Solana CLI export format
   const decoded = bs58.decode(raw);
   return Keypair.fromSecretKey(decoded);
 }
@@ -36,7 +36,7 @@ export async function getBalanceSol(
 }
 
 // ─── Build a minimal self-transfer transaction (for testing) ──────────────────
-// Sends 0 lamports back to self — cheap, verifiable, produces a real signature.
+// Sends 0 lamports back to self -- cheap, verifiable, produces a real signature.
 
 export function buildSelfTransferTx(payer: Keypair): Transaction {
   const tx = new Transaction();
@@ -60,7 +60,7 @@ export async function requestAirdropIfNeeded(
   const balance = await getBalanceSol(connection, keypair.publicKey);
   if (balance >= minSol) return;
 
-  console.log(`[wallet] Balance low (${balance.toFixed(4)} SOL) — requesting airdrop…`);
+  console.log(`[wallet] Balance low (${balance.toFixed(4)} SOL) -- requesting airdrop...`);
   const sig = await connection.requestAirdrop(
     keypair.publicKey,
     LAMPORTS_PER_SOL * 0.5
