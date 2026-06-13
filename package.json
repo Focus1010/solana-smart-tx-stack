@@ -8,7 +8,9 @@
     "start":              "ts-node src/index.ts",
     "run:stack":          "ts-node src/index.ts",
     "run:inject":         "ts-node src/scripts/fault-inject.ts",
-    "generate:evidence":  "ts-node src/scripts/generate-evidence.ts"
+    "run:marinade":       "ts-node src/scripts/run-marinade.ts",
+    "generate:evidence":  "ts-node src/scripts/generate-evidence.ts",
+    "generate:mainnet-report": "ts-node src/scripts/generate-mainnet-report.ts"
   },
   "keywords": ["solana", "jito", "yellowstone", "bundles", "ai-agent"],
   "author": "",
