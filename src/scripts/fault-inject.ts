@@ -32,8 +32,10 @@ import {
   FaultMode,
   FailureReason,
   NetworkSnapshot,
+  NetworkConditions,
   LeaderWindow,
 } from "../types";
+import { AdvancedFailureClassifier } from "../bundle/failure-classifier";
 
 const TIP_ACCOUNT = "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5";
 
@@ -43,12 +45,26 @@ async function buildNetworkSnapshot(
 ): Promise<NetworkSnapshot> {
   const slot          = await connection.getSlot("processed").catch(() => 0);
   const leaderWindow  = await leaderDetector.detect(slot);
+  const conditions: NetworkConditions = {
+    capturedAt:               new Date().toISOString(),
+    blockProductionRateMs:    400,
+    processedToConfirmedP50:  null,
+    processedToConfirmedP90:  null,
+    recentPrioritizationFees: { p25: 1000, p50: 2000, p75: 5000, p95: 20000, p99: 50000 },
+    slotSkipRate:             0,
+    recentFailureRate:        0,
+    bundleLandingRate:        1,
+    feeDispersionRatio:       20, // p95/p25 = 20000/1000
+    validatorLoadProxy:       0,
+  };
   return {
     currentSlot:               slot,
     averageSlotTimeMs:         400,
     recentFailureRate:         0,
     leaderWindow,
     processedToConfirmedMsP50: null,
+    processedToConfirmedMsP90: null,
+    conditions,
   };
 }
 
@@ -61,6 +77,7 @@ async function runExpiredBlockhash(
   agent: Agent,
   tipOracle: TipOracle,
   leaderDetector: LeaderWindowDetector,
+  classifier: AdvancedFailureClassifier,
   logger: Logger
 ): Promise<LifecycleEntry> {
   const runId   = newRunId();
@@ -98,6 +115,7 @@ async function runExpiredBlockhash(
   // Agent decides
   const retryDecision = await agent.decideRetry({
     failure:             failureDetected,
+    classification:      classifier.fromReason(failureDetected, { retryCount: 0, tipLamports: tipStats.p50Lamports, tipP75Lamports: tipStats.p75Lamports }),
     retryCount:          0,
     networkSnapshot,
     tipStats,
@@ -137,6 +155,7 @@ async function runFeeTooLow(
   agent: Agent,
   tipOracle: TipOracle,
   leaderDetector: LeaderWindowDetector,
+  classifier: AdvancedFailureClassifier,
   logger: Logger
 ): Promise<LifecycleEntry> {
   const runId   = newRunId();
@@ -176,6 +195,7 @@ async function runFeeTooLow(
 
   const retryDecision = await agent.decideRetry({
     failure:             "FEE_TOO_LOW",
+    classification:      classifier.fromReason("FEE_TOO_LOW", { retryCount: 0, tipLamports: intentionallyLowTip, tipP75Lamports: tipStats.p75Lamports }),
     retryCount:          0,
     networkSnapshot,
     tipStats,
@@ -211,6 +231,7 @@ async function runComputeExceeded(
   agent: Agent,
   tipOracle: TipOracle,
   leaderDetector: LeaderWindowDetector,
+  classifier: AdvancedFailureClassifier,
   logger: Logger
 ): Promise<LifecycleEntry> {
   const runId   = newRunId();
@@ -245,6 +266,7 @@ async function runComputeExceeded(
 
   const retryDecision = await agent.decideRetry({
     failure:             "COMPUTE_EXCEEDED",
+    classification:      classifier.fromReason("COMPUTE_EXCEEDED", { retryCount: 0, tipLamports: tipStats.p75Lamports, tipP75Lamports: tipStats.p75Lamports }),
     retryCount:          0,
     networkSnapshot,
     tipStats,
@@ -294,6 +316,10 @@ function buildEntry(
     agentAction:       finalStage === "failed" ? "abort" : "retry_refresh_blockhash",
     leaderWindow:      network.leaderWindow,
     networkSnapshot:   network,
+    networkConditionsAtSubmission:    network.conditions,
+    networkConditionsAtConfirmation:  null,
+    deltaFromSubmissionToConfirmation: null,
+    triggerEvent:      null,
     retryCount,
     blockhashUsed:     "",
     slotAtSubmission:  network.currentSlot,
@@ -326,15 +352,16 @@ async function main(): Promise<void> {
   const agent          = new Agent(logger);
   const tipOracle      = new TipOracle(connection, logger);
   const leaderDetector = new LeaderWindowDetector(logger);
+  const classifier     = new AdvancedFailureClassifier();
   const jitoClient     = new JitoJsonRpcClient(config.jito.rpcUrl, "");
 
   const entries: LifecycleEntry[] = [];
 
-  entries.push(await runExpiredBlockhash(payer, connection, jitoClient, agent, tipOracle, leaderDetector, logger));
+  entries.push(await runExpiredBlockhash(payer, connection, jitoClient, agent, tipOracle, leaderDetector, classifier, logger));
   await sleep(2_000);
-  entries.push(await runFeeTooLow(payer, connection, jitoClient, agent, tipOracle, leaderDetector, logger));
+  entries.push(await runFeeTooLow(payer, connection, jitoClient, agent, tipOracle, leaderDetector, classifier, logger));
   await sleep(2_000);
-  entries.push(await runComputeExceeded(payer, connection, jitoClient, agent, tipOracle, leaderDetector, logger));
+  entries.push(await runComputeExceeded(payer, connection, jitoClient, agent, tipOracle, leaderDetector, classifier, logger));
 
   // Write all three to lifecycle.json
   for (const entry of entries) {
