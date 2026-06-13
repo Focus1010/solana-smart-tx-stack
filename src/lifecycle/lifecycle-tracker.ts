@@ -23,7 +23,7 @@ export interface TrackResult {
 // purely from Yellowstone slot events (no RPC polling for those stages).
 //
 // For the processed stage we still poll getSignatureStatus() because we need
-// the actual transaction slot number — the stream only tells us the cluster
+// the actual transaction slot number -- the stream only tells us the cluster
 // has passed that slot, not which slot the tx landed in.
 
 export class LifecycleTracker {
@@ -108,7 +108,7 @@ export class LifecycleTracker {
       confirmedAt   = obs.observedAt;
       confirmedSlot = obs.slot;
     } catch {
-      // Stream timed out — fall back to RPC poll
+      // Stream timed out -- fall back to RPC poll
       const rpcResult = await this.pollForCommitment(signature, "confirmed", this.CONFIRMED_TIMEOUT_MS);
       if (rpcResult) {
         confirmedAt   = rpcResult.timestamp;
