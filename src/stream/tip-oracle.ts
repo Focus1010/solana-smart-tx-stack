@@ -5,7 +5,7 @@ import { config }     from "../config";
 
 // ─── TipOracle ────────────────────────────────────────────────────────────────
 // Primary source: Jito tip floor API (bundles.jito.wtf/api/v1/bundles/tip_floor)
-// This is the real Jito auction data — it returns actual percentiles of tips
+// This is the real Jito auction data -- it returns actual percentiles of tips
 // paid in recent Jito bundles, which is exactly what you need to price
 // competitively in the Jito block auction.
 //
@@ -59,7 +59,7 @@ export class TipOracle {
     };
 
     await this.logger.warn(
-      "[tip-oracle] Using conservative floor values — no live fee data available. " +
+      "[tip-oracle] Using conservative floor values -- no live fee data available. " +
       "Normal on devnet or when Jito tip floor API is unreachable."
     );
 
