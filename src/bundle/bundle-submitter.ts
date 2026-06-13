@@ -61,7 +61,7 @@ export class BundleSubmitter {
         };
       }
 
-      // Jito returned a response but no result — classify the error
+      // Jito returned a response but no result -- classify the error
       const failure = this.classifyJitoError(response?.error);
       await this.logger.error("[submitter] Bundle rejected", { failure, raw: response?.error });
 

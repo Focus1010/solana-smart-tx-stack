@@ -47,7 +47,7 @@ export class BlockhashCache {
       currentSlot - this.fetchedAtSlot > this.REFRESH_SLOTS;
 
     if (needsRefresh) {
-      // Always fetch at "confirmed" — never "finalized" (too stale)
+      // Always fetch at "confirmed" -- never "finalized" (too stale)
       this.cached        = await this.connection.getLatestBlockhash("confirmed");
       this.fetchedAtSlot = currentSlot;
     }
@@ -90,7 +90,7 @@ export class BundleBuilder {
   }
 
   // ── Build a bundle containing a self-transfer + tip instruction ──────────────
-  // The self-transfer is a zero-lamport send back to self — it is valid,
+  // The self-transfer is a zero-lamport send back to self -- it is valid,
   // cheap, and produces a real signature that can be tracked on-chain.
 
   async build(
