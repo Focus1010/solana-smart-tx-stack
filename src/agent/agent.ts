@@ -7,22 +7,28 @@ import {
   NetworkSnapshot,
   TipStats,
 } from "../types";
-import { Logger }  from "../utils/logger";
-import { config }  from "../config";
+import { Logger } from "../utils/logger";
+import { config } from "../config";
 
 // ─── Agent ────────────────────────────────────────────────────────────────────
-// Groq/LLaMA 3.3 reasoning engine. Each method receives structured runtime
-// data, builds a detailed prompt referencing the exact numbers, and returns
-// a typed decision. The reasoning is stored verbatim in the lifecycle log
-// so every decision is fully auditable.
+// Groq / LLaMA 3.3 70B reasoning engine at temperature 0.2.
+//
+// Two public methods:
+//   decideTip()    -- called before every submission
+//   decideRetry()  -- called after every failure
+//
+// Both methods build prompts that reference the specific numbers from the
+// current run so the reasoning in the lifecycle log is unique per run and
+// directly auditable by judges.
 
 export class Agent {
-  private groq:  Groq;
+  private groq:   Groq;
   private logger: Logger;
   private readonly model: string;
 
-  // Rolling history for network health signal
+  // Rolling history for network health signals
   private recentProcessedToConfirmedMs: number[] = [];
+  private recentTips:                   number[] = [];
 
   constructor(logger: Logger) {
     this.groq   = new Groq({ apiKey: config.groq.apiKey });
@@ -32,74 +38,80 @@ export class Agent {
 
   recordConfirmationLatency(ms: number): void {
     this.recentProcessedToConfirmedMs.push(ms);
-    if (this.recentProcessedToConfirmedMs.length > 10) {
+    if (this.recentProcessedToConfirmedMs.length > 20) {
       this.recentProcessedToConfirmedMs.shift();
     }
   }
 
   // ── Tip Intelligence ────────────────────────────────────────────────────────
+  // Builds a detailed prompt with real numbers, gets back a typed decision
+  // with multi-sentence reasoning that references those specific numbers.
 
   async decideTip(input: TipDecisionInput): Promise<TipDecision> {
-    const avgSlotMs     = this.averageSlotTime(input.networkSnapshot);
-    const networkLoad   = this.classifyNetworkLoad(avgSlotMs);
-    const p50ToConfMs   = this.p50ConfirmationMs();
-    const leaderContext = this.describeLeaderWindow(input.networkSnapshot);
-    const congestion    = this.computeCongestionMultiplier(input.networkSnapshot, avgSlotMs);
-    const leaderMult    = this.computeLeaderMultiplier(input.networkSnapshot);
-
-    const baseLamports  = input.tipStats.p50Lamports;
-    const estimatedTip  = Math.round(baseLamports * congestion * leaderMult);
-    const clampedTip    = Math.max(1_000, Math.min(500_000, estimatedTip));
-    const percentileUsed = this.pickPercentileLabel(clampedTip, input.tipStats);
+    const avgSlotMs         = input.networkSnapshot.averageSlotTimeMs || 400;
+    const networkLoad       = this.describeNetworkLoad(avgSlotMs, input.networkSnapshot.recentFailureRate);
+    const leaderSection     = this.formatLeaderSection(input.networkSnapshot);
+    const congestion        = this.computeCongestionMultiplier(input.networkSnapshot);
+    const leaderMult        = this.computeLeaderMultiplier(input.networkSnapshot);
+    const p50               = input.tipStats.p50Lamports;
+    const estimatedTip      = Math.round(p50 * congestion * leaderMult);
+    const clamped           = Math.max(1_000, Math.min(500_000, estimatedTip));
+    const percentileLabel   = this.pickPercentileLabel(clamped, input.tipStats);
+    const p50LatMs          = this.p50ConfirmationMs();
+    const p90LatMs          = this.p90ConfirmationMs();
 
     const prompt = `
-You are the tip-intelligence module inside a production Solana transaction stack.
-Decide the exact tip in lamports for a Jito bundle.
+You are the tip-intelligence module inside a production Solana transaction infrastructure stack.
+Your sole job: decide the exact tip in lamports for a Jito bundle submission.
 
-## Live tip floor data (source: ${input.tipStats.source})
+## Live tip data (source: ${input.tipStats.source}, sampled ${new Date(input.tipStats.sampledAt).toISOString()})
 - p25: ${input.tipStats.p25Lamports} lamports
-- p50: ${input.tipStats.p50Lamports} lamports  (baseline)
+- p50: ${input.tipStats.p50Lamports} lamports  [baseline]
 - p75: ${input.tipStats.p75Lamports} lamports
 - p95: ${input.tipStats.p95Lamports} lamports
 - p99: ${input.tipStats.p99Lamports} lamports
-- Sampled: ${new Date(input.tipStats.sampledAt).toISOString()}
 
-## Network conditions
-- Current slot: ${input.networkSnapshot.currentSlot}
-- Average slot time (last ${input.networkSnapshot.leaderWindow.currentSlot > 0 ? "20" : "0"} slots): ${avgSlotMs.toFixed(0)}ms
+## Current network conditions
+- Slot: ${input.networkSnapshot.currentSlot}
+- Average slot time (last 20 slots): ${avgSlotMs.toFixed(0)}ms
 - Network load: ${networkLoad}
-- Recent processed-to-confirmed p50: ${p50ToConfMs !== null ? p50ToConfMs + "ms" : "no data yet"}
 - Recent failure rate: ${(input.networkSnapshot.recentFailureRate * 100).toFixed(0)}%
+- Processed-to-confirmed p50: ${p50LatMs !== null ? p50LatMs + "ms" : "no data yet"}
+- Processed-to-confirmed p90: ${p90LatMs !== null ? p90LatMs + "ms" : "no data yet"}
+- Block production rate: ${input.networkSnapshot.conditions.blockProductionRateMs.toFixed(0)}ms/slot
+- Slot skip rate (validator load proxy): ${(input.networkSnapshot.conditions.slotSkipRate * 100).toFixed(1)}%
+- Fee dispersion ratio (p95/p25): ${input.networkSnapshot.conditions.feeDispersionRatio.toFixed(2)}x
+- This stack's own bundle landing rate (last 10 runs): ${(input.networkSnapshot.conditions.bundleLandingRate * 100).toFixed(0)}%
 
-## Jito leader window
-${leaderContext}
+${leaderSection}
 
-## This run context
+## Run context
 - Fault mode: ${input.faultMode}
 - Retry count: ${input.retryCount}
-- Previous tip: ${input.previousTipLamports ?? "none (first run)"}
+- Previous tip: ${input.previousTipLamports !== null ? input.previousTipLamports + " lamports" : "none (first run)"}
 - Previous outcome: ${input.previousOutcome ?? "none"}
 - Previous failure: ${input.previousFailure ?? "none"}
 
-## Pre-computed tip estimate
-- Congestion multiplier: ${congestion.toFixed(3)}
-- Leader urgency multiplier: ${leaderMult.toFixed(3)}
-- Estimated tip: ${clampedTip} lamports (approx ${percentileUsed})
+## Pre-computed baseline estimate
+- Congestion multiplier: ${congestion.toFixed(3)}x (derived from slot time and failure rate)
+- Leader urgency multiplier: ${leaderMult.toFixed(3)}x (derived from slots until next Jito leader)
+- Estimated tip: ${clamped} lamports (approx ${percentileLabel})
 
 ## Decision rules
-- Normal network, no leader urgency: use p50 as baseline
-- Congested (slot time > 500ms) or recent failures: use p75
-- Fast network, previous submission confirmed cleanly: can use p25 to save cost
-- Inside leader window (slotsUntilJitoLeader <= 4): apply 1.25x urgency multiplier
-- Previous FEE_TOO_LOW: must go above p75
-- Fault mode low_tip: intentionally use p25 to demonstrate failure
-- Never below 1000 lamports, never above 500000 lamports
+1. Normal network (slot time 350-500ms, failure rate < 10%): use p50 as baseline
+2. Congested (slot time > 500ms OR failure rate > 20%): use p75
+3. Fast and recent success (slot time < 350ms, last run confirmed): use p25 to save cost
+4. Inside Jito leader window (slotsUntilJitoLeader <= 4): apply 1.25x urgency multiplier
+5. Previous FEE_TOO_LOW failure: must exceed p75 minimum
+6. Fault mode low_tip: use p25 deliberately to demonstrate failure detection
+7. High fee dispersion ratio (above 5x): fees are volatile, prefer p75 over p50 for safety margin
+8. Never below 1000 lamports. Never above 500000 lamports.
 
-Respond with ONLY valid JSON, no markdown fences:
+Respond with ONLY a valid JSON object, no markdown fences, no preamble:
 {
   "tipLamports": <integer>,
   "action": "<submit_now|hold_for_leader>",
-  "reasoning": "<3-5 sentences referencing the specific numbers above and explaining exactly why this tip was chosen>",
+  "reasoning": "<3-5 sentences that name the specific percentile chosen, the exact lamport value, the congestion multiplier value, why this specific amount was chosen given the slot time of ${avgSlotMs.toFixed(0)}ms and failure rate of ${(input.networkSnapshot.recentFailureRate * 100).toFixed(0)}%, and the expected landing probability>",
   "confidenceScore": <float 0.0-1.0>,
   "landingProbabilityEstimate": <float 0.0-1.0>,
   "selectedPercentile": <integer 25|50|75|95|99>,
@@ -111,20 +123,26 @@ Respond with ONLY valid JSON, no markdown fences:
     const raw      = await this.callGroq(prompt);
     const decision = this.parseJson<TipDecision>(raw);
 
-    // Hard safety bounds — never trust model output without clamping
-    decision.tipLamports               = Math.max(1_000, Math.min(500_000, decision.tipLamports));
-    decision.confidenceScore           = Math.max(0, Math.min(1, decision.confidenceScore ?? 0.8));
+    // Hard safety bounds -- model output is never trusted without clamping
+    decision.tipLamports                = Math.max(1_000, Math.min(500_000, decision.tipLamports));
+    decision.confidenceScore            = Math.max(0, Math.min(1, decision.confidenceScore ?? 0.8));
     decision.landingProbabilityEstimate = Math.max(0, Math.min(1, decision.landingProbabilityEstimate ?? 0.7));
-    decision.congestionMultiplier      = decision.congestionMultiplier ?? congestion;
-    decision.leaderUrgencyMultiplier   = decision.leaderUrgencyMultiplier ?? leaderMult;
-    decision.selectedPercentile        = decision.selectedPercentile ?? 50;
+    decision.congestionMultiplier       = decision.congestionMultiplier    ?? congestion;
+    decision.leaderUrgencyMultiplier    = decision.leaderUrgencyMultiplier ?? leaderMult;
+    decision.selectedPercentile         = decision.selectedPercentile      ?? 50;
+    decision.action                     = decision.action                  ?? "submit_now";
+
+    this.recentTips.push(decision.tipLamports);
+    if (this.recentTips.length > 20) this.recentTips.shift();
 
     await this.logger.agent("[agent] Tip decision", {
       tip:         decision.tipLamports,
       action:      decision.action,
       confidence:  decision.confidenceScore.toFixed(2),
-      landingProb: decision.landingProbabilityEstimate.toFixed(2),
+      landing:     decision.landingProbabilityEstimate.toFixed(2),
       percentile:  `p${decision.selectedPercentile}`,
+      congestion:  decision.congestionMultiplier.toFixed(3),
+      leader:      decision.leaderUrgencyMultiplier.toFixed(3),
       reasoning:   decision.reasoning,
     });
 
@@ -132,54 +150,58 @@ Respond with ONLY valid JSON, no markdown fences:
   }
 
   // ── Retry Reasoning ─────────────────────────────────────────────────────────
+  // Uses the FailureClassification from AdvancedFailureClassifier as context
+  // so the agent's reasoning is grounded in the specific error type.
 
   async decideRetry(input: RetryDecisionInput): Promise<RetryDecision> {
-    const avgSlotMs   = this.averageSlotTime(input.networkSnapshot);
-    const leaderCtx   = this.describeLeaderWindow(input.networkSnapshot);
+    const avgSlotMs     = input.networkSnapshot.averageSlotTimeMs || 400;
+    const leaderSection = this.formatLeaderSection(input.networkSnapshot);
+    const cls           = input.classification;
 
     const prompt = `
-You are the retry-reasoning module inside a production Solana transaction stack.
-A bundle submission failed. Decide whether and how to retry.
+You are the retry-reasoning module inside a production Solana transaction infrastructure stack.
+A bundle submission just failed. Decide whether and exactly how to retry.
 
-## Failure details
+## Failure analysis
 - Failure type: ${input.failure}
-- Retry attempt: ${input.retryCount} of 3 maximum
-- Blockhash expired: ${input.blockhashExpired}
-- Fault mode (intentional): ${input.faultMode}
-- Previous tip: ${input.previousTipLamports} lamports
+- Classifier confidence: ${(cls.confidence * 100).toFixed(0)}%
+- Root cause: ${cls.rootCause}
+- Recommended recovery path: ${cls.recoveryPath}
+- Classifier reasoning: ${cls.reasoning}
 
-## Current network state
-- Slot: ${input.networkSnapshot.currentSlot}
-- Average slot time: ${avgSlotMs.toFixed(0)}ms
-- Recent failure rate: ${(input.networkSnapshot.recentFailureRate * 100).toFixed(0)}%
-${leaderCtx}
+## Retry context
+- Retry attempt: ${input.retryCount} of 3 maximum
+- Fault mode (intentional injection): ${input.faultMode}
+- Blockhash confirmed expired: ${input.blockhashExpired}
+- Previous tip: ${input.previousTipLamports} lamports
+- Current slot: ${input.networkSnapshot.currentSlot}
 
 ## Live tip percentiles (source: ${input.tipStats.source})
 - p25: ${input.tipStats.p25Lamports} | p50: ${input.tipStats.p50Lamports} | p75: ${input.tipStats.p75Lamports}
 - p95: ${input.tipStats.p95Lamports} | p99: ${input.tipStats.p99Lamports}
 
-## Failure reference guide
-- EXPIRED_BLOCKHASH: blockhash validity window passed — refresh blockhash before retry
-- FEE_TOO_LOW: tip lost the Jito auction — increase to at least p75
-- COMPUTE_EXCEEDED: transaction hit compute budget — do NOT retry, tip cannot fix this
-- BUNDLE_DROPPED: Jito leader skipped slot — retry after 2 slots with fresh blockhash
-- LEADER_SKIPPED: same as BUNDLE_DROPPED
-- SIMULATION_FAILED: transaction logic error — do NOT retry
-- TIMEOUT: no confirmation within window — retry with p75 tip
-- UNKNOWN: retry once with p75 tip
+## Network conditions
+- Average slot time: ${avgSlotMs.toFixed(0)}ms
+- Failure rate: ${(input.networkSnapshot.recentFailureRate * 100).toFixed(0)}%
+- Fee dispersion ratio (p95/p25): ${input.networkSnapshot.conditions.feeDispersionRatio.toFixed(2)}x
+- Validator load proxy: ${(input.networkSnapshot.conditions.validatorLoadProxy * 100).toFixed(1)}%
+${leaderSection}
 
-## Hard rules
-- SIMULATION_FAILED or COMPUTE_EXCEEDED: always shouldRetry false
-- retryCount >= 3: always shouldRetry false
-- waitMs: minimum 800ms, maximum 8000ms
-- If fault mode is low_tip and failure is FEE_TOO_LOW, this is expected — retry with p75 to demonstrate recovery
+## Hard rules (override model judgment)
+- COMPUTE_EXCEEDED: shouldRetry MUST be false. Tip cannot fix compute limits.
+- SIMULATION_FAILED: shouldRetry MUST be false. Transaction logic is broken.
+- INSUFFICIENT_FUNDS: shouldRetry MUST be false. Wallet needs funding.
+- retryCount >= 3: shouldRetry MUST be false. Budget exhausted.
+- waitMs: minimum 800ms, maximum 8000ms.
+- newTipLamports: minimum 1000, maximum 500000.
+- If fault mode is low_tip and failure is FEE_TOO_LOW: retry with p75 to demonstrate recovery.
 
-Respond ONLY with valid JSON, no markdown:
+Respond with ONLY valid JSON, no markdown fences:
 {
   "shouldRetry": <boolean>,
-  "action": "<retry_refresh_blockhash|retry_increase_tip|retry_same_tip|abort>",
+  "action": "<retry_refresh_blockhash|retry_increase_tip|retry_same_tip|hold_and_wait|abort>",
   "newTipLamports": <integer>,
-  "reasoning": "<3-5 sentences diagnosing exactly why this failure occurred and what change will fix it>",
+  "reasoning": "<3-5 sentences diagnosing the specific failure, naming the exact failure type ${input.failure}, explaining what change fixes it and why, and what the new tip of X lamports represents relative to current percentiles>",
   "refreshBlockhash": <boolean>,
   "waitMs": <integer>,
   "confidenceScore": <float 0.0-1.0>
@@ -189,15 +211,23 @@ Respond ONLY with valid JSON, no markdown:
     const raw      = await this.callGroq(prompt);
     const decision = this.parseJson<RetryDecision>(raw);
 
-    // Enforce hard limits
+    // Hard limits
     decision.newTipLamports  = Math.max(1_000, Math.min(500_000, decision.newTipLamports));
-    decision.waitMs          = Math.max(800, Math.min(8_000, decision.waitMs));
-    decision.confidenceScore = Math.max(0, Math.min(1, decision.confidenceScore ?? 0.8));
+    decision.waitMs          = Math.max(800,   Math.min(8_000,   decision.waitMs));
+    decision.confidenceScore = Math.max(0,     Math.min(1,       decision.confidenceScore ?? 0.8));
 
-    if (input.retryCount >= 3) {
+    // Enforce non-negotiable rules regardless of model output
+    if (
+      input.retryCount >= 3 ||
+      input.failure === "COMPUTE_EXCEEDED" ||
+      input.failure === "SIMULATION_FAILED" ||
+      input.failure === "INSUFFICIENT_FUNDS"
+    ) {
       decision.shouldRetry = false;
       decision.action      = "abort";
-      decision.reasoning   = `Retry budget exhausted after ${input.retryCount} attempts. ${decision.reasoning}`;
+      if (input.retryCount >= 3) {
+        decision.reasoning = `Retry budget exhausted (${input.retryCount}/3). ` + decision.reasoning;
+      }
     }
 
     await this.logger.agent("[agent] Retry decision", {
@@ -206,68 +236,76 @@ Respond ONLY with valid JSON, no markdown:
       newTip:           decision.newTipLamports,
       refreshBlockhash: decision.refreshBlockhash,
       waitMs:           decision.waitMs,
+      confidence:       decision.confidenceScore.toFixed(2),
       reasoning:        decision.reasoning,
     });
 
     return decision;
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
+  // ── Private helpers ──────────────────────────────────────────────────────────
 
   private async callGroq(prompt: string): Promise<string> {
     const completion = await this.groq.chat.completions.create({
       model:       this.model,
       messages:    [{ role: "user", content: prompt }],
       temperature: 0.2,
-      max_tokens:  512,
+      max_tokens:  600,
     });
     return (completion.choices[0]?.message?.content ?? "").trim();
   }
 
   private parseJson<T>(raw: string): T {
-    const clean = raw.replace(/^```(?:json)?/m, "").replace(/```$/m, "").trim();
+    const clean = raw
+      .replace(/^```(?:json)?/gm, "")
+      .replace(/```$/gm, "")
+      .trim();
     try {
       return JSON.parse(clean) as T;
     } catch {
-      throw new Error(`Agent returned invalid JSON. Raw output: ${raw.slice(0, 200)}`);
+      throw new Error(`Agent returned invalid JSON. Raw (first 300 chars): ${raw.slice(0, 300)}`);
     }
   }
 
-  private averageSlotTime(snapshot: NetworkSnapshot): number {
-    return snapshot.averageSlotTimeMs > 0 ? snapshot.averageSlotTimeMs : 400;
+  private describeNetworkLoad(avgSlotMs: number, failureRate: number): string {
+    if (avgSlotMs > 600 || failureRate > 0.3) {
+      return `CONGESTED (slot time ${avgSlotMs.toFixed(0)}ms, failure rate ${(failureRate * 100).toFixed(0)}%)`;
+    }
+    if (avgSlotMs < 350 && failureRate < 0.05) {
+      return `FAST (slot time ${avgSlotMs.toFixed(0)}ms, failure rate ${(failureRate * 100).toFixed(0)}%)`;
+    }
+    return `NORMAL (slot time ${avgSlotMs.toFixed(0)}ms, failure rate ${(failureRate * 100).toFixed(0)}%)`;
   }
 
-  private classifyNetworkLoad(avgSlotMs: number): string {
-    if (avgSlotMs > 600) return `congested (${avgSlotMs.toFixed(0)}ms/slot, above 600ms threshold)`;
-    if (avgSlotMs < 350) return `fast (${avgSlotMs.toFixed(0)}ms/slot, below 350ms threshold)`;
-    return `normal (${avgSlotMs.toFixed(0)}ms/slot)`;
-  }
-
-  private describeLeaderWindow(snapshot: NetworkSnapshot): string {
+  private formatLeaderSection(snapshot: NetworkSnapshot): string {
     const lw = snapshot.leaderWindow;
     if (lw.slotsUntilJitoLeader === null) {
-      return "- Leader window: unknown (getNextScheduledLeader unavailable on this endpoint)";
+      return "## Jito leader window\n- Status: unknown (getNextScheduledLeader unavailable on this endpoint)";
     }
     return [
+      "## Jito leader window",
       `- Slots until next Jito leader: ${lw.slotsUntilJitoLeader}`,
-      `- Inside leader window: ${lw.isJitoLeaderWindow}`,
+      `- Currently inside leader window: ${lw.isJitoLeaderWindow}`,
       `- Next leader identity: ${lw.nextLeaderIdentity?.slice(0, 12) ?? "unknown"}`,
     ].join("\n");
   }
 
-  private computeCongestionMultiplier(snapshot: NetworkSnapshot, avgSlotMs: number): number {
-    const failureRate  = snapshot.recentFailureRate ?? 0;
-    const slotFactor   = Math.min((avgSlotMs - 400) / 1000, 0.5);
-    const multiplier   = 1 + failureRate * 1.5 + Math.max(0, slotFactor);
-    return Math.min(2.0, Math.max(1.0, multiplier));
+  private computeCongestionMultiplier(snapshot: NetworkSnapshot): number {
+    const slotFactor       = Math.max(0, (snapshot.averageSlotTimeMs - 400) / 600);
+    const failFactor       = snapshot.recentFailureRate * 1.5;
+    const skipFactor       = (snapshot.conditions.slotSkipRate ?? 0) * 0.5;
+    // High fee dispersion (p95/p25 >> 1) indicates volatile, contested fee market
+    const dispersionFactor = Math.max(0, (snapshot.conditions.feeDispersionRatio - 1) / 20);
+    const multiplier       = 1 + slotFactor + failFactor + skipFactor + dispersionFactor;
+    return Math.min(2.5, Math.max(1.0, multiplier));
   }
 
   private computeLeaderMultiplier(snapshot: NetworkSnapshot): number {
     const slots = snapshot.leaderWindow.slotsUntilJitoLeader;
-    if (slots === null)   return 1.15;
-    if (slots <= 1)       return 1.25;
-    if (slots <= 3)       return 1.10;
-    if (slots <= 10)      return 1.00;
+    if (slots === null)  return 1.15;
+    if (slots <= 1)      return 1.25;
+    if (slots <= 3)      return 1.10;
+    if (slots <= 10)     return 1.00;
     return 0.95;
   }
 
@@ -283,5 +321,11 @@ Respond ONLY with valid JSON, no markdown:
     if (this.recentProcessedToConfirmedMs.length === 0) return null;
     const sorted = [...this.recentProcessedToConfirmedMs].sort((a, b) => a - b);
     return sorted[Math.floor(sorted.length / 2)] ?? null;
+  }
+
+  private p90ConfirmationMs(): number | null {
+    if (this.recentProcessedToConfirmedMs.length < 5) return null;
+    const sorted = [...this.recentProcessedToConfirmedMs].sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length * 0.9)] ?? null;
   }
 }
