@@ -1,10 +1,10 @@
+# solana-smart-tx-stack
+
 ![node](https://img.shields.io/badge/node-%3E%3D20.11-brightgreen)
 ![typescript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![solana](https://img.shields.io/badge/Solana-mainnet--beta-9945FF)
 ![jito](https://img.shields.io/badge/Jito-jito--ts%20SDK-orange)
 ![license](https://img.shields.io/badge/license-MIT-green)
-
-# solana-smart-tx-stack
 
 A production-grade Solana transaction infrastructure stack built for the Superteam Nigeria Advanced Infrastructure Challenge. It submits Jito bundles, streams live slot data via Yellowstone gRPC, resolves transaction commitment from stream events rather than RPC polling, detects Jito leader windows, captures network conditions at the moment of every submission, classifies failures into 15 distinct types, and uses an AI agent (Groq / LLaMA 3.3 70B) to make tip and retry decisions with full reasoning written to the lifecycle log on every run.
 
