@@ -6,41 +6,43 @@
 ![jito](https://img.shields.io/badge/Jito-jito--ts%20SDK-orange)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-A production-grade Solana transaction infrastructure stack built for the Superteam Nigeria Advanced Infrastructure Challenge. It submits Jito bundles, streams live slot data via Yellowstone gRPC, resolves transaction commitment from stream events rather than RPC polling, detects Jito leader windows, captures network conditions at the moment of every submission, classifies failures into 15 distinct types, and uses an AI agent (Groq / LLaMA 3.3 70B) to make tip and retry decisions with full reasoning written to the lifecycle log on every run.
+A production-grade Solana transaction infrastructure stack built for the Superteam Nigeria Advanced Infrastructure Challenge. It submits Jito bundles, streams live slot data via Yellowstone gRPC, uses stream-first commitment tracking with RPC fallback when the stream times out, detects Jito leader windows, captures network conditions at the moment of every submission, classifies failures into 15 distinct types, and uses an AI agent (Groq / LLaMA 3.3 70B) to make tip and retry decisions with full reasoning written to the lifecycle log on every run.
 
-No hardcoded tip values. No hardcoded retry logic. No RPC polling for commitment resolution. Every agent decision is auditable in `logs/lifecycle.json`.
+No hardcoded submitted tip values. Retry decisions are made through the agent path with classifier-grounded guardrails. Commitment tracking is stream-first, with RPC fallback only when the stream cannot resolve a stage before timeout. Every agent decision is auditable in `logs/lifecycle.json`.
 
 ---
 
-## Bounty Requirement Compliance
+## Bounty Implementation Map
 
-| Status | Requirement | Implementation |
+| Area | Requirement | Implementation |
 |--------|-------------|----------------|
-| PASS | Live slot and leader monitoring via Yellowstone gRPC | `src/stream/slot-stream.ts` |
-| PASS | Correct slot streaming with reconnect and backpressure | `src/stream/slot-stream.ts` (ping keepalive, fromSlot replay, exponential backoff) |
-| PASS | RPC polling fallback when gRPC unavailable | `src/stream/slot-stream.ts` (SlotPoller class) |
-| PASS | Leader window detection | `src/jito/leader-window-detector.ts` (getNextScheduledLeader) |
-| PASS | Jito bundle construction with jito-ts SDK | `src/bundle/bundle-builder.ts` |
-| PASS | Dynamic tips from live data (not hardcoded) | `src/stream/tip-oracle.ts` (Jito tip floor API + RPC fallback) |
-| PASS | Stream-based commitment confirmation (not RPC-only) | `src/lifecycle/commitment-tracker.ts` |
-| PASS | Full lifecycle tracking: processed, confirmed, finalized | `src/lifecycle/lifecycle-tracker.ts` |
-| PASS | Failure detection and classification (15 types) | `src/bundle/failure-classifier.ts` |
-| PASS | Automatic retry with blockhash refresh | `src/stack.ts` (agent-driven loop) |
-| PASS | AI agent with real per-run decisions | `src/agent/agent.ts` (decideTip + decideRetry) |
-| PASS | Agent reasoning visible in logs (unique per run) | `logs/lifecycle.json` (agentReasoning field) |
-| PASS | Network conditions captured at submission | `src/stream/network-state-observer.ts` |
-| PASS | 10+ bundle submissions with lifecycle log | `logs/lifecycle.json` |
-| PASS | 3 classified failure cases (fault injection) | `src/scripts/fault-inject.ts` |
-| PASS | Blockhash at confirmed commitment (never finalized) | `src/bundle/bundle-builder.ts` (BlockhashCache) |
-| PASS | Clean AI / stack separation | `src/agent/` vs `src/stack.ts` |
-| PASS | Network conditions captured at submission AND confirmation (delta analysis) | `src/stream/network-state-observer.ts`, `LifecycleEntry.deltaFromSubmissionToConfirmation` |
-| PASS | Reactive event-triggered submissions (Marinade Finance) | `src/stream/marinade-event-stream.ts` + `Stack.runWithMarinadeTriggering()` |
-| PASS | 15 advanced failure types including ACCOUNT_NOT_FOUND, INSTRUCTION_ERROR, BLOCKHASH_NOT_FOUND | `src/bundle/failure-classifier.ts` |
-| PASS | Network load proxies derived from real observations (no estimated/public-metric placeholders) | `src/stream/network-state-observer.ts` (bundleLandingRate, feeDispersionRatio, validatorLoadProxy) |
-| PASS | Mainnet observation report generator | `src/scripts/generate-mainnet-report.ts` |
-| PASS | Architecture document | `ARCHITECTURE.md` + Notion public URL |
-| PASS | Verification report | `evidence/verification-report.md` |
-| PASS | MIT license | `LICENSE` |
+| Built | Live slot and leader monitoring via Yellowstone gRPC | `src/stream/slot-stream.ts` |
+| Built | Correct slot streaming with reconnect and backpressure | `src/stream/slot-stream.ts` (ping keepalive, fromSlot replay, exponential backoff) |
+| Built | RPC polling fallback when gRPC unavailable | `src/stream/slot-stream.ts` (SlotPoller class) |
+| Built | Leader window detection | `src/jito/leader-window-detector.ts` (getNextScheduledLeader) |
+| Built | Jito bundle construction with jito-ts SDK | `src/bundle/bundle-builder.ts` |
+| Built | Dynamic tips from live data (not hardcoded) | `src/stream/tip-oracle.ts` (Jito tip floor API + RPC fallback) |
+| Built | Stream-first commitment confirmation with fallback | `src/lifecycle/commitment-tracker.ts` |
+| Built | Full lifecycle tracking: processed, confirmed, finalized | `src/lifecycle/lifecycle-tracker.ts` |
+| Built | Failure detection and classification (15 types) | `src/bundle/failure-classifier.ts` |
+| Built | Automatic retry with blockhash refresh | `src/stack.ts` (agent-driven loop) |
+| Built | AI agent with real per-run decisions | `src/agent/agent.ts` (decideTip + decideRetry) |
+| Built | Agent reasoning visible in logs | `logs/lifecycle.json` (agentReasoning field) |
+| Built | Network conditions captured at submission | `src/stream/network-state-observer.ts` |
+| Built | 10+ bundle submissions with lifecycle log | `logs/lifecycle.json` |
+| Built | 3 classified failure cases (fault injection) | `src/scripts/fault-inject.ts` |
+| Built | Blockhash at confirmed commitment (never finalized) | `src/bundle/bundle-builder.ts` (BlockhashCache) |
+| Built | Clean AI / stack separation | `src/agent/` vs `src/stack.ts` |
+| Built | Network conditions captured at submission AND confirmation (delta analysis) | `src/stream/network-state-observer.ts`, `LifecycleEntry.deltaFromSubmissionToConfirmation` |
+| Built | Reactive event-triggered submissions (Marinade Finance) | `src/stream/marinade-event-stream.ts` + `Stack.runWithMarinadeTriggering()` |
+| Built | 15 advanced failure types including ACCOUNT_NOT_FOUND, INSTRUCTION_ERROR, BLOCKHASH_NOT_FOUND | `src/bundle/failure-classifier.ts` |
+| Built | Network load proxies derived from real observations (no estimated/public-metric placeholders) | `src/stream/network-state-observer.ts` (bundleLandingRate, feeDispersionRatio, validatorLoadProxy) |
+| Built | Mainnet observation report generator | `src/scripts/generate-mainnet-report.ts` |
+| Built | Architecture document | `ARCHITECTURE.md` + Notion public URL |
+| Built | Verification report | `evidence/verification-report.md` |
+| Built | MIT license | `LICENSE` |
+
+This table maps implementation coverage. The current proof quality is generated separately by `npm run generate:evidence` and checked by `npm run evidence:audit`. If the audit reports missing explorer URLs, non-zero slots, dynamic tips, or fault metadata, rerun the stack and fault injection before final submission rather than editing logs by hand.
 
 ---
 
@@ -245,9 +247,9 @@ Runs three fault scenarios in sequence:
 npm run run:marinade
 ```
 
-Listens for real Marinade Finance staking events (Deposit/Unstake) on mainnet via `onLogs()`. When a staking event of 50 SOL or more is detected, the stack submits a bundle in response and tags the lifecycle entry with the triggering event's signature, amount, and slot. This demonstrates the stack operating as reactive infrastructure rather than a fixed-schedule runner.
+Listens for real Marinade Finance staking events (Deposit/Unstake) on mainnet via `onLogs()`. When a staking event of 1 SOL or more is detected, the stack submits a bundle in response and tags the lifecycle entry with the triggering event's signature, amount, and slot. This demonstrates the stack operating as reactive infrastructure rather than a fixed-schedule runner.
 
-Marinade Finance (`MarBmsSgKXdrQP1zU937A8bLnSZ3xq4b5VW6dcjpyQ`) is the largest liquid staking protocol on Solana. Large staking and unstaking transactions represent real institutional transaction volume and can correlate with short-term network load changes -- exactly the kind of condition the tip-intelligence agent is designed to react to.
+Marinade Finance (`MarBmsSgKXdrQP1zU937A8bLnSZ3xq4b5VW6dcjpyQ`) is the largest liquid staking protocol on Solana. Staking and unstaking transactions above the 1 SOL trigger represent real user transaction flow and can correlate with short-term network load changes -- exactly the kind of condition the tip-intelligence agent is designed to react to.
 
 This script requires `SOLANA_NETWORK=mainnet-beta`. Marinade does not operate on devnet, so this mode has no devnet equivalent.
 
