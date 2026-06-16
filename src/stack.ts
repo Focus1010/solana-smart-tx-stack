@@ -216,7 +216,7 @@ export class Stack {
 
       // ── 1. Build NetworkSnapshot ────────────────────────────────────────────
 
-      const currentSlot  = this.slotSource.getCurrentSlot();
+      const currentSlot  = await this.getReliableCurrentSlot();
       const slotTimes    = this.slotSource.getRecentSlotTimes();
       const avgSlotMs    = estimateSlotTimeMs(slotTimes);
       const leaderWindow = await this.leaderDetector.detect(currentSlot);
@@ -277,7 +277,13 @@ export class Stack {
 
       // ── 6. Track lifecycle ──────────────────────────────────────────────────
 
-      const sigToTrack = realSig ?? submitResult.signature;
+      const tracksBundleTransaction =
+        submitResult.success &&
+        submitResult.signature !== null &&
+        submitResult.signature !== "unknown";
+      const sigToTrack = tracksBundleTransaction
+        ? submitResult.signature
+        : realSig ?? submitResult.signature;
 
       if (!sigToTrack) {
         lastFailure = submitResult.failure ?? "UNKNOWN";
@@ -334,9 +340,9 @@ export class Stack {
       // Capture conditions again at confirmation time for delta analysis
       const conditionsAtConfirmation = await this.networkObs.captureConditions(this.recentFailureRate());
 
-      const finalStage = submitResult.success
-        ? trackResult.finalStage
-        : trackResult.finalStage !== "failed" ? "confirmed" : "failed";
+      const finalStage = trackResult.finalStage;
+      const entryFailure = trackResult.failure ??
+        (!tracksBundleTransaction && !realSig ? submitResult.failure : null);
 
       const entry = this.buildEntry({
         runId,
@@ -346,7 +352,7 @@ export class Stack {
         submittedAt:      submitResult.submittedAt,
         stages:           trackResult.stages,
         finalStage,
-        failure:          submitResult.success ? trackResult.failure : submitResult.failure,
+        failure:          entryFailure,
         agentReasoning:   lastReasoning,
         agentConfidence:  lastConfidence,
         agentAction:      lastAction,
@@ -394,7 +400,7 @@ export class Stack {
     }
 
     // Max retries exhausted
-    const slot = this.slotSource.getCurrentSlot();
+    const slot = await this.getReliableCurrentSlot();
     const lw   = await this.leaderDetector.detect(slot);
     const cond = await this.networkObs.captureConditions(this.recentFailureRate());
     const snap: NetworkSnapshot = {
@@ -444,6 +450,27 @@ export class Stack {
       });
       return null;
     }
+  }
+
+  private async getReliableCurrentSlot(): Promise<number> {
+    const streamed = this.slotSource.getCurrentSlot();
+    if (streamed > 0) return streamed;
+
+    try {
+      const rpcSlot = await this.connection.getSlot("processed");
+      if (rpcSlot > 0) {
+        await this.logger.warn("[stack] Slot stream had no current slot; using RPC slot for submission metadata", {
+          rpcSlot,
+        });
+        return rpcSlot;
+      }
+    } catch (err) {
+      await this.logger.warn("[stack] Could not recover current slot from RPC", {
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    return streamed;
   }
 
   // ── Build lifecycle entry ─────────────────────────────────────────────────
