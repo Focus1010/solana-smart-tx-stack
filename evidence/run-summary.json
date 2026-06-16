@@ -1,1 +1,60 @@
-
+{
+  "generatedAt": "2026-06-16T21:38:43.993Z",
+  "totals": {
+    "runs": 13,
+    "normalRuns": 13,
+    "faultRuns": 0,
+    "confirmed": 10,
+    "failed": 3,
+    "landingRate": "77%"
+  },
+  "networks": [],
+  "failureBreakdown": {
+    "EXPIRED_BLOCKHASH": 3
+  },
+  "faultTypesInjected": {},
+  "agentActionsSeen": [],
+  "tipStats": {
+    "uniqueTipValues": 1,
+    "minLamports": 2000,
+    "maxLamports": 2000,
+    "avgLamports": 2000,
+    "p25Lamports": 2000,
+    "p50Lamports": 2000,
+    "p75Lamports": 2000
+  },
+  "latencyStats": {
+    "processedToConfirmed": {
+      "samples": 0,
+      "avgMs": 0,
+      "p50Ms": 0,
+      "p90Ms": 0,
+      "minMs": 0,
+      "maxMs": 0
+    },
+    "confirmedToFinalized": {
+      "samples": 0,
+      "avgMs": 0,
+      "p50Ms": 0,
+      "p90Ms": 0,
+      "minMs": 0,
+      "maxMs": 0
+    },
+    "submittedToFinalized": {
+      "samples": 0,
+      "avgMs": 0
+    }
+  },
+  "dataQuality": {
+    "entriesWithExplorerUrl": 0,
+    "entriesWithRealSlot": 0,
+    "entriesWithReasoning": 13,
+    "avgReasoningLengthChars": 99,
+    "minReasoningLengthChars": 79,
+    "entriesWithNetworkSnapshot": 0,
+    "entriesWithLeaderWindow": 0
+  },
+  "sampleExplorerUrls": [],
+  "networkConditionsDelta": null,
+  "marinadeTriggeredRuns": []
+}
