@@ -1,7 +1,7 @@
 # Bounty Requirement Verification Report
 
-Generated: 2026-06-16T21:38:44.000Z
-Score: **15/22**
+Generated: 2026-06-16T22:50:41.724Z
+Score: **15/24**
 
 | Status | Requirement | Detail | Implementation |
 |--------|-------------|--------|----------------|
@@ -13,6 +13,8 @@ Score: **15/22**
 | PASS | Live tip data from real source | Jito tip floor API primary (bundles.jito.wtf), getRecentPrioritizationFees fallback | `src/stream/tip-oracle.ts` |
 | PASS | AI agent reasoning visible and non-trivial in logs | 13/13 entries have reasoning, avg 99 chars per entry | `src/agent/agent.ts + logs/lifecycle.json (agentReasoning field)` |
 | FAIL | AI agent makes multiple distinct decision types | 0 distinct agentAction values observed across runs | `src/agent/agent.ts` |
+| FAIL | Structured AI decision trace stored in lifecycle log | 0/13 entries include agentDecisionTrace; families: none | `src/types.ts + src/stack.ts` |
+| FAIL | Autonomous blockhash-expiry recovery trace | 0 EXPIRED_BLOCKHASH records include refresh-blockhash retry evidence | `src/scripts/fault-inject.ts + logs/lifecycle.json` |
 | PASS | Yellowstone gRPC slot stream with reconnect and backpressure | SlotStream with ping keepalive, fromSlot replay, exponential backoff, 3-attempt limit | `src/stream/slot-stream.ts` |
 | PASS | RPC polling fallback when gRPC unavailable | SlotPoller polls getSlot() at 400ms intervals with deep polling every 5 cycles | `src/stream/slot-stream.ts (SlotPoller class)` |
 | PASS | Stream-based commitment confirmation (not RPC-only) | CommitmentTracker resolves confirmed and finalized from slot stream events | `src/lifecycle/commitment-tracker.ts` |
@@ -40,6 +42,9 @@ Score: **15/22**
 | Unique tip values | 1 |
 | Avg agent reasoning | 99 characters |
 | Agent action types seen | 0 |
+| Structured AI traces | 0/13 |
+| AI decision families | none |
+| Blockhash recovery traces | 0 |
 | Networks | devnet |
 
 ## Commitment Latency (from running system)
@@ -54,3 +59,7 @@ Score: **15/22**
 
 
 No explorer URLs are present in the current lifecycle log; rerun the stack before final submission to produce judge-verifiable signatures.
+
+## Blockhash Recovery Examples
+
+No blockhash recovery examples are present in the current lifecycle log. Run `npm run run:inject` before final submission.
