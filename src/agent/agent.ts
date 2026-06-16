@@ -120,8 +120,29 @@ Respond with ONLY a valid JSON object, no markdown fences, no preamble:
 }
 `.trim();
 
-    const raw      = await this.callGroq(prompt);
-    const decision = this.parseJson<TipDecision>(raw);
+    let decision: TipDecision;
+    try {
+      const raw = await this.callGroq(prompt);
+      decision = this.parseJson<TipDecision>(raw);
+    } catch (err) {
+      await this.logger.warn("[agent] Groq tip decision failed; using deterministic safety fallback", {
+        message: err instanceof Error ? err.message : String(err),
+      });
+      decision = {
+        tipLamports: clamped,
+        action: "submit_now",
+        reasoning:
+          `Groq was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. ` +
+          `The fallback selected ${clamped} lamports (${percentileLabel}) from live tip data, with congestion ` +
+          `multiplier ${congestion.toFixed(3)}x and leader urgency multiplier ${leaderMult.toFixed(3)}x. ` +
+          `This preserves autonomous operation while keeping the decision bounded by observed network conditions.`,
+        confidenceScore: 0.68,
+        landingProbabilityEstimate: 0.65,
+        selectedPercentile: Number(percentileLabel.replace("p", "")),
+        congestionMultiplier: congestion,
+        leaderUrgencyMultiplier: leaderMult,
+      };
+    }
 
     // Hard safety bounds -- model output is never trusted without clamping
     decision.tipLamports                = Math.max(1_000, Math.min(500_000, decision.tipLamports));
@@ -208,8 +229,37 @@ Respond with ONLY valid JSON, no markdown fences:
 }
 `.trim();
 
-    const raw      = await this.callGroq(prompt);
-    const decision = this.parseJson<RetryDecision>(raw);
+    let decision: RetryDecision;
+    try {
+      const raw = await this.callGroq(prompt);
+      decision = this.parseJson<RetryDecision>(raw);
+    } catch (err) {
+      await this.logger.warn("[agent] Groq retry decision failed; using deterministic safety fallback", {
+        message: err instanceof Error ? err.message : String(err),
+      });
+      const nonRetryable =
+        input.retryCount >= 3 ||
+        input.failure === "COMPUTE_EXCEEDED" ||
+        input.failure === "SIMULATION_FAILED" ||
+        input.failure === "INSUFFICIENT_FUNDS" ||
+        cls.recoveryPath === "abort";
+      const fallbackTip =
+        input.failure === "FEE_TOO_LOW"
+          ? Math.max(input.tipStats.p75Lamports, Math.ceil(input.previousTipLamports * 1.25))
+          : input.previousTipLamports;
+      decision = {
+        shouldRetry: !nonRetryable,
+        action: nonRetryable ? "abort" : cls.recoveryPath,
+        newTipLamports: fallbackTip,
+        reasoning:
+          `Groq was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. ` +
+          `The classifier labeled the failure as ${input.failure} with ${(cls.confidence * 100).toFixed(0)}% confidence. ` +
+          `The selected recovery path is ${nonRetryable ? "abort" : cls.recoveryPath}; the next tip would be ${fallbackTip} lamports based on current percentiles and previous tip.`,
+        refreshBlockhash: cls.recoveryPath === "retry_refresh_blockhash" || input.blockhashExpired,
+        waitMs: cls.waitMs,
+        confidenceScore: Math.max(0.5, Math.min(0.8, cls.confidence)),
+      };
+    }
 
     // Hard limits
     decision.newTipLamports  = Math.max(1_000, Math.min(500_000, decision.newTipLamports));
