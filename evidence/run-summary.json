@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-16T21:38:43.993Z",
+  "generatedAt": "2026-06-16T22:50:41.711Z",
   "totals": {
     "runs": 13,
     "normalRuns": 13,
@@ -14,6 +14,14 @@
   },
   "faultTypesInjected": {},
   "agentActionsSeen": [],
+  "agentDecisionEvidence": {
+    "entriesWithTrace": 0,
+    "totalDecisionTraces": 0,
+    "decisionTypesSeen": [],
+    "tipDecisionTraces": 0,
+    "retryDecisionTraces": 0,
+    "blockhashRecoveryTraces": 0
+  },
   "tipStats": {
     "uniqueTipValues": 1,
     "minLamports": 2000,
@@ -56,5 +64,6 @@
   },
   "sampleExplorerUrls": [],
   "networkConditionsDelta": null,
-  "marinadeTriggeredRuns": []
+  "marinadeTriggeredRuns": [],
+  "blockhashRecoveryExamples": []
 }
