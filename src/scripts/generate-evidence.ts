@@ -34,8 +34,8 @@ function pct(sorted: number[], p: number): number {
 }
 
 function generateRunSummary(entries: LifecycleEntry[]): object {
-  const normal    = entries.filter((e) => e.faultInjected === "none");
-  const faults    = entries.filter((e) => e.faultInjected !== "none");
+  const normal    = entries.filter((e) => !e.faultInjected || e.faultInjected === "none");
+  const faults    = entries.filter((e) => e.faultInjected && e.faultInjected !== "none");
   const confirmed = entries.filter((e) =>
     e.finalStage === "confirmed" || e.finalStage === "finalized"
   );
@@ -134,9 +134,9 @@ function generateRunSummary(entries: LifecycleEntry[]): object {
       entriesWithRealSlot:       entries.filter((e) => (e.slotAtSubmission ?? 0) > 0).length,
       entriesWithReasoning:      entries.filter((e) => (e.agentReasoning?.length ?? 0) > 50).length,
       avgReasoningLengthChars:   Math.round(avg(reasoningLengths)),
-      minReasoningLengthChars:   Math.min(...reasoningLengths, 0),
-      entriesWithNetworkSnapshot: entries.filter((e) => e.networkSnapshot !== null).length,
-      entriesWithLeaderWindow:   entries.filter((e) => e.leaderWindow !== null).length,
+      minReasoningLengthChars:   reasoningLengths.length > 0 ? Math.min(...reasoningLengths) : 0,
+      entriesWithNetworkSnapshot: entries.filter((e) => e.networkSnapshot != null).length,
+      entriesWithLeaderWindow:   entries.filter((e) => e.leaderWindow != null).length,
     },
     sampleExplorerUrls: entries
       .filter((e) => e.explorerUrl)
@@ -144,7 +144,7 @@ function generateRunSummary(entries: LifecycleEntry[]): object {
       .map((e) => ({ runId: e.runId, finalStage: e.finalStage, url: e.explorerUrl })),
 
     networkConditionsDelta: (() => {
-      const withDelta = entries.filter((e) => e.deltaFromSubmissionToConfirmation !== null);
+      const withDelta = entries.filter((e) => e.deltaFromSubmissionToConfirmation != null);
       if (withDelta.length === 0) return null;
 
       const blockRateDeltas = withDelta
@@ -186,15 +186,15 @@ function generateVerificationReport(
   const confirmed   = entries.filter((e) =>
     e.finalStage === "confirmed" || e.finalStage === "finalized"
   ).length;
-  const faultRuns   = entries.filter((e) => e.faultInjected !== "none").length;
+  const faultRuns   = entries.filter((e) => e.faultInjected && e.faultInjected !== "none").length;
   const faultTypes  = new Set(
-    entries.filter((e) => e.faultInjected !== "none").map((e) => e.faultInjected)
+    entries.filter((e) => e.faultInjected && e.faultInjected !== "none").map((e) => e.faultInjected)
   ).size;
   const uniqueTips  = new Set(entries.map((e) => e.tipLamports)).size;
   const withReason  = entries.filter((e) => (e.agentReasoning?.length ?? 0) > 50).length;
   const withExplorer = entries.filter((e) => e.explorerUrl).length;
   const withSlot    = entries.filter((e) => (e.slotAtSubmission ?? 0) > 0).length;
-  const withSnapshot = entries.filter((e) => e.networkSnapshot !== null).length;
+  const withSnapshot = entries.filter((e) => e.networkSnapshot != null).length;
   const agentActions = new Set(entries.map((e) => e.agentAction).filter(Boolean)).size;
   const avgReasoning = summary.dataQuality?.avgReasoningLengthChars ?? 0;
 
@@ -379,7 +379,7 @@ ${(summary.sampleExplorerUrls ?? [])
   .map((e: any) => `- [${e.runId}] (${e.finalStage}) ${e.url}`)
   .join("\n")}
 
-All signatures and slot numbers are verifiable on Solana Explorer.
+${withExplorer > 0 ? "Explorer URLs above are verifiable on Solana Explorer." : "No explorer URLs are present in the current lifecycle log; rerun the stack before final submission to produce judge-verifiable signatures."}
 `;
 }
 
@@ -401,7 +401,7 @@ async function main(): Promise<void> {
   console.log(`Written: evidence/verification-report.md`);
   console.log(`\nTotal: ${entries.length} runs`);
   console.log(`Confirmed: ${entries.filter((e) => e.finalStage === "confirmed" || e.finalStage === "finalized").length}`);
-  console.log(`Fault runs: ${entries.filter((e) => e.faultInjected !== "none").length}`);
+  console.log(`Fault runs: ${entries.filter((e) => e.faultInjected && e.faultInjected !== "none").length}`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
