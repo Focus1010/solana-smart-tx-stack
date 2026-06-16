@@ -4,30 +4,32 @@
   "description": "Smart Solana transaction stack with Jito bundles, Yellowstone gRPC streaming, stream-based commitment tracking, leader window detection, and AI-driven tip and retry decisions",
   "main": "dist/index.js",
   "scripts": {
-    "build":              "tsc",
-    "start":              "ts-node src/index.ts",
-    "run:stack":          "ts-node src/index.ts",
-    "run:inject":         "ts-node src/scripts/fault-inject.ts",
-    "run:marinade":       "ts-node src/scripts/run-marinade.ts",
-    "generate:evidence":  "ts-node src/scripts/generate-evidence.ts",
-    "generate:mainnet-report": "ts-node src/scripts/generate-mainnet-report.ts"
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "run:stack": "ts-node src/index.ts",
+    "run:inject": "ts-node src/scripts/fault-inject.ts",
+    "run:marinade": "ts-node src/scripts/run-marinade.ts",
+    "generate:evidence": "ts-node src/scripts/generate-evidence.ts",
+    "generate:mainnet-report": "ts-node src/scripts/generate-mainnet-report.ts",
+    "evidence:audit": "ts-node src/scripts/verify-evidence.ts",
+    "bounty:audit": "npm run generate:evidence && npm run evidence:audit"
   },
   "keywords": ["solana", "jito", "yellowstone", "bundles", "ai-agent"],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@solana/web3.js":              "^1.98.4",
+    "@solana/web3.js": "^1.98.4",
     "@triton-one/yellowstone-grpc": "^5.0.8",
-    "bs58":                         "^6.0.0",
-    "chalk":                        "^5.6.2",
-    "dotenv":                       "^17.4.2",
-    "groq-sdk":                     "^1.2.1",
-    "jito-js-rpc":                  "^0.2.2",
-    "jito-ts":                      "^4.2.1"
+    "bs58": "^6.0.0",
+    "chalk": "^5.6.2",
+    "dotenv": "^17.4.2",
+    "groq-sdk": "^1.2.1",
+    "jito-js-rpc": "^0.2.2",
+    "jito-ts": "^4.2.1"
   },
   "devDependencies": {
-    "@types/node":  "^25.9.1",
-    "ts-node":      "^10.9.2",
-    "typescript":   "^6.0.3"
+    "@types/node": "^25.9.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }
