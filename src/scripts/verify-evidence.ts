@@ -31,6 +31,8 @@ function hasText(value: unknown): boolean {
 function main(): void {
   const entries = readLifecycle();
   const successes = count(entries, (e) => e.finalStage === "confirmed" || e.finalStage === "finalized");
+  const mainnetRecords = count(entries, (e) => e.explorerUrl?.includes("mainnet-beta") ?? false);
+  const devnetRecords = count(entries, (e) => e.explorerUrl?.includes("devnet") ?? false);
   const failed = entries.filter((e) => e.finalStage === "failed" || (e.failure !== null && e.failure !== undefined));
   const classifiedFailures = failed.filter((e) => e.failure && e.failure !== "UNKNOWN");
   const distinctFailures = new Set(classifiedFailures.map((e) => e.failure)).size;
@@ -44,12 +46,32 @@ function main(): void {
   const leaderWindows = count(entries, (e) => e.leaderWindow != null);
   const p2cLatency = count(entries, (e) => e.latencyMs?.processedToConfirmed != null);
   const finalized = count(entries, (e) => e.finalStage === "finalized" || e.stages?.some((s) => s.stage === "finalized"));
+  const traces = count(entries, (e) => (e.agentDecisionTrace?.length ?? 0) > 0);
+  const decisionFamilies = new Set(entries.flatMap((e) => (e.agentDecisionTrace ?? []).map((d) => d.decisionType)));
+  const blockhashRecovery = count(entries, (e) =>
+    e.failure === "EXPIRED_BLOCKHASH" &&
+    (e.agentDecisionTrace ?? []).some((d) => d.refreshBlockhash || d.action === "retry_refresh_blockhash")
+  );
+  const jitoBundleIds = count(entries, (e) => hasText(e.bundleId));
+  const marinadeTriggered = count(entries, (e) => e.triggerEvent?.type === "marinade_staking");
+
+  const pct = (value: number) => entries.length === 0 ? 0 : value / entries.length;
 
   const checks: Check[] = [
     {
-      level: entries.length >= 10 ? "PASS" : "FAIL",
-      name: "Lifecycle volume",
-      detail: `${entries.length} total records; bounty minimum is 10 real submissions.`,
+      level: entries.length >= 40 ? "PASS" : entries.length >= 10 ? "WARN" : "FAIL",
+      name: "10/10 lifecycle volume",
+      detail: `${entries.length} total records; target is 40+ across devnet and mainnet.`,
+    },
+    {
+      level: mainnetRecords >= 10 ? "PASS" : mainnetRecords > 0 ? "WARN" : "FAIL",
+      name: "Mainnet evidence",
+      detail: `${mainnetRecords} mainnet-beta records with explorer URLs; target is 10+.`,
+    },
+    {
+      level: devnetRecords >= 10 ? "PASS" : devnetRecords > 0 ? "WARN" : "FAIL",
+      name: "Devnet evidence",
+      detail: `${devnetRecords} devnet records with explorer URLs; target is 10+.`,
     },
     {
       level: successes >= 10 ? "PASS" : successes > 0 ? "WARN" : "FAIL",
@@ -57,14 +79,14 @@ function main(): void {
       detail: `${successes} confirmed/finalized records.`,
     },
     {
-      level: classifiedFailures.length >= 2 ? "PASS" : "FAIL",
+      level: classifiedFailures.length >= 5 ? "PASS" : classifiedFailures.length >= 2 ? "WARN" : "FAIL",
       name: "Classified failures",
-      detail: `${classifiedFailures.length} classified failure records; bounty minimum is 2.`,
+      detail: `${classifiedFailures.length} classified failure records; target is 5+.`,
     },
     {
-      level: distinctFailures >= 2 ? "PASS" : classifiedFailures.length >= 2 ? "WARN" : "FAIL",
+      level: distinctFailures >= 3 ? "PASS" : classifiedFailures.length >= 2 ? "WARN" : "FAIL",
       name: "Failure diversity",
-      detail: `${distinctFailures} distinct classified failure types observed.`,
+      detail: `${distinctFailures} distinct classified failure types observed; target is 3+.`,
     },
     {
       level: faultRuns >= 1 ? "PASS" : "WARN",
@@ -72,14 +94,24 @@ function main(): void {
       detail: `${faultRuns} records include faultInjected metadata; rerun npm run run:inject if this is 0.`,
     },
     {
-      level: uniqueTips >= 3 ? "PASS" : uniqueTips > 1 ? "WARN" : "FAIL",
+      level: uniqueTips >= 5 ? "PASS" : uniqueTips > 1 ? "WARN" : "FAIL",
       name: "Dynamic tip evidence",
-      detail: `${uniqueTips} unique positive tip values observed.`,
+      detail: `${uniqueTips} unique positive tip values observed; target is 5+.`,
     },
     {
       level: reasoning === entries.length && entries.length > 0 ? "PASS" : reasoning > 0 ? "WARN" : "FAIL",
       name: "AI reasoning traces",
       detail: `${reasoning}/${entries.length} records include non-trivial reasoning.`,
+    },
+    {
+      level: pct(traces) >= 0.9 ? "PASS" : traces > 0 ? "WARN" : "FAIL",
+      name: "Structured AI decision traces",
+      detail: `${traces}/${entries.length} records include agentDecisionTrace; families: ${[...decisionFamilies].join(", ") || "none"}.`,
+    },
+    {
+      level: blockhashRecovery >= 1 ? "PASS" : "FAIL",
+      name: "Blockhash recovery proof",
+      detail: `${blockhashRecovery} EXPIRED_BLOCKHASH records include refresh-blockhash retry trace.`,
     },
     {
       level: actions >= 2 ? "PASS" : actions === 1 ? "WARN" : "FAIL",
@@ -92,24 +124,34 @@ function main(): void {
       detail: `${realSlots}/${entries.length} records include non-zero slot data.`,
     },
     {
-      level: explorerUrls >= successes && successes > 0 ? "PASS" : explorerUrls > 0 ? "WARN" : "FAIL",
+      level: successes > 0 && explorerUrls >= successes ? "PASS" : explorerUrls > 0 ? "WARN" : "FAIL",
       name: "Explorer verification",
       detail: `${explorerUrls} records include explorer URLs for judge cross-checking.`,
     },
     {
-      level: networkSnapshots >= 10 ? "PASS" : networkSnapshots > 0 ? "WARN" : "FAIL",
+      level: pct(networkSnapshots) >= 0.9 ? "PASS" : networkSnapshots > 0 ? "WARN" : "FAIL",
       name: "Network snapshots",
       detail: `${networkSnapshots}/${entries.length} records include NetworkSnapshot data.`,
     },
     {
-      level: leaderWindows >= 10 ? "PASS" : leaderWindows > 0 ? "WARN" : "FAIL",
+      level: pct(leaderWindows) >= 0.9 ? "PASS" : leaderWindows > 0 ? "WARN" : "FAIL",
       name: "Leader-window context",
       detail: `${leaderWindows}/${entries.length} records include leader-window snapshots.`,
     },
     {
-      level: p2cLatency >= 10 ? "PASS" : p2cLatency > 0 ? "WARN" : "FAIL",
+      level: pct(p2cLatency) >= 0.9 ? "PASS" : p2cLatency > 0 ? "WARN" : "FAIL",
       name: "Commitment latency deltas",
       detail: `${p2cLatency}/${entries.length} records include processed-to-confirmed latency.`,
+    },
+    {
+      level: jitoBundleIds >= 5 ? "PASS" : jitoBundleIds > 0 ? "WARN" : "FAIL",
+      name: "Mainnet Jito bundle IDs",
+      detail: `${jitoBundleIds} records include bundleId; target is 5+ accepted mainnet Jito attempts.`,
+    },
+    {
+      level: marinadeTriggered > 0 ? "PASS" : "WARN",
+      name: "Reactive Marinade trigger",
+      detail: `${marinadeTriggered} records were triggered by Marinade events. Optional, but strong differentiator.`,
     },
     {
       level: finalized > 0 ? "PASS" : "WARN",
