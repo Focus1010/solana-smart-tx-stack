@@ -27,6 +27,7 @@ import {
   NetworkConditionsDelta,
   TriggerEvent,
   LeaderWindow,
+  AgentDecisionEvidence,
 } from "./types";
 import { MarinadeLiquidStakingListener } from "./stream/marinade-event-stream";
 
@@ -211,6 +212,7 @@ export class Stack {
     let lastReasoning   = "";
     let lastConfidence  = 0.8;
     let lastAction      = "submit_now";
+    const agentDecisionTrace: AgentDecisionEvidence[] = [];
 
     while (retryCount <= config.stack.maxRetries) {
 
@@ -251,6 +253,19 @@ export class Stack {
       lastReasoning      = tipDecision.reasoning;
       lastConfidence     = tipDecision.confidenceScore;
       lastAction         = tipDecision.action;
+      agentDecisionTrace.push({
+        decisionType:                "tip_intelligence",
+        action:                      tipDecision.action,
+        reasoning:                   tipDecision.reasoning,
+        confidenceScore:             tipDecision.confidenceScore,
+        tipLamports:                 tipDecision.tipLamports,
+        selectedPercentile:          tipDecision.selectedPercentile,
+        congestionMultiplier:        tipDecision.congestionMultiplier,
+        leaderUrgencyMultiplier:     tipDecision.leaderUrgencyMultiplier,
+        landingProbabilityEstimate:  tipDecision.landingProbabilityEstimate,
+        retryCount,
+        createdAt:                   new Date().toISOString(),
+      });
 
       // ── 3. Build bundle ─────────────────────────────────────────────────────
 
@@ -305,6 +320,21 @@ export class Stack {
           faultMode:           "none",
         });
         lastReasoning = retryDecision.reasoning;
+        lastConfidence = retryDecision.confidenceScore;
+        lastAction = retryDecision.action;
+        agentDecisionTrace.push({
+          decisionType:          "autonomous_retry",
+          action:                retryDecision.action,
+          reasoning:             retryDecision.reasoning,
+          confidenceScore:       retryDecision.confidenceScore,
+          previousTipLamports:   built.tipLamports,
+          newTipLamports:        retryDecision.newTipLamports,
+          failure:               lastFailure,
+          refreshBlockhash:      retryDecision.refreshBlockhash,
+          waitMs:                retryDecision.waitMs,
+          retryCount,
+          createdAt:             new Date().toISOString(),
+        });
 
         if (!retryDecision.shouldRetry) {
           const entry = this.buildEntry({
@@ -314,6 +344,7 @@ export class Stack {
             agentReasoning: lastReasoning, agentConfidence: lastConfidence,
             agentAction: lastAction, leaderWindow, networkSnapshot,
             conditionsAtSubmission, triggerEvent: triggerEvent ?? null, retryCount,
+            agentDecisionTrace,
           });
           this.logger.appendLifecycle(entry);
           return entry;
@@ -363,13 +394,15 @@ export class Stack {
         triggerEvent:     triggerEvent ?? null,
         retryCount,
         latencyMs:        trackResult.latencyMs,
+        agentDecisionTrace,
       });
-      this.logger.appendLifecycle(entry);
-
       // If on-chain tx failed after landing, ask agent about retry
       if (trackResult.finalStage === "failed" && submitResult.success) {
         lastFailure = trackResult.failure;
-        if (!lastFailure) return entry;
+        if (!lastFailure) {
+          this.logger.appendLifecycle(entry);
+          return entry;
+        }
 
         const cls = this.classifier.fromReason(lastFailure, {
           retryCount,
@@ -389,6 +422,28 @@ export class Stack {
           blockhashExpired:    lastFailure === "EXPIRED_BLOCKHASH",
           faultMode:           "none",
         });
+        lastReasoning = retryDecision.reasoning;
+        lastConfidence = retryDecision.confidenceScore;
+        lastAction = retryDecision.action;
+        agentDecisionTrace.push({
+          decisionType:          "failure_reasoning",
+          action:                retryDecision.action,
+          reasoning:             retryDecision.reasoning,
+          confidenceScore:       retryDecision.confidenceScore,
+          previousTipLamports:   built.tipLamports,
+          newTipLamports:        retryDecision.newTipLamports,
+          failure:               lastFailure,
+          refreshBlockhash:      retryDecision.refreshBlockhash,
+          waitMs:                retryDecision.waitMs,
+          retryCount,
+          createdAt:             new Date().toISOString(),
+        });
+        entry.agentReasoning = lastReasoning;
+        entry.agentConfidence = lastConfidence;
+        entry.agentAction = lastAction;
+        entry.agentDecisionType = "failure_reasoning";
+        entry.agentDecisionTrace = [...agentDecisionTrace];
+        this.logger.appendLifecycle(entry);
         if (!retryDecision.shouldRetry) return entry;
         if (retryDecision.refreshBlockhash) this.builder.invalidateBlockhash();
         await sleep(retryDecision.waitMs);
@@ -396,6 +451,7 @@ export class Stack {
         continue;
       }
 
+      this.logger.appendLifecycle(entry);
       return entry;
     }
 
@@ -419,6 +475,7 @@ export class Stack {
       agentConfidence: lastConfidence, agentAction: "abort",
       leaderWindow: lw, networkSnapshot: snap,
       conditionsAtSubmission: cond, triggerEvent: triggerEvent ?? null, retryCount,
+      agentDecisionTrace,
     });
     this.logger.appendLifecycle(entry);
     return entry;
@@ -494,6 +551,7 @@ export class Stack {
     triggerEvent?:                TriggerEvent | null;
     retryCount:                   number;
     latencyMs?:                   LifecycleEntry["latencyMs"];
+    agentDecisionTrace?:          AgentDecisionEvidence[];
   }): LifecycleEntry {
     const network = config.solana.network === "mainnet-beta" ? "mainnet-beta" : "devnet";
 
@@ -532,6 +590,8 @@ export class Stack {
       agentReasoning:  p.agentReasoning,
       agentConfidence: p.agentConfidence,
       agentAction:     p.agentAction,
+      agentDecisionType: p.agentDecisionTrace?.[p.agentDecisionTrace.length - 1]?.decisionType ?? undefined,
+      agentDecisionTrace: p.agentDecisionTrace ?? [],
       leaderWindow:    p.leaderWindow,
       networkSnapshot: p.networkSnapshot,
       networkConditionsAtSubmission:   sub,
