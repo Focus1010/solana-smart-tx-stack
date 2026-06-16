@@ -395,5 +395,37 @@ logs/
 
 ---
 
+## Judge-Facing Operational Proof Model
+
+The stack separates implementation coverage from evidence quality. Implementation coverage lives in the source modules; proof quality is produced by real runs and checked by `npm run evidence:audit`.
+
+### AI Decision Boundary
+
+The AI agent does not sign, submit, or mutate transactions directly. The core stack gives it structured context:
+
+- live tip percentiles
+- current slot and average slot time
+- Jito leader-window context
+- recent failure rate
+- failure classification and confidence
+- previous tip and retry count
+- blockhash-expiry context
+
+The agent returns the operational decision: submit/hold, tip amount, retry action, blockhash refresh, wait time, confidence, and reasoning. The stack applies safety guardrails and writes `agentDecisionTrace` into the lifecycle log so judges can inspect the exact decision that influenced the run.
+
+### Mainnet vs Devnet Evidence
+
+Every `npm start` run attempts the Jito bundle path. On mainnet-beta, a working Jito endpoint can return a real `bundleId`; that is the strongest bundle proof. On devnet, Jito block-engine acceptance is not available in the same way, so the stack also sends a real Solana transaction and tracks its lifecycle for explorer-verifiable commitment evidence.
+
+Final evidence should include both mainnet records with accepted Jito bundle IDs and devnet/mainnet records with signatures, explorer URLs, slots, and commitment deltas.
+
+### 10/10 Evidence Target
+
+The strict audit targets 40+ lifecycle records, 10+ mainnet records, 10+ devnet records, 5+ classified failures, 3+ distinct failure classes, 5+ unique tip values, structured AI traces on 90%+ of records, explorer URLs, network snapshots, leader-window context, processed-to-confirmed latency deltas, 5+ accepted mainnet Jito bundle IDs, and at least 1 blockhash-expiry recovery trace.
+
+The goal is not to inflate counts. The goal is to make every claim cross-checkable against lifecycle logs, Solana Explorer, and the generated evidence report.
+
+---
+
 *Built for the Superteam Nigeria Advanced Infrastructure Challenge*
 *Network: Solana Devnet | Language: TypeScript | AI: Groq LLaMA 3.3 70B*
