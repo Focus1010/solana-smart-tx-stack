@@ -72,6 +72,10 @@ This table maps implementation coverage. The current proof quality is generated 
 
 12. The complete `LifecycleEntry` is written to `logs/lifecycle.json` including explorer URL, latency breakdown per stage, leader window snapshot, network conditions, and agent reasoning.
 
+### Mainnet vs devnet Jito behavior
+
+`npm start` / `npm run run:stack` attempts the Jito bundle path on every run. On mainnet-beta, with a working Jito block-engine endpoint, accepted submissions should include a `bundleId` plus the transaction signature and lifecycle evidence. On devnet, Jito block-engine acceptance is not the strong proof path, so the stack also sends a real Solana transaction and tracks that lifecycle for explorer-verifiable evidence. In both modes, the run records the same agent decision context, tip, blockhash, slot, network snapshot, and leader-window data.
+
 ---
 
 ## Architecture
@@ -257,9 +261,12 @@ This script requires `SOLANA_NETWORK=mainnet-beta`. Marinade does not operate on
 
 ```bash
 npm run generate:evidence
+npm run evidence:audit
 ```
 
 Produces `evidence/run-summary.json` and `evidence/verification-report.md` from `logs/lifecycle.json`. Includes network condition delta analysis (block production rate and fee percentile changes between submission and confirmation) and a breakdown of any Marinade-triggered runs.
+
+`npm run evidence:audit` is intentionally stricter than the bounty minimum. It is designed to answer: "is this a 10/10 submission yet?" It checks volume, mainnet/devnet split, explorer URLs, dynamic tips, structured AI decision traces, blockhash recovery proof, Jito bundle IDs, leader-window context, and latency deltas.
 
 ### Generate mainnet observation report
 
