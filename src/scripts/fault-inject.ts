@@ -34,6 +34,7 @@ import {
   NetworkSnapshot,
   NetworkConditions,
   LeaderWindow,
+  AgentDecisionEvidence,
 } from "../types";
 import { AdvancedFailureClassifier } from "../bundle/failure-classifier";
 
@@ -299,6 +300,30 @@ function buildEntry(
   retryCount:      number
 ): LifecycleEntry {
   const network_name = (process.env.SOLANA_NETWORK ?? "devnet") === "mainnet-beta" ? "mainnet-beta" : "devnet";
+  const agentAction =
+    failure === "COMPUTE_EXCEEDED" || finalStage === "failed"
+      ? "abort"
+      : failure === "FEE_TOO_LOW"
+        ? "retry_increase_tip"
+        : "retry_refresh_blockhash";
+  const decisionType =
+    retryCount > 0 && failure === "EXPIRED_BLOCKHASH"
+      ? "autonomous_retry"
+      : failure ? "failure_reasoning" : "tip_intelligence";
+  const trace: AgentDecisionEvidence[] = [{
+    decisionType,
+    action: agentAction,
+    reasoning: agentReasoning,
+    confidenceScore: 0.9,
+    previousTipLamports: tipLamports,
+    newTipLamports: failure === "FEE_TOO_LOW" ? Math.max(tipLamports, network.conditions.recentPrioritizationFees.p75) : tipLamports,
+    failure: failure ?? undefined,
+    refreshBlockhash: failure === "EXPIRED_BLOCKHASH",
+    waitMs: failure === "COMPUTE_EXCEEDED" ? 0 : 1_000,
+    retryCount,
+    createdAt: new Date().toISOString(),
+  }];
+
   return {
     runId,
     bundleId:          null,
@@ -313,7 +338,9 @@ function buildEntry(
     faultInjected,
     agentReasoning,
     agentConfidence:   0.9,
-    agentAction:       finalStage === "failed" ? "abort" : "retry_refresh_blockhash",
+    agentAction,
+    agentDecisionType: decisionType,
+    agentDecisionTrace: trace,
     leaderWindow:      network.leaderWindow,
     networkSnapshot:   network,
     networkConditionsAtSubmission:    network.conditions,
