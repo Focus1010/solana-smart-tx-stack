@@ -313,9 +313,9 @@ export class AdvancedFailureClassifier {
       ACCOUNT_NOT_FOUND:   "account not found",
       INSUFFICIENT_FUNDS:  "insufficient lamports",
       RATE_LIMITED:        "429",
-      STREAM_DIVERGENCE:   "",
+      STREAM_DIVERGENCE:   "stream divergence rpc mismatch",
       TIMEOUT:             "timeout",
-      UNKNOWN:             "",
+      UNKNOWN:             "unknown unclassified",
     };
 
     return this.classify(reasonToMsg[reason] ?? "", defaults);
