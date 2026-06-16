@@ -136,6 +136,32 @@ export interface TriggerEvent {
   detectedAt: string;
 }
 
+// ─── AI decision evidence written into lifecycle logs ───────────────────────
+
+export type AgentDecisionType =
+  | "tip_intelligence"
+  | "failure_reasoning"
+  | "autonomous_retry";
+
+export interface AgentDecisionEvidence {
+  decisionType:               AgentDecisionType;
+  action:                     string;
+  reasoning:                  string;
+  confidenceScore:            number;
+  tipLamports?:               number;
+  previousTipLamports?:       number;
+  newTipLamports?:            number;
+  selectedPercentile?:        number;
+  congestionMultiplier?:      number;
+  leaderUrgencyMultiplier?:   number;
+  landingProbabilityEstimate?: number;
+  failure?:                   FailureReason;
+  refreshBlockhash?:          boolean;
+  waitMs?:                    number;
+  retryCount:                 number;
+  createdAt:                  string;
+}
+
 // ─── Full lifecycle log entry ─────────────────────────────────────────────────
 
 export interface LifecycleEntry {
@@ -153,6 +179,8 @@ export interface LifecycleEntry {
   agentReasoning:   string;
   agentConfidence:  number;
   agentAction:      string;
+  agentDecisionType?: AgentDecisionType;
+  agentDecisionTrace?: AgentDecisionEvidence[];
   leaderWindow:     LeaderWindow | null;
   networkSnapshot:  NetworkSnapshot | null;
 
