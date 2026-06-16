@@ -83,6 +83,16 @@ function generateRunSummary(entries: LifecycleEntry[]): object {
   const agentActions = new Set(
     entries.map((e) => e.agentAction).filter(Boolean)
   );
+  const decisionTraces = entries.flatMap((e) => e.agentDecisionTrace ?? []);
+  const decisionTypes = new Set(decisionTraces.map((d) => d.decisionType).filter(Boolean));
+  const tipDecisionTraces = decisionTraces.filter((d) => d.decisionType === "tip_intelligence");
+  const retryDecisionTraces = decisionTraces.filter((d) =>
+    d.decisionType === "autonomous_retry" || d.decisionType === "failure_reasoning"
+  );
+  const blockhashRecoveries = entries.filter((e) =>
+    e.failure === "EXPIRED_BLOCKHASH" &&
+    (e.agentDecisionTrace ?? []).some((d) => d.refreshBlockhash || d.action === "retry_refresh_blockhash")
+  );
 
   return {
     generatedAt: new Date().toISOString(),
@@ -98,6 +108,14 @@ function generateRunSummary(entries: LifecycleEntry[]): object {
     failureBreakdown,
     faultTypesInjected: faultBreakdown,
     agentActionsSeen:   [...agentActions],
+    agentDecisionEvidence: {
+      entriesWithTrace: entries.filter((e) => (e.agentDecisionTrace?.length ?? 0) > 0).length,
+      totalDecisionTraces: decisionTraces.length,
+      decisionTypesSeen: [...decisionTypes],
+      tipDecisionTraces: tipDecisionTraces.length,
+      retryDecisionTraces: retryDecisionTraces.length,
+      blockhashRecoveryTraces: blockhashRecoveries.length,
+    },
     tipStats: {
       uniqueTipValues: uniqueTips,
       minLamports:     tips[0]              ?? 0,
@@ -171,6 +189,16 @@ function generateRunSummary(entries: LifecycleEntry[]): object {
         metadata:    e.triggerEvent?.metadata,
         detectedAt:  e.triggerEvent?.detectedAt,
       })),
+
+    blockhashRecoveryExamples: blockhashRecoveries.slice(0, 5).map((e) => ({
+      runId: e.runId,
+      finalStage: e.finalStage,
+      signature: e.signature,
+      explorerUrl: e.explorerUrl,
+      retryCount: e.retryCount,
+      action: e.agentAction,
+      reasoning: e.agentReasoning,
+    })),
   };
 }
 
@@ -196,6 +224,9 @@ function generateVerificationReport(
   const withSlot    = entries.filter((e) => (e.slotAtSubmission ?? 0) > 0).length;
   const withSnapshot = entries.filter((e) => e.networkSnapshot != null).length;
   const agentActions = new Set(entries.map((e) => e.agentAction).filter(Boolean)).size;
+  const withTrace = entries.filter((e) => (e.agentDecisionTrace?.length ?? 0) > 0).length;
+  const decisionTypes = summary.agentDecisionEvidence?.decisionTypesSeen ?? [];
+  const blockhashRecoveryTraces = summary.agentDecisionEvidence?.blockhashRecoveryTraces ?? 0;
   const avgReasoning = summary.dataQuality?.avgReasoningLengthChars ?? 0;
 
   const checks = [
@@ -246,6 +277,18 @@ function generateVerificationReport(
       req:    "AI agent makes multiple distinct decision types",
       detail: `${agentActions} distinct agentAction values observed across runs`,
       file:   "src/agent/agent.ts",
+    },
+    {
+      status: withTrace >= Math.floor(total * 0.8) ? PASS : FAIL,
+      req:    "Structured AI decision trace stored in lifecycle log",
+      detail: `${withTrace}/${total} entries include agentDecisionTrace; families: ${decisionTypes.join(", ") || "none"}`,
+      file:   "src/types.ts + src/stack.ts",
+    },
+    {
+      status: blockhashRecoveryTraces >= 1 ? PASS : FAIL,
+      req:    "Autonomous blockhash-expiry recovery trace",
+      detail: `${blockhashRecoveryTraces} EXPIRED_BLOCKHASH records include refresh-blockhash retry evidence`,
+      file:   "src/scripts/fault-inject.ts + logs/lifecycle.json",
     },
     {
       status: PASS,
@@ -364,6 +407,9 @@ ${rows}
 | Unique tip values | ${uniqueTips} |
 | Avg agent reasoning | ${avgReasoning} characters |
 | Agent action types seen | ${agentActions} |
+| Structured AI traces | ${withTrace}/${total} |
+| AI decision families | ${decisionTypes.join(", ") || "none"} |
+| Blockhash recovery traces | ${blockhashRecoveryTraces} |
 | Networks | ${(summary.networks ?? []).join(", ") || "devnet"} |
 
 ## Commitment Latency (from running system)
@@ -380,6 +426,12 @@ ${(summary.sampleExplorerUrls ?? [])
   .join("\n")}
 
 ${withExplorer > 0 ? "Explorer URLs above are verifiable on Solana Explorer." : "No explorer URLs are present in the current lifecycle log; rerun the stack before final submission to produce judge-verifiable signatures."}
+
+## Blockhash Recovery Examples
+
+${(summary.blockhashRecoveryExamples ?? [])
+  .map((e: any) => `- ${e.runId}: ${e.action}, retryCount=${e.retryCount}, finalStage=${e.finalStage}${e.explorerUrl ? `, ${e.explorerUrl}` : ""}`)
+  .join("\n") || "No blockhash recovery examples are present in the current lifecycle log. Run `npm run run:inject` before final submission."}
 `;
 }
 
