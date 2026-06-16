@@ -1,5 +1,6 @@
 import { JitoJsonRpcClient } from "jito-js-rpc";
 import { Connection, Transaction } from "@solana/web3.js";
+import bs58 from "bs58";
 import { BuiltBundle } from "./bundle-builder";
 import { FailureReason } from "../types";
 import { Logger } from "../utils/logger";
@@ -102,7 +103,7 @@ export class BundleSubmitter {
 
   private extractSignature(tx: Transaction): string {
     if (tx.signatures.length > 0 && tx.signatures[0].signature) {
-      return Buffer.from(tx.signatures[0].signature).toString("base64");
+      return bs58.encode(tx.signatures[0].signature);
     }
     return "unknown";
   }
