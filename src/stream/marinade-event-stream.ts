@@ -9,8 +9,8 @@ const MARINADE_PROGRAM_ID = new PublicKey(
   "MarBmsSgKXdrQP1zU937A8bLnSZ3xq4b5VW6dcjpyQ"
 );
 
-// Minimum SOL value to classify as a "large" event worth reacting to
-const LARGE_EVENT_THRESHOLD_SOL = 50;
+// Minimum SOL value to classify as a trigger event worth reacting to
+const LARGE_EVENT_THRESHOLD_SOL = 1;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
