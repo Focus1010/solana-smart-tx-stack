@@ -130,6 +130,14 @@ export interface FailureClassification {
 
 // ─── Trigger event context (Marinade or manual) ───────────────────────────────
 
+export interface MarinadeTriggerEvent {
+  eventType:      "stake" | "unstake" | "deposit" | "withdraw";
+  slot:           number;
+  signature:      string;
+  amountLamports: number;
+  timestamp:      number;
+}
+
 export interface TriggerEvent {
   type:       "marinade_staking" | "manual" | "scheduled";
   metadata:   Record<string, unknown>;
@@ -155,6 +163,11 @@ export interface AgentDecisionEvidence {
   congestionMultiplier?:      number;
   leaderUrgencyMultiplier?:   number;
   landingProbabilityEstimate?: number;
+  engine?:                    string;
+  model?:                     string;
+  promptHash?:                string;
+  llmLatencyMs?:              number;
+  guardrailAdjusted?:         boolean;
   failure?:                   FailureReason;
   refreshBlockhash?:          boolean;
   waitMs?:                    number;
@@ -168,6 +181,8 @@ export interface LifecycleEntry {
   runId:            string;
   bundleId:         string | null;
   signature:        string | null;
+  network:          "devnet" | "mainnet-beta";
+  dryRun:           boolean;
   tipLamports:      number;
   tipAccount:       string;
   submittedAt:      number;
@@ -190,7 +205,8 @@ export interface LifecycleEntry {
   deltaFromSubmissionToConfirmation: NetworkConditionsDelta | null;
 
   // Optional trigger context (set when Marinade-triggered)
-  triggerEvent:    TriggerEvent | null;
+  triggerEvent:          TriggerEvent | null;
+  marinadeTriggerEvent:  MarinadeTriggerEvent | null;
 
   retryCount:      number;
   blockhashUsed:   string;
@@ -237,7 +253,15 @@ export interface TipDecisionInput {
   faultMode:           FaultMode;
 }
 
-export interface TipDecision {
+export interface LlmDecisionMeta {
+  engine:            string;
+  model:             string;
+  promptHash:        string;
+  llmLatencyMs:      number;
+  guardrailAdjusted: boolean;
+}
+
+export interface TipDecision extends LlmDecisionMeta {
   tipLamports:                number;
   reasoning:                  string;
   action:                     string;
@@ -259,7 +283,7 @@ export interface RetryDecisionInput {
   faultMode:           FaultMode;
 }
 
-export interface RetryDecision {
+export interface RetryDecision extends LlmDecisionMeta {
   shouldRetry:      boolean;
   action:           RecoveryPath;
   newTipLamports:   number;
