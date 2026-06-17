@@ -13,7 +13,7 @@ async function getChalk() {
   return _chalk;
 }
 
-// ─── Log levels ───────────────────────────────────────────────────────────────
+//  Log levels 
 
 export type LogLevel = "info" | "warn" | "error" | "success" | "debug" | "agent";
 
@@ -26,7 +26,7 @@ const LEVEL_LABELS: Record<LogLevel, string> = {
   agent:   "  AI ",
 };
 
-// ─── Logger class ─────────────────────────────────────────────────────────────
+//  Logger class 
 
 export class Logger {
   private logDir: string;
@@ -47,7 +47,7 @@ export class Logger {
     }
   }
 
-  // ── Core print ──────────────────────────────────────────────────────────────
+  //  Core print 
 
   async log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
     const c = await getChalk();
@@ -77,7 +77,7 @@ export class Logger {
     fs.appendFileSync(this.sessionFile, plain);
   }
 
-  // ── Convenience wrappers ────────────────────────────────────────────────────
+  //  Convenience wrappers 
 
   info   = (msg: string, meta?: Record<string, unknown>) => this.log("info",    msg, meta);
   warn   = (msg: string, meta?: Record<string, unknown>) => this.log("warn",    msg, meta);
@@ -86,7 +86,7 @@ export class Logger {
   debug  = (msg: string, meta?: Record<string, unknown>) => this.log("debug",   msg, meta);
   agent  = (msg: string, meta?: Record<string, unknown>) => this.log("agent",   msg, meta);
 
-  // ── Lifecycle persistence ───────────────────────────────────────────────────
+  //  Lifecycle persistence 
 
   appendLifecycle(entry: LifecycleEntry): void {
     const raw     = fs.readFileSync(this.lifecycleFile, "utf-8");
@@ -100,11 +100,11 @@ export class Logger {
     return JSON.parse(raw) as LifecycleEntry[];
   }
 
-  // ── Section dividers ────────────────────────────────────────────────────────
+  //  Section dividers 
 
   async divider(title?: string) {
     const c = await getChalk();
-    const line = "─".repeat(60);
+    const line = "".repeat(60);
     if (title) {
       console.log(c.gray(`\n${line}`));
       console.log(c.white.bold(`  ${title}`));

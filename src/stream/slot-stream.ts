@@ -9,7 +9,7 @@ import { Logger }       from "../utils/logger";
 import { sleep }        from "../utils/helpers";
 import { config }       from "../config";
 
-// ─── Yellowstone slot status constants ───────────────────────────────────────
+//  Yellowstone slot status constants 
 // From the Dragon's Mouth proto: PROCESSED=0, CONFIRMED=1, FINALIZED=2
 // Dead/skipped slots also appear and must be handled gracefully.
 
@@ -21,7 +21,7 @@ const YS_STATUS_FINALIZED   = 2;
 // Sending a ping every 30s keeps the connection alive.
 const PING_INTERVAL_MS      = 30_000;
 
-// ─── SlotStream ───────────────────────────────────────────────────────────────
+//  SlotStream 
 // Production Yellowstone gRPC slot subscription.
 //
 // Features:
@@ -73,7 +73,7 @@ export class SlotStream extends EventEmitter {
     this.client  = null;
   }
 
-  // ── Reconnect loop with exponential backoff ────────────────────────────────
+  //  Reconnect loop with exponential backoff 
 
   private async connectWithRetry(): Promise<void> {
     let attempt = 0;
@@ -110,7 +110,7 @@ export class SlotStream extends EventEmitter {
     }
   }
 
-  // ── gRPC subscribe with ping keepalive and fromSlot replay ────────────────
+  //  gRPC subscribe with ping keepalive and fromSlot replay 
 
   private async subscribe(): Promise<void> {
     // Per Triton docs: endpoint must include https:// prefix for SDK v5+
@@ -136,7 +136,7 @@ export class SlotStream extends EventEmitter {
         if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
       };
 
-      // ── Ping keepalive ──────────────────────────────────────────────────────
+      //  Ping keepalive 
       // Triton docs: send ping every 30s, server responds with pong.
       // Required to keep stream alive through cloud load balancers.
 
@@ -155,7 +155,7 @@ export class SlotStream extends EventEmitter {
         stream.write(pingReq, () => {});
       }, PING_INTERVAL_MS);
 
-      // ── Data handler ────────────────────────────────────────────────────────
+      //  Data handler 
 
       stream.on("data", (data: any) => {
         // Handle pong response
@@ -215,7 +215,7 @@ export class SlotStream extends EventEmitter {
       stream.on("end",   () => { cleanup(); resolve(); });
       stream.on("close", () => { cleanup(); resolve(); });
 
-      // ── Initial subscription request ────────────────────────────────────────
+      //  Initial subscription request 
       // Subscribe to all slots. No filterByCommitment -- we want all levels
       // so we can track processed, confirmed, finalized independently.
       // fromSlot enables replay if reconnecting after a disconnect.
@@ -258,7 +258,7 @@ export class SlotStream extends EventEmitter {
   }
 }
 
-// ─── SlotPoller ───────────────────────────────────────────────────────────────
+//  SlotPoller 
 // RPC fallback for when Yellowstone is unavailable.
 // Polls getSlot() at all three commitment levels with cycle-based scheduling
 // to avoid excessive RPC load.

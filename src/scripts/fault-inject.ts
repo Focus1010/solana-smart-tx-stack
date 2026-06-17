@@ -69,7 +69,7 @@ async function buildNetworkSnapshot(
   };
 }
 
-// ─── Fault 1: Expired Blockhash ───────────────────────────────────────────────
+//  Fault 1: Expired Blockhash 
 
 async function runExpiredBlockhash(
   payer: Keypair,
@@ -147,7 +147,7 @@ async function runExpiredBlockhash(
     failureDetected, retryDecision.reasoning, "expired_blockhash", networkSnapshot, 1);
 }
 
-// ─── Fault 2: Fee Too Low ─────────────────────────────────────────────────────
+//  Fault 2: Fee Too Low 
 
 async function runFeeTooLow(
   payer: Keypair,
@@ -223,7 +223,7 @@ async function runFeeTooLow(
     "FEE_TOO_LOW", retryDecision.reasoning, "low_tip", networkSnapshot, 1);
 }
 
-// ─── Fault 3: Compute Exceeded ────────────────────────────────────────────────
+//  Fault 3: Compute Exceeded 
 
 async function runComputeExceeded(
   payer: Keypair,
@@ -285,7 +285,7 @@ async function runComputeExceeded(
     "COMPUTE_EXCEEDED", retryDecision.reasoning, "compute_exceeded", networkSnapshot, 0);
 }
 
-// ─── Entry builder ────────────────────────────────────────────────────────────
+//  Entry builder 
 
 function buildEntry(
   runId:           string,
@@ -363,7 +363,7 @@ function buildEntry(
   };
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+//  Main 
 
 async function main(): Promise<void> {
   const logger     = new Logger(config.stack.logDir);

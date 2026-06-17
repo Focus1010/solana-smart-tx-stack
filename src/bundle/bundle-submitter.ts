@@ -7,7 +7,7 @@ import { Logger } from "../utils/logger";
 import { shortKey } from "../utils/helpers";
 import { config } from "../config";
 
-// ─── Submission result ────────────────────────────────────────────────────────
+//  Submission result 
 
 export interface SubmitResult {
   success:   boolean;
@@ -18,7 +18,7 @@ export interface SubmitResult {
   submittedAt: number;
 }
 
-// ─── BundleSubmitter ──────────────────────────────────────────────────────────
+//  BundleSubmitter 
 
 export class BundleSubmitter {
   private jitoClient: JitoJsonRpcClient;
@@ -93,7 +93,7 @@ export class BundleSubmitter {
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
+  //  Helpers 
 
   private serializeBundle(built: BuiltBundle): string[] {
     return [built.transaction].map((tx: Transaction) =>

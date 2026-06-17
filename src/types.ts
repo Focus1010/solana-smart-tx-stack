@@ -1,8 +1,8 @@
-// ─── Commitment levels ────────────────────────────────────────────────────────
+//  Commitment levels 
 
 export type CommitmentLevel = "processed" | "confirmed" | "finalized";
 
-// ─── Bundle lifecycle stages ──────────────────────────────────────────────────
+//  Bundle lifecycle stages 
 
 export type BundleStage =
   | "submitted"
@@ -11,7 +11,7 @@ export type BundleStage =
   | "finalized"
   | "failed";
 
-// ─── Failure classifications ──────────────────────────────────────────────────
+//  Failure classifications 
 
 export type FailureReason =
   | "EXPIRED_BLOCKHASH"
@@ -30,7 +30,7 @@ export type FailureReason =
   | "TIMEOUT"
   | "UNKNOWN";
 
-// ─── Fault injection modes ────────────────────────────────────────────────────
+//  Fault injection modes 
 
 export type FaultMode =
   | "none"
@@ -38,7 +38,7 @@ export type FaultMode =
   | "low_tip"
   | "compute_exceeded";
 
-// ─── Recovery paths ───────────────────────────────────────────────────────────
+//  Recovery paths 
 
 export type RecoveryPath =
   | "retry_refresh_blockhash"
@@ -47,7 +47,7 @@ export type RecoveryPath =
   | "hold_and_wait"
   | "abort";
 
-// ─── Per-stage timestamp record ───────────────────────────────────────────────
+//  Per-stage timestamp record 
 
 export interface StageRecord {
   stage:             BundleStage;
@@ -56,7 +56,7 @@ export interface StageRecord {
   latencyFromPrevMs: number | null;
 }
 
-// ─── Leader window snapshot ───────────────────────────────────────────────────
+//  Leader window snapshot 
 
 export interface LeaderWindow {
   observedAt:           string;
@@ -66,7 +66,7 @@ export interface LeaderWindow {
   isJitoLeaderWindow:   boolean;
 }
 
-// ─── Network conditions (captured at a specific point in time) ────────────────
+//  Network conditions (captured at a specific point in time) 
 
 export interface NetworkConditions {
   capturedAt:               string;
@@ -92,7 +92,7 @@ export interface NetworkConditions {
   validatorLoadProxy:    number; // derived from slotSkipRate, 0.0-1.0
 }
 
-// ─── Delta between submission-time and confirmation-time conditions ───────────
+//  Delta between submission-time and confirmation-time conditions 
 
 export interface NetworkConditionsDelta {
   blockProductionRateDeltaMs: number;
@@ -105,7 +105,7 @@ export interface NetworkConditionsDelta {
   bundleLandingRateDelta:      number;
 }
 
-// ─── Network snapshot fed to agent on every run ───────────────────────────────
+//  Network snapshot fed to agent on every run 
 
 export interface NetworkSnapshot {
   currentSlot:               number;
@@ -117,7 +117,7 @@ export interface NetworkSnapshot {
   conditions:                NetworkConditions;
 }
 
-// ─── Failure classification with recovery recommendation ─────────────────────
+//  Failure classification with recovery recommendation 
 
 export interface FailureClassification {
   type:         FailureReason;
@@ -128,7 +128,7 @@ export interface FailureClassification {
   reasoning:    string;
 }
 
-// ─── Trigger event context (Marinade or manual) ───────────────────────────────
+//  Trigger event context (Marinade or manual) 
 
 export interface MarinadeTriggerEvent {
   eventType:      "stake" | "unstake" | "deposit" | "withdraw";
@@ -144,7 +144,7 @@ export interface TriggerEvent {
   detectedAt: string;
 }
 
-// ─── AI decision evidence written into lifecycle logs ───────────────────────
+//  AI decision evidence written into lifecycle logs 
 
 export type AgentDecisionType =
   | "tip_intelligence"
@@ -175,7 +175,7 @@ export interface AgentDecisionEvidence {
   createdAt:                  string;
 }
 
-// ─── Full lifecycle log entry ─────────────────────────────────────────────────
+//  Full lifecycle log entry 
 
 export interface LifecycleEntry {
   runId:            string;
@@ -220,7 +220,7 @@ export interface LifecycleEntry {
   };
 }
 
-// ─── Slot stream event ────────────────────────────────────────────────────────
+//  Slot stream event 
 
 export interface SlotEvent {
   slot:      number;
@@ -229,7 +229,7 @@ export interface SlotEvent {
   timestamp: number;
 }
 
-// ─── Tip stats ────────────────────────────────────────────────────────────────
+//  Tip stats 
 
 export interface TipStats {
   p25Lamports: number;
@@ -241,7 +241,7 @@ export interface TipStats {
   source:      "jito-tip-floor" | "rpc-prioritization-fees" | "fallback";
 }
 
-// ─── AI agent inputs / outputs ────────────────────────────────────────────────
+//  AI agent inputs / outputs 
 
 export interface TipDecisionInput {
   tipStats:            TipStats;

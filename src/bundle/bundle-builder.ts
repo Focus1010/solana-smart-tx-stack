@@ -12,7 +12,7 @@ import { Logger } from "../utils/logger";
 
 const { Bundle } = JitoBundle;
 
-// ─── Known Jito tip accounts (used to attach tip instruction) ─────────────────
+//  Known Jito tip accounts (used to attach tip instruction) 
 
 const TIP_ACCOUNTS = [
   "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
@@ -26,7 +26,7 @@ function pickTipAccount(): PublicKey {
   return new PublicKey(TIP_ACCOUNTS[idx]);
 }
 
-// ─── BlockhashCache ───────────────────────────────────────────────────────────
+//  BlockhashCache 
 // Caches a recent blockhash and tracks whether it has expired.
 // Solana blockhashes are valid for ~150 slots (~60 seconds).
 
@@ -66,7 +66,7 @@ export class BlockhashCache {
   }
 }
 
-// ─── BundleBuilder ────────────────────────────────────────────────────────────
+//  BundleBuilder 
 
 export interface BuiltBundle {
   bundle:      InstanceType<typeof Bundle>;
@@ -89,7 +89,7 @@ export class BundleBuilder {
     this.blockhashCache = new BlockhashCache(connection);
   }
 
-  // ── Build a bundle containing a self-transfer + tip instruction ──────────────
+  //  Build a bundle containing a self-transfer + tip instruction 
   // The self-transfer is a zero-lamport send back to self -- it is valid,
   // cheap, and produces a real signature that can be tracked on-chain.
 
@@ -140,7 +140,7 @@ export class BundleBuilder {
     };
   }
 
-  // ── Expose blockhash cache for external expiry checks ─────────────────────
+  //  Expose blockhash cache for external expiry checks 
 
   isBlockhashExpired(slot: number): boolean {
     return this.blockhashCache.isExpiredAt(slot);

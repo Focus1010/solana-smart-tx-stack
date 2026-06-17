@@ -4,7 +4,7 @@ import { BundleStage, StageRecord, FailureReason } from "../types";
 import { Logger }               from "../utils/logger";
 import { sleep, shortKey }      from "../utils/helpers";
 
-// ─── TrackResult ─────────────────────────────────────────────────────────────
+//  TrackResult 
 
 export interface TrackResult {
   finalStage: BundleStage;
@@ -18,7 +18,7 @@ export interface TrackResult {
   };
 }
 
-// ─── LifecycleTracker ─────────────────────────────────────────────────────────
+//  LifecycleTracker 
 // Stream-first: uses CommitmentTracker to resolve confirmed and finalized
 // purely from Yellowstone slot events (no RPC polling for those stages).
 //
@@ -56,7 +56,7 @@ export class LifecycleTracker {
 
     await this.logger.info("[tracker] Tracking lifecycle", { sig: shortKey(signature) });
 
-    // ── Stage: processed (RPC poll to get the landing slot) ──────────────────
+    //  Stage: processed (RPC poll to get the landing slot) 
 
     const processedResult = await this.waitForProcessed(signature, submittedAt);
 
@@ -93,7 +93,7 @@ export class LifecycleTracker {
       };
     }
 
-    // ── Stage: confirmed (stream-based via CommitmentTracker) ─────────────────
+    //  Stage: confirmed (stream-based via CommitmentTracker) 
 
     const landingSlot = processedResult.slot ?? submissionSlot;
     let confirmedAt:  number | null = null;
@@ -138,7 +138,7 @@ export class LifecycleTracker {
       processedToConfirmedMs:  processedToConfirmed,
     });
 
-    // ── Stage: finalized (stream-based) ───────────────────────────────────────
+    //  Stage: finalized (stream-based) 
 
     let finalizedAt:   number | null = null;
     let finalizedSlot: number | null = null;
@@ -197,7 +197,7 @@ export class LifecycleTracker {
     };
   }
 
-  // ── Poll for processed stage to get the landing slot number ──────────────
+  //  Poll for processed stage to get the landing slot number 
 
   private async waitForProcessed(
     signature: string,
@@ -227,7 +227,7 @@ export class LifecycleTracker {
     return null;
   }
 
-  // ── RPC fallback for confirmed/finalized if stream times out ─────────────
+  //  RPC fallback for confirmed/finalized if stream times out 
 
   private async pollForCommitment(
     signature: string,

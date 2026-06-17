@@ -3,7 +3,7 @@ import { TipStats }   from "../types";
 import { Logger }     from "../utils/logger";
 import { config }     from "../config";
 
-// ─── TipOracle ────────────────────────────────────────────────────────────────
+//  TipOracle 
 // Primary source: Jito tip floor API (bundles.jito.wtf/api/v1/bundles/tip_floor)
 // This is the real Jito auction data -- it returns actual percentiles of tips
 // paid in recent Jito bundles, which is exactly what you need to price

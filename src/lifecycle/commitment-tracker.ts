@@ -1,4 +1,4 @@
-// ─── CommitmentTracker ────────────────────────────────────────────────────────
+//  CommitmentTracker 
 // Resolves transaction commitment purely from slot stream events.
 // No RPC polling. When the stream reports latestConfirmedSlot >= submittedSlot,
 // the transaction is confirmed. Same logic for finalized.

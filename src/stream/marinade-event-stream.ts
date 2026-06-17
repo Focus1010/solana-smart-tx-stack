@@ -2,7 +2,7 @@ import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { EventEmitter }                             from "events";
 import { Logger }                                   from "../utils/logger";
 
-// ─── Marinade Finance program address (mainnet) ───────────────────────────────
+//  Marinade Finance program address (mainnet) 
 // Source: https://marinade.finance/developers
 
 const MARINADE_PROGRAM_ID = new PublicKey(
@@ -12,7 +12,7 @@ const MARINADE_PROGRAM_ID = new PublicKey(
 // Minimum SOL value to classify as a trigger event worth reacting to
 const LARGE_EVENT_THRESHOLD_SOL = 1;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+//  Types 
 
 export type MarinadeEventType = "stake" | "unstake" | "merge" | "split";
 
@@ -29,7 +29,7 @@ export interface MarinadeLiquidStakingEvent {
   isLargeEvent:       boolean;
 }
 
-// ─── MarinadeLiquidStakingListener ───────────────────────────────────────────
+//  MarinadeLiquidStakingListener 
 // Subscribes to Marinade Finance program logs via onLogs() and parses
 // Deposit (stake) and Unstake events. Emits "event" on each parsed event
 // and "large_event" when the amount exceeds LARGE_EVENT_THRESHOLD_SOL.
@@ -87,7 +87,7 @@ export class MarinadeLiquidStakingListener extends EventEmitter {
     this.events = [];
   }
 
-  // ── Log parser ──────────────────────────────────────────────────────────────
+  //  Log parser 
   // Marinade emits structured program logs. We parse two patterns:
   //   Deposit:  "Program log: Depositing ... amount: X"
   //   Unstake:  "Program log: Unstaking ... amount: X"
@@ -105,7 +105,7 @@ export class MarinadeLiquidStakingListener extends EventEmitter {
 
       const lower = line.toLowerCase();
 
-      // ── Deposit / stake event ──────────────────────────────────────────────
+      //  Deposit / stake event 
       if (lower.includes("deposit") || lower.includes("stake")) {
         const lamports = this.extractAmount(line);
         if (lamports === null || lamports <= 0) continue;
@@ -118,7 +118,7 @@ export class MarinadeLiquidStakingListener extends EventEmitter {
         return;
       }
 
-      // ── Unstake event ──────────────────────────────────────────────────────
+      //  Unstake event 
       if (lower.includes("unstake") || lower.includes("liquid_unstake")) {
         const lamports = this.extractAmount(line);
         if (lamports === null || lamports <= 0) continue;

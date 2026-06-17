@@ -32,7 +32,7 @@ import {
 } from "./types";
 import { MarinadeLiquidStakingListener } from "./stream/marinade-event-stream";
 
-// ─── Stack ────────────────────────────────────────────────────────────────────
+//  Stack 
 
 export class Stack {
   private connection:     Connection;
@@ -82,7 +82,7 @@ export class Stack {
     });
   }
 
-  // ── Initialise ─────────────────────────────────────────────────────────────
+  //  Initialise 
 
   async start(): Promise<void> {
     await this.logger.divider("Smart Transaction Stack -- Starting");
@@ -103,7 +103,7 @@ export class Stack {
 
   stop(): void { this.slotSource.stop(); }
 
-  // ── Run N bundle submissions ───────────────────────────────────────────────
+  //  Run N bundle submissions 
 
   async runBatch(count: number = config.stack.bundleCount): Promise<void> {
     await this.logger.divider(`Running ${count} bundle submissions`);
@@ -122,7 +122,7 @@ export class Stack {
     await this.printSummary(this.logger.readLifecycle());
   }
 
-  // ── Reactive run: triggered by real Marinade Finance staking events ───────
+  //  Reactive run: triggered by real Marinade Finance staking events 
   // Listens for Marinade Deposit/Unstake events on mainnet. When an event
   // exceeding the large-event threshold is detected, submits a bundle in
   // response and tags the lifecycle entry with the triggering event context.
@@ -210,7 +210,7 @@ export class Stack {
     return entries;
   }
 
-  // ── Single bundle run (agent-driven retry loop) ────────────────────────────
+  //  Single bundle run (agent-driven retry loop) 
 
   async runOne(
     triggerEvent?: TriggerEvent,
@@ -227,7 +227,7 @@ export class Stack {
 
     while (retryCount <= config.stack.maxRetries) {
 
-      // ── 1. Build NetworkSnapshot ────────────────────────────────────────────
+      //  1. Build NetworkSnapshot 
 
       const currentSlot  = await this.getReliableCurrentSlot();
       const slotTimes    = this.slotSource.getRecentSlotTimes();
@@ -247,7 +247,7 @@ export class Stack {
         conditions,
       };
 
-      // ── 2. Agent decides tip ────────────────────────────────────────────────
+      //  2. Agent decides tip 
 
       const tipInput: TipDecisionInput = {
         tipStats,
@@ -283,7 +283,7 @@ export class Stack {
         createdAt:                   new Date().toISOString(),
       });
 
-      // ── 3. Build bundle ─────────────────────────────────────────────────────
+      //  3. Build bundle 
 
       const built = await this.builder.build(
         tipDecision.tipLamports,
@@ -298,15 +298,15 @@ export class Stack {
         network:   config.solana.network,
       });
 
-      // ── 4. Send real transaction (ensures verifiable on-chain evidence) ─────
+      //  4. Send real transaction (ensures verifiable on-chain evidence) 
 
       const realSig = await this.sendRealTx(built.blockhash);
 
-      // ── 5. Attempt Jito bundle ──────────────────────────────────────────────
+      //  5. Attempt Jito bundle 
 
       const submitResult = await this.submitter.submit(built, currentSlot);
 
-      // ── 6. Track lifecycle ──────────────────────────────────────────────────
+      //  6. Track lifecycle 
 
       const tracksBundleTransaction =
         submitResult.success &&
@@ -510,7 +510,7 @@ export class Stack {
     return entry;
   }
 
-  // ── Send a real zero-lamport self-transfer ────────────────────────────────
+  //  Send a real zero-lamport self-transfer 
 
   private async sendRealTx(blockhash: string): Promise<string | null> {
     try {
@@ -559,7 +559,7 @@ export class Stack {
     return streamed;
   }
 
-  // ── Build lifecycle entry ─────────────────────────────────────────────────
+  //  Build lifecycle entry 
 
   private buildEntry(p: {
     runId:                        string;

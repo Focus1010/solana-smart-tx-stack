@@ -9,7 +9,7 @@ import {
 import bs58 from "bs58";
 import { config } from "../config";
 
-// ─── Wallet loader ────────────────────────────────────────────────────────────
+//  Wallet loader 
 
 export function loadWalletFromEnv(): Keypair {
   const raw = config.wallet.privateKey;
@@ -25,7 +25,7 @@ export function loadWalletFromEnv(): Keypair {
   return Keypair.fromSecretKey(decoded);
 }
 
-// ─── Balance check ────────────────────────────────────────────────────────────
+//  Balance check 
 
 export async function getBalanceSol(
   connection: Connection,
@@ -35,7 +35,7 @@ export async function getBalanceSol(
   return lamports / LAMPORTS_PER_SOL;
 }
 
-// ─── Build a minimal self-transfer transaction (for testing) ──────────────────
+//  Build a minimal self-transfer transaction (for testing) 
 // Sends 0 lamports back to self -- cheap, verifiable, produces a real signature.
 
 export function buildSelfTransferTx(payer: Keypair): Transaction {
@@ -50,7 +50,7 @@ export function buildSelfTransferTx(payer: Keypair): Transaction {
   return tx;
 }
 
-// ─── Request airdrop on devnet ────────────────────────────────────────────────
+//  Request airdrop on devnet 
 
 export async function requestAirdropIfNeeded(
   connection: Connection,

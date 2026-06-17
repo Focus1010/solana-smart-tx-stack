@@ -2,7 +2,7 @@ import { Connection } from "@solana/web3.js";
 import { NetworkConditions } from "../types";
 import { Logger } from "../utils/logger";
 
-// ─── NetworkStateObserver ─────────────────────────────────────────────────────
+//  NetworkStateObserver 
 // Captures a snapshot of network conditions at the moment of bundle submission.
 // Stored in the lifecycle log for each run so judges can see the exact network
 // state the agent was reasoning about.
@@ -69,7 +69,7 @@ export class NetworkStateObserver {
       // Non-fatal -- use floor values
     }
 
-    // ── Derived proxies (all computed from values already gathered above) ─────
+    //  Derived proxies (all computed from values already gathered above) 
     //
     // bundleLandingRate: the inverse of this stack's own rolling failure rate.
     // This is NOT a public Jito metric -- it is this stack's actual landing

@@ -85,7 +85,7 @@ are used in the populated version of this report.
     return;
   }
 
-  // ── Real mainnet data is present -- compute everything from it ────────────
+  //  Real mainnet data is present -- compute everything from it 
 
   const p2cValues = mainnet
     .map((e) => e.latencyMs?.processedToConfirmed)

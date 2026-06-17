@@ -3,7 +3,7 @@ import { LeaderWindow }      from "../types";
 import { Logger }            from "../utils/logger";
 import { config }            from "../config";
 
-// ─── LeaderWindowDetector ─────────────────────────────────────────────────────
+//  LeaderWindowDetector 
 // Calls getNextScheduledLeader() on the Jito block engine to find out how many
 // slots remain until the next Jito-connected leader. This feeds the agent's
 // timing decision: inside a window means submit now, far away means hold or

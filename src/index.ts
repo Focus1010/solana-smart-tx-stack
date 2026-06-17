@@ -9,7 +9,7 @@ async function main(): Promise<void> {
   const logger = new Logger(config.stack.logDir);
 
   await logger.divider("Solana Smart Transaction Stack");
-  await logger.info("Loading wallet…");
+  await logger.info("Loading wallet");
 
   let payer;
   try {
@@ -33,7 +33,7 @@ async function main(): Promise<void> {
 
   // Graceful shutdown on SIGINT / SIGTERM
   const shutdown = async () => {
-    await logger.warn("\n[main] Shutting down…");
+    await logger.warn("\n[main] Shutting down");
     stack.stop();
     process.exit(0);
   };

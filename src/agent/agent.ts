@@ -11,7 +11,7 @@ import { Logger } from "../utils/logger";
 import { LlmProvider } from "./llm-provider";
 import { createLlmProvider } from "./provider-factory";
 
-// ─── Agent ────────────────────────────────────────────────────────────────────
+//  Agent 
 // Provider-backed reasoning engine at temperature 0.2.
 //
 // Two public methods:
@@ -47,7 +47,7 @@ export class Agent {
     }
   }
 
-  // ── Tip Intelligence ────────────────────────────────────────────────────────
+  //  Tip Intelligence 
   // Builds a detailed prompt with real numbers, gets back a typed decision
   // with multi-sentence reasoning that references those specific numbers.
 
@@ -188,7 +188,7 @@ Respond with ONLY a valid JSON object, no markdown fences, no preamble:
     return decision;
   }
 
-  // ── Retry Reasoning ─────────────────────────────────────────────────────────
+  //  Retry Reasoning 
   // Uses the FailureClassification from AdvancedFailureClassifier as context
   // so the agent's reasoning is grounded in the specific error type.
 
@@ -328,7 +328,7 @@ Respond with ONLY valid JSON, no markdown fences:
     return decision;
   }
 
-  // ── Private helpers ──────────────────────────────────────────────────────────
+  //  Private helpers 
 
   private async callLlm(prompt: string, maxTokens: number): Promise<{ text: string; latencyMs: number }> {
     return this.provider.complete(prompt, maxTokens);

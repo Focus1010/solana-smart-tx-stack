@@ -4,7 +4,7 @@ import {
   RecoveryPath,
 } from "../types";
 
-// ─── FailureContext ───────────────────────────────────────────────────────────
+//  FailureContext 
 
 export interface FailureContext {
   retryCount:          number;
@@ -15,7 +15,7 @@ export interface FailureContext {
   tipP75Lamports:      number;
 }
 
-// ─── AdvancedFailureClassifier ────────────────────────────────────────────────
+//  AdvancedFailureClassifier 
 // Classifies errors into typed failure reasons with confidence scores and
 // recommended recovery paths. Each failure type has a specific, correct
 // recovery strategy that the agent uses as its starting point.
@@ -27,7 +27,7 @@ export class AdvancedFailureClassifier {
   ): FailureClassification {
     const msg   = (errorMessage ?? "").toLowerCase();
 
-    // ── EXPIRED_BLOCKHASH ─────────────────────────────────────────────────────
+    //  EXPIRED_BLOCKHASH 
     if (
       msg.includes("blockhash") && msg.includes("expir")
     ) {
@@ -44,7 +44,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── BLOCKHASH_NOT_FOUND ──────────────────────────────────────────────────
+    //  BLOCKHASH_NOT_FOUND 
     // Distinct from EXPIRED_BLOCKHASH: the blockhash was never in the ledger
     // (extreme edge case, usually a bug in blockhash generation)
     if (msg.includes("blockhash not found") && !msg.includes("expir")) {
@@ -61,7 +61,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── INSTRUCTION_ERROR ─────────────────────────────────────────────────────
+    //  INSTRUCTION_ERROR 
     // A specific instruction within the transaction failed on-chain (not simulation).
     // Different from SIMULATION_FAILED because the tx was accepted and processed.
     if (
@@ -82,7 +82,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── ACCOUNT_NOT_FOUND ─────────────────────────────────────────────────────
+    //  ACCOUNT_NOT_FOUND 
     if (
       msg.includes("account not found") ||
       msg.includes("account does not exist") ||
@@ -101,7 +101,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── INSUFFICIENT_FUNDS ────────────────────────────────────────────────────
+    //  INSUFFICIENT_FUNDS 
     if (
       msg.includes("insufficient lamports") ||
       msg.includes("insufficient funds") ||
@@ -120,7 +120,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── FEE_TOO_LOW ───────────────────────────────────────────────────────────
+    //  FEE_TOO_LOW 
     if (
       msg.includes("fee too low") ||
       msg.includes("tip too low") ||
@@ -142,7 +142,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── COMPUTE_EXCEEDED ─────────────────────────────────────────────────────
+    //  COMPUTE_EXCEEDED 
     if (
       msg.includes("compute") && (msg.includes("exceed") || msg.includes("budget")) ||
       msg.includes("computational budget exceeded")
@@ -160,7 +160,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── SIMULATION_FAILED ────────────────────────────────────────────────────
+    //  SIMULATION_FAILED 
     if (
       msg.includes("simulation") ||
       msg.includes("preflight") ||
@@ -179,7 +179,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── RATE_LIMITED ─────────────────────────────────────────────────────────
+    //  RATE_LIMITED 
     if (
       msg.includes("429") ||
       msg.includes("rate limit") ||
@@ -199,7 +199,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── ACCOUNT_IN_USE ────────────────────────────────────────────────────────
+    //  ACCOUNT_IN_USE 
     if (
       msg.includes("account in use") ||
       msg.includes("account is being") ||
@@ -218,7 +218,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── BUNDLE_DROPPED / LEADER_SKIPPED ──────────────────────────────────────
+    //  BUNDLE_DROPPED / LEADER_SKIPPED 
     if (
       msg.includes("bundle dropped") ||
       msg.includes("leader skip") ||
@@ -239,7 +239,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── STREAM_DIVERGENCE ─────────────────────────────────────────────────────
+    //  STREAM_DIVERGENCE 
     if (context.streamSaysConfirmed && !context.rpcConfirmed) {
       return {
         type:         "STREAM_DIVERGENCE",
@@ -255,7 +255,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── TIMEOUT ───────────────────────────────────────────────────────────────
+    //  TIMEOUT 
     if (msg.includes("timeout") || msg.includes("timed out")) {
       return {
         type:         "TIMEOUT",
@@ -270,7 +270,7 @@ export class AdvancedFailureClassifier {
       };
     }
 
-    // ── UNKNOWN ───────────────────────────────────────────────────────────────
+    //  UNKNOWN 
     return {
       type:         "UNKNOWN",
       confidence:   0.30,
@@ -284,7 +284,7 @@ export class AdvancedFailureClassifier {
     };
   }
 
-  // ── Convenience: classify a FailureReason directly ────────────────────────
+  //  Convenience: classify a FailureReason directly 
   fromReason(
     reason: FailureReason,
     context: Partial<FailureContext> = {}
