@@ -26,6 +26,7 @@ import {
   NetworkConditions,
   NetworkConditionsDelta,
   TriggerEvent,
+  MarinadeTriggerEvent,
   LeaderWindow,
   AgentDecisionEvidence,
 } from "./types";
@@ -37,7 +38,7 @@ export class Stack {
   private connection:     Connection;
   private payer:          Keypair;
   private logger:         Logger;
-  private agent:          Agent;
+  private agent!:         Agent;
   private builder:        BundleBuilder;
   private submitter:      BundleSubmitter;
   private tracker:        LifecycleTracker;
@@ -63,7 +64,6 @@ export class Stack {
       ? new SlotStream(logger)
       : new SlotPoller(this.connection, logger);
 
-    this.agent           = new Agent(logger);
     this.builder         = new BundleBuilder(this.connection, payer, logger);
     this.submitter       = new BundleSubmitter(this.connection, logger);
     this.tracker         = new LifecycleTracker(this.connection, this.slotSource, logger);
@@ -88,6 +88,7 @@ export class Stack {
     await this.logger.divider("Smart Transaction Stack -- Starting");
     await this.logger.info("[stack] Network: " + config.solana.network);
     await this.logger.info("[stack] Payer:   " + shortKey(this.payer.publicKey.toBase58(), 12));
+    this.agent = await Agent.create(this.logger);
 
     // Forward slot timestamps to NetworkStateObserver
     this.slotSource.on("slot", (ev: any) => {
@@ -144,7 +145,7 @@ export class Stack {
 
     await this.logger.divider("Marinade-triggered bundle submissions");
     await this.logger.info(
-      `[marinade] Listening for large staking events (>= 50 SOL), ` +
+      `[marinade] Listening for large staking events (>= 1 SOL), ` +
       `max ${maxEvents} triggers, ${(timeoutMs / 1000).toFixed(0)}s timeout`
     );
 
@@ -174,8 +175,15 @@ export class Stack {
           },
           detectedAt: event.timestampIso,
         };
+        const marinadeTriggerEvent: MarinadeTriggerEvent = {
+          eventType: event.eventType === "unstake" ? "unstake" : "stake",
+          slot: event.slot,
+          signature: event.signature,
+          amountLamports: event.amountLamports,
+          timestamp: event.timestamp,
+        };
 
-        const entry = await this.runOne(triggerEvent);
+        const entry = await this.runOne(triggerEvent, marinadeTriggerEvent);
         entries.push(entry);
         this.recordOutcome(entry.finalStage === "confirmed" || entry.finalStage === "finalized");
 
@@ -204,7 +212,10 @@ export class Stack {
 
   // ── Single bundle run (agent-driven retry loop) ────────────────────────────
 
-  async runOne(triggerEvent?: TriggerEvent): Promise<LifecycleEntry> {
+  async runOne(
+    triggerEvent?: TriggerEvent,
+    marinadeTriggerEvent?: MarinadeTriggerEvent | null
+  ): Promise<LifecycleEntry> {
     const runId         = newRunId();
     let retryCount      = 0;
     let lastFailure:    FailureReason | null = null;
@@ -263,6 +274,11 @@ export class Stack {
         congestionMultiplier:        tipDecision.congestionMultiplier,
         leaderUrgencyMultiplier:     tipDecision.leaderUrgencyMultiplier,
         landingProbabilityEstimate:  tipDecision.landingProbabilityEstimate,
+        engine:                      tipDecision.engine,
+        model:                       tipDecision.model,
+        promptHash:                  tipDecision.promptHash,
+        llmLatencyMs:                tipDecision.llmLatencyMs,
+        guardrailAdjusted:           tipDecision.guardrailAdjusted,
         retryCount,
         createdAt:                   new Date().toISOString(),
       });
@@ -332,6 +348,11 @@ export class Stack {
           failure:               lastFailure,
           refreshBlockhash:      retryDecision.refreshBlockhash,
           waitMs:                retryDecision.waitMs,
+          engine:                retryDecision.engine,
+          model:                 retryDecision.model,
+          promptHash:            retryDecision.promptHash,
+          llmLatencyMs:          retryDecision.llmLatencyMs,
+          guardrailAdjusted:     retryDecision.guardrailAdjusted,
           retryCount,
           createdAt:             new Date().toISOString(),
         });
@@ -344,6 +365,7 @@ export class Stack {
             agentReasoning: lastReasoning, agentConfidence: lastConfidence,
             agentAction: lastAction, leaderWindow, networkSnapshot,
             conditionsAtSubmission, triggerEvent: triggerEvent ?? null, retryCount,
+            marinadeTriggerEvent: marinadeTriggerEvent ?? null,
             agentDecisionTrace,
           });
           this.logger.appendLifecycle(entry);
@@ -392,6 +414,7 @@ export class Stack {
         conditionsAtSubmission,
         conditionsAtConfirmation,
         triggerEvent:     triggerEvent ?? null,
+        marinadeTriggerEvent: marinadeTriggerEvent ?? null,
         retryCount,
         latencyMs:        trackResult.latencyMs,
         agentDecisionTrace,
@@ -435,6 +458,11 @@ export class Stack {
           failure:               lastFailure,
           refreshBlockhash:      retryDecision.refreshBlockhash,
           waitMs:                retryDecision.waitMs,
+          engine:                retryDecision.engine,
+          model:                 retryDecision.model,
+          promptHash:            retryDecision.promptHash,
+          llmLatencyMs:          retryDecision.llmLatencyMs,
+          guardrailAdjusted:     retryDecision.guardrailAdjusted,
           retryCount,
           createdAt:             new Date().toISOString(),
         });
@@ -475,6 +503,7 @@ export class Stack {
       agentConfidence: lastConfidence, agentAction: "abort",
       leaderWindow: lw, networkSnapshot: snap,
       conditionsAtSubmission: cond, triggerEvent: triggerEvent ?? null, retryCount,
+      marinadeTriggerEvent: marinadeTriggerEvent ?? null,
       agentDecisionTrace,
     });
     this.logger.appendLifecycle(entry);
@@ -549,6 +578,7 @@ export class Stack {
     conditionsAtSubmission:       NetworkConditions | null;
     conditionsAtConfirmation?:    NetworkConditions | null;
     triggerEvent?:                TriggerEvent | null;
+    marinadeTriggerEvent?:        MarinadeTriggerEvent | null;
     retryCount:                   number;
     latencyMs?:                   LifecycleEntry["latencyMs"];
     agentDecisionTrace?:          AgentDecisionEvidence[];
@@ -579,6 +609,8 @@ export class Stack {
       runId:           p.runId,
       bundleId:        p.bundleId,
       signature:       p.signature,
+      network:         config.solana.network,
+      dryRun:          false,
       tipLamports:     p.built?.tipLamports ?? 0,
       tipAccount:      p.built?.tipAccount  ?? "",
       submittedAt:     p.submittedAt,
@@ -598,6 +630,7 @@ export class Stack {
       networkConditionsAtConfirmation: conf,
       deltaFromSubmissionToConfirmation: delta,
       triggerEvent:    p.triggerEvent ?? null,
+      marinadeTriggerEvent: p.marinadeTriggerEvent ?? null,
       retryCount:      p.retryCount,
       blockhashUsed:   p.built?.blockhash ?? "",
       slotAtSubmission:
