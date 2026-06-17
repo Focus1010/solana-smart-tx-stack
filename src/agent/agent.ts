@@ -1,4 +1,4 @@
-import Groq from "groq-sdk";
+import crypto from "crypto";
 import {
   TipDecision,
   TipDecisionInput,
@@ -8,10 +8,11 @@ import {
   TipStats,
 } from "../types";
 import { Logger } from "../utils/logger";
-import { config } from "../config";
+import { LlmProvider } from "./llm-provider";
+import { createLlmProvider } from "./provider-factory";
 
 // ─── Agent ────────────────────────────────────────────────────────────────────
-// Groq / LLaMA 3.3 70B reasoning engine at temperature 0.2.
+// Provider-backed reasoning engine at temperature 0.2.
 //
 // Two public methods:
 //   decideTip()    -- called before every submission
@@ -22,18 +23,21 @@ import { config } from "../config";
 // directly auditable by judges.
 
 export class Agent {
-  private groq:   Groq;
+  private provider: LlmProvider;
   private logger: Logger;
-  private readonly model: string;
 
   // Rolling history for network health signals
   private recentProcessedToConfirmedMs: number[] = [];
   private recentTips:                   number[] = [];
 
-  constructor(logger: Logger) {
-    this.groq   = new Groq({ apiKey: config.groq.apiKey });
-    this.logger = logger;
-    this.model  = config.groq.model;
+  static async create(logger: Logger): Promise<Agent> {
+    const provider = await createLlmProvider(logger);
+    return new Agent(provider, logger);
+  }
+
+  private constructor(provider: LlmProvider, logger: Logger) {
+    this.provider = provider;
+    this.logger   = logger;
   }
 
   recordConfirmationLatency(ms: number): void {
@@ -120,19 +124,27 @@ Respond with ONLY a valid JSON object, no markdown fences, no preamble:
 }
 `.trim();
 
+    const promptHash = this.hashPrompt(prompt);
+    let latencyMs = 0;
     let decision: TipDecision;
     try {
-      const raw = await this.callGroq(prompt);
-      decision = this.parseJson<TipDecision>(raw);
+      const { text, latencyMs: measuredLatencyMs } = await this.callLlm(prompt, 600);
+      latencyMs = measuredLatencyMs;
+      decision = this.parseJson<TipDecision>(text);
     } catch (err) {
-      await this.logger.warn("[agent] Groq tip decision failed; using deterministic safety fallback", {
+      await this.logger.warn("[agent] LLM tip decision failed; using deterministic safety fallback", {
         message: err instanceof Error ? err.message : String(err),
       });
       decision = {
+        engine: this.provider.name,
+        model: this.provider.model,
+        promptHash,
+        llmLatencyMs: latencyMs,
+        guardrailAdjusted: false,
         tipLamports: clamped,
         action: "submit_now",
         reasoning:
-          `Groq was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. ` +
+          `The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. ` +
           `The fallback selected ${clamped} lamports (${percentileLabel}) from live tip data, with congestion ` +
           `multiplier ${congestion.toFixed(3)}x and leader urgency multiplier ${leaderMult.toFixed(3)}x. ` +
           `This preserves autonomous operation while keeping the decision bounded by observed network conditions.`,
@@ -145,7 +157,13 @@ Respond with ONLY a valid JSON object, no markdown fences, no preamble:
     }
 
     // Hard safety bounds -- model output is never trusted without clamping
+    const preClampTip = decision.tipLamports;
     decision.tipLamports                = Math.max(1_000, Math.min(500_000, decision.tipLamports));
+    decision.engine                     = this.provider.name;
+    decision.model                      = this.provider.model;
+    decision.promptHash                 = promptHash;
+    decision.llmLatencyMs               = latencyMs;
+    decision.guardrailAdjusted          = preClampTip !== decision.tipLamports;
     decision.confidenceScore            = Math.max(0, Math.min(1, decision.confidenceScore ?? 0.8));
     decision.landingProbabilityEstimate = Math.max(0, Math.min(1, decision.landingProbabilityEstimate ?? 0.7));
     decision.congestionMultiplier       = decision.congestionMultiplier    ?? congestion;
@@ -229,12 +247,15 @@ Respond with ONLY valid JSON, no markdown fences:
 }
 `.trim();
 
+    const promptHash = this.hashPrompt(prompt);
+    let latencyMs = 0;
     let decision: RetryDecision;
     try {
-      const raw = await this.callGroq(prompt);
-      decision = this.parseJson<RetryDecision>(raw);
+      const { text, latencyMs: measuredLatencyMs } = await this.callLlm(prompt, 600);
+      latencyMs = measuredLatencyMs;
+      decision = this.parseJson<RetryDecision>(text);
     } catch (err) {
-      await this.logger.warn("[agent] Groq retry decision failed; using deterministic safety fallback", {
+      await this.logger.warn("[agent] LLM retry decision failed; using deterministic safety fallback", {
         message: err instanceof Error ? err.message : String(err),
       });
       const nonRetryable =
@@ -248,11 +269,16 @@ Respond with ONLY valid JSON, no markdown fences:
           ? Math.max(input.tipStats.p75Lamports, Math.ceil(input.previousTipLamports * 1.25))
           : input.previousTipLamports;
       decision = {
+        engine: this.provider.name,
+        model: this.provider.model,
+        promptHash,
+        llmLatencyMs: latencyMs,
+        guardrailAdjusted: false,
         shouldRetry: !nonRetryable,
         action: nonRetryable ? "abort" : cls.recoveryPath,
         newTipLamports: fallbackTip,
         reasoning:
-          `Groq was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. ` +
+          `The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. ` +
           `The classifier labeled the failure as ${input.failure} with ${(cls.confidence * 100).toFixed(0)}% confidence. ` +
           `The selected recovery path is ${nonRetryable ? "abort" : cls.recoveryPath}; the next tip would be ${fallbackTip} lamports based on current percentiles and previous tip.`,
         refreshBlockhash: cls.recoveryPath === "retry_refresh_blockhash" || input.blockhashExpired,
@@ -262,8 +288,17 @@ Respond with ONLY valid JSON, no markdown fences:
     }
 
     // Hard limits
+    const preClampTip = decision.newTipLamports;
+    const preClampWaitMs = decision.waitMs;
     decision.newTipLamports  = Math.max(1_000, Math.min(500_000, decision.newTipLamports));
     decision.waitMs          = Math.max(800,   Math.min(8_000,   decision.waitMs));
+    decision.engine          = this.provider.name;
+    decision.model           = this.provider.model;
+    decision.promptHash      = promptHash;
+    decision.llmLatencyMs    = latencyMs;
+    decision.guardrailAdjusted =
+      preClampTip !== decision.newTipLamports ||
+      preClampWaitMs !== decision.waitMs;
     decision.confidenceScore = Math.max(0,     Math.min(1,       decision.confidenceScore ?? 0.8));
 
     // Enforce non-negotiable rules regardless of model output
@@ -295,14 +330,12 @@ Respond with ONLY valid JSON, no markdown fences:
 
   // ── Private helpers ──────────────────────────────────────────────────────────
 
-  private async callGroq(prompt: string): Promise<string> {
-    const completion = await this.groq.chat.completions.create({
-      model:       this.model,
-      messages:    [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      max_tokens:  600,
-    });
-    return (completion.choices[0]?.message?.content ?? "").trim();
+  private async callLlm(prompt: string, maxTokens: number): Promise<{ text: string; latencyMs: number }> {
+    return this.provider.complete(prompt, maxTokens);
+  }
+
+  private hashPrompt(prompt: string): string {
+    return crypto.createHash("sha256").update(prompt).digest("hex");
   }
 
   private parseJson<T>(raw: string): T {
