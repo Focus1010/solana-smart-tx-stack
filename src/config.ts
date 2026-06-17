@@ -41,9 +41,14 @@ export const config = {
     token: optionalEnv("YELLOWSTONE_TOKEN", ""),
   },
   groq: {
-    apiKey: requireEnv("GROQ_API_KEY"),
+    apiKey: optionalEnv("GROQ_API_KEY", ""),
     model: optionalEnv("GROQ_MODEL", "llama-3.3-70b-versatile"),
   },
+  anthropic: {
+    apiKey: optionalEnv("ANTHROPIC_API_KEY", ""),
+    model: optionalEnv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
+  },
+  aiProvider: optionalEnv("AI_PROVIDER", "groq") as "groq" | "anthropic",
   wallet: {
     privateKey: requireEnv("WALLET_PRIVATE_KEY"),
   },
