@@ -12,12 +12,14 @@
     "generate:evidence": "ts-node src/scripts/generate-evidence.ts",
     "generate:mainnet-report": "ts-node src/scripts/generate-mainnet-report.ts",
     "evidence:audit": "ts-node src/scripts/verify-evidence.ts",
+    "verify:evidence": "ts-node src/scripts/verify-evidence.ts",
     "bounty:audit": "npm run generate:evidence && npm run evidence:audit"
   },
   "keywords": ["solana", "jito", "yellowstone", "bundles", "ai-agent"],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.0",
     "@solana/web3.js": "^1.98.4",
     "@triton-one/yellowstone-grpc": "^5.0.8",
     "bs58": "^6.0.0",

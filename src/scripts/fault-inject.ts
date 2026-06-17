@@ -328,6 +328,8 @@ function buildEntry(
     runId,
     bundleId:          null,
     signature,
+    network:           network_name,
+    dryRun:            false,
     tipLamports,
     tipAccount:        TIP_ACCOUNT,
     submittedAt:       stages[0]?.timestamp ?? Date.now(),
@@ -347,6 +349,7 @@ function buildEntry(
     networkConditionsAtConfirmation:  null,
     deltaFromSubmissionToConfirmation: null,
     triggerEvent:      null,
+    marinadeTriggerEvent: null,
     retryCount,
     blockhashUsed:     "",
     slotAtSubmission:  network.currentSlot,
@@ -376,7 +379,7 @@ async function main(): Promise<void> {
     await requestAirdropIfNeeded(connection, payer, 0.1);
   }
 
-  const agent          = new Agent(logger);
+  const agent          = await Agent.create(logger);
   const tipOracle      = new TipOracle(connection, logger);
   const leaderDetector = new LeaderWindowDetector(logger);
   const classifier     = new AdvancedFailureClassifier();
