@@ -6,7 +6,7 @@ import { Logger }                                   from "../utils/logger";
 // Source: https://marinade.finance/developers
 
 const MARINADE_PROGRAM_ID = new PublicKey(
-  "MarBmsSgKXdrQP1zU937A8bLnSZ3xq4b5VW6dcjpyQ"
+  "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD"
 );
 
 // Minimum SOL value to classify as a trigger event worth reacting to
