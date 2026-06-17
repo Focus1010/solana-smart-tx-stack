@@ -1,8 +1,0 @@
-2026-06-05T01:57:42.429Z [INFO ] Payer: F3zJDCAaxvuF...RxsW
-2026-06-05T01:57:42.817Z [WARN ] [tip-oracle] No live fee data available — using conservative floor values. This is normal on quiet devnet periods.
-2026-06-05T01:57:43.305Z [  OK ] [inject] Bundle threw as expected (stale blockhash) {"message":"getaddrinfo ENOTFOUND devnet.block-engine.jito.wtf"}
-2026-06-05T01:57:43.648Z [  AI ] [agent] Retry decision {"shouldRetry":true,"newTip":5000,"refreshBlockhash":true,"waitMs":1000,"reasoning":"The blockhash has expired and needs to be refreshed before retrying with a competitive tip."}
-2026-06-05T01:57:43.650Z [INFO ] [inject] Agent says retry after 1000ms {"newTip":5000,"refreshBlockhash":true,"reasoning":"The blockhash has expired and needs to be refreshed before retrying with a competitive tip."}
-2026-06-05T01:57:44.852Z [  AI ] [agent] Tip decision {"tip":2000,"confidence":"0.80","reasoning":"Using p50 as baseline due to normal network conditions."}
-2026-06-05T01:57:44.928Z [WARN ] [inject] Retry bundle threw {"message":"getaddrinfo ENOTFOUND devnet.block-engine.jito.wtf"}
-2026-06-05T01:57:44.936Z [INFO ] [inject] Entry written to lifecycle log
