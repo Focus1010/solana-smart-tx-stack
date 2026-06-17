@@ -29,8 +29,7 @@ export class AdvancedFailureClassifier {
 
     // ── EXPIRED_BLOCKHASH ─────────────────────────────────────────────────────
     if (
-      msg.includes("blockhash") && (msg.includes("expir") || msg.includes("not found")) ||
-      msg.includes("blockhash not found")
+      msg.includes("blockhash") && msg.includes("expir")
     ) {
       return {
         type:         "EXPIRED_BLOCKHASH",
