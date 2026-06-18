@@ -34,7 +34,10 @@ export class LifecycleTracker {
   private readonly PROCESSED_TIMEOUT_MS  = 20_000;
   private readonly CONFIRMED_TIMEOUT_MS  = 45_000;
   private readonly FINALIZED_TIMEOUT_MS  = 90_000;
-  private readonly POLL_INTERVAL_MS      = 600;
+  // 2s between RPC polls -- 600ms was too aggressive for the free public RPC
+  // (api.mainnet-beta.solana.com) and caused 429 spam. If you have a paid
+  // RPC endpoint set in SOLANA_RPC_URL you can lower this safely.
+  private readonly POLL_INTERVAL_MS      = 2_000;
 
   constructor(connection: Connection, slotSource: SlotSource, logger: Logger) {
     this.connection        = connection;

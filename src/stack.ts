@@ -522,8 +522,15 @@ export class Stack {
 
   //  Send a real zero-lamport self-transfer 
 
-  private async sendRealTx(blockhash: string): Promise<string | null> {
+  private async sendRealTx(_bundleBlockhash: string): Promise<string | null> {
     try {
+      // Fetch a FRESH blockhash independent of the bundle's cached blockhash.
+      // If sendRealTx reused the bundle's blockhash AND had identical instructions,
+      // both txs would produce the same signature -- Jito drops the bundle as a
+      // duplicate of an already-confirmed transaction (Invalid status).
+      const { blockhash, lastValidBlockHeight } =
+        await this.connection.getLatestBlockhash("confirmed");
+
       const message = new TransactionMessage({
         payerKey:        this.payer.publicKey,
         recentBlockhash: blockhash,
@@ -544,8 +551,11 @@ export class Stack {
         preflightCommitment: "confirmed",
       });
 
+      // Pass the cached lastValidBlockHeight -- avoids a second getLatestBlockhash()
+      // call inside confirmTransaction which would add another RPC hit on the
+      // free public endpoint and contribute to 429s.
       await this.connection.confirmTransaction(
-        { signature: sig, blockhash, lastValidBlockHeight: (await this.connection.getLatestBlockhash()).lastValidBlockHeight },
+        { signature: sig, blockhash, lastValidBlockHeight },
         "confirmed"
       );
 

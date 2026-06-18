@@ -25,12 +25,16 @@ export const config = {
   jito: {
     blockEngineUrl: optionalEnv(
       "JITO_BLOCK_ENGINE_URL",
-      "https://mainnet.block-engine.jito.wtf"
+      "https://frankfurt.mainnet.block-engine.jito.wtf"
     ),
-    // For devnet simulation we use the JSON-RPC endpoint
+    // Use a regional endpoint, NOT the global mainnet.block-engine.jito.wtf.
+    // The global endpoint is load-balanced: sendBundle may hit server A while
+    // getInflightBundleStatuses hits server B, which has no record of the bundle
+    // and immediately returns Invalid. A regional endpoint is sticky.
+    // Regions: frankfurt (EU/Africa), amsterdam, ny, tokyo, slc
     rpcUrl: optionalEnv(
       "JITO_RPC_URL",
-      "https://mainnet.block-engine.jito.wtf/api/v1"
+      "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1"
     ),
   },
   yellowstone: {
