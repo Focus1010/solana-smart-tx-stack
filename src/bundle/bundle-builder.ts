@@ -2,23 +2,30 @@ import {
   Connection,
   Keypair,
   PublicKey,
-  Transaction,
   SystemProgram,
-  LAMPORTS_PER_SOL,
   BlockhashWithExpiryBlockHeight,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import { bundle as JitoBundle } from "jito-ts";
 import { Logger } from "../utils/logger";
 
 const { Bundle } = JitoBundle;
 
-//  Known Jito tip accounts (used to attach tip instruction) 
+// ─── Jito tip accounts ────────────────────────────────────────────────────────
+// Full list of 8 official Jito tip accounts (mainnet).
+// Source: https://docs.jito.wtf/lowlatencytxnsend/#tip-accounts
+// Picked at random per submission to reduce contention.
 
 const TIP_ACCOUNTS = [
   "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
   "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
   "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
   "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+  "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+  "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+  "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+  "juLesoSmdTcRtzjrcVaBdQKzewoU7DR9AL8GCFmFKYc",
 ];
 
 function pickTipAccount(): PublicKey {
@@ -26,15 +33,13 @@ function pickTipAccount(): PublicKey {
   return new PublicKey(TIP_ACCOUNTS[idx]);
 }
 
-//  BlockhashCache 
-// Caches a recent blockhash and tracks whether it has expired.
-// Solana blockhashes are valid for ~150 slots (~60 seconds).
+// ─── BlockhashCache ───────────────────────────────────────────────────────────
 
 export class BlockhashCache {
   private connection: Connection;
   private cached: BlockhashWithExpiryBlockHeight | null = null;
   private fetchedAtSlot = 0;
-  private readonly REFRESH_SLOTS = 100; // Proactively refresh before expiry
+  private readonly REFRESH_SLOTS = 100;
 
   constructor(connection: Connection) {
     this.connection = connection;
@@ -47,7 +52,6 @@ export class BlockhashCache {
       currentSlot - this.fetchedAtSlot > this.REFRESH_SLOTS;
 
     if (needsRefresh) {
-      // Always fetch at "confirmed" -- never "finalized" (too stale)
       this.cached        = await this.connection.getLatestBlockhash("confirmed");
       this.fetchedAtSlot = currentSlot;
     }
@@ -66,11 +70,11 @@ export class BlockhashCache {
   }
 }
 
-//  BundleBuilder 
+// ─── BundleBuilder ────────────────────────────────────────────────────────────
 
 export interface BuiltBundle {
   bundle:      InstanceType<typeof Bundle>;
-  transaction: Transaction;
+  transaction: VersionedTransaction;
   tipAccount:  string;
   tipLamports: number;
   blockhash:   string;
@@ -89,9 +93,10 @@ export class BundleBuilder {
     this.blockhashCache = new BlockhashCache(connection);
   }
 
-  //  Build a bundle containing a self-transfer + tip instruction 
-  // The self-transfer is a zero-lamport send back to self -- it is valid,
-  // cheap, and produces a real signature that can be tracked on-chain.
+  // Build a VersionedTransaction bundle containing a self-transfer + tip.
+  // Uses TransactionMessage + VersionedTransaction (V0) which is required
+  // by the Jito block engine -- legacy Transaction serialization causes
+  // bundles to be marked Invalid and never land.
 
   async build(
     tipLamports: number,
@@ -101,46 +106,38 @@ export class BundleBuilder {
     const blockhashInfo = await this.blockhashCache.get(currentSlot, forceBlockhashRefresh);
     const tipAccount    = pickTipAccount();
 
-    const tx = new Transaction({
+    const message = new TransactionMessage({
+      payerKey:        this.payer.publicKey,
       recentBlockhash: blockhashInfo.blockhash,
-      feePayer:        this.payer.publicKey,
-    });
+      instructions: [
+        // Primary: zero-lamport self-transfer (minimal cost, real verifiable sig)
+        SystemProgram.transfer({
+          fromPubkey: this.payer.publicKey,
+          toPubkey:   this.payer.publicKey,
+          lamports:   0,
+        }),
+        // Tip: pays the Jito tip account to enter the block engine auction
+        SystemProgram.transfer({
+          fromPubkey: this.payer.publicKey,
+          toPubkey:   tipAccount,
+          lamports:   tipLamports,
+        }),
+      ],
+    }).compileToV0Message();
 
-    // Primary instruction: zero-lamport self-transfer (minimal cost, real tx)
-    tx.add(
-      SystemProgram.transfer({
-        fromPubkey: this.payer.publicKey,
-        toPubkey:   this.payer.publicKey,
-        lamports:   0,
-      })
-    );
+    const vtx = new VersionedTransaction(message);
+    vtx.sign([this.payer]);
 
-    // Tip instruction: pays the Jito tip account
-    tx.add(
-      SystemProgram.transfer({
-        fromPubkey: this.payer.publicKey,
-        toPubkey:   tipAccount,
-        lamports:   tipLamports,
-      })
-    );
-
-    tx.sign(this.payer);
-
-    // Jito Bundle: max 5 transactions per bundle.
-    // Cast to `any` here because jito-ts type defs expect VersionedTransaction
-    // but the runtime serializeTransactions() handles legacy Transaction correctly.
-    const jitoBundle = new Bundle([tx as any], 5);
+    const jitoBundle = new Bundle([vtx], 5);
 
     return {
       bundle:      jitoBundle,
-      transaction: tx,
+      transaction: vtx,
       tipAccount:  tipAccount.toBase58(),
       tipLamports,
       blockhash:   blockhashInfo.blockhash,
     };
   }
-
-  //  Expose blockhash cache for external expiry checks 
 
   isBlockhashExpired(slot: number): boolean {
     return this.blockhashCache.isExpiredAt(slot);

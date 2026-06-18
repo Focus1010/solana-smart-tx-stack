@@ -1,5 +1,5 @@
 import { JitoJsonRpcClient } from "jito-js-rpc";
-import { Connection, Transaction } from "@solana/web3.js";
+import { Connection, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import { BuiltBundle } from "./bundle-builder";
 import { FailureReason } from "../types";
@@ -22,37 +22,31 @@ export interface SubmitResult {
 // Sends a Jito bundle via the JSON-RPC block engine API, then polls
 // getInflightBundleStatuses for confirmation.
 //
-// Key correctness notes (source: Jito docs + jito-js-rpc source):
+// Key correctness notes:
 //
-// 1. Transactions must be base58-encoded (NOT base64).
-//    The block engine API uses the same wire format as sendTransaction.
+// 1. Transactions must be base58-encoded VersionedTransactions.
+//    Legacy Transaction serialization causes Invalid bundle status.
 //
 // 2. sendBundle(params) expects params = [[tx1, tx2, ...]] -- an array
 //    containing ONE array of encoded transactions.
-//    jito-js-rpc wraps this in { params: [[...]] } for you.
 //
-// 3. No auth key is required for public endpoints. The JitoJsonRpcClient
-//    constructor second argument is the uuid for priority access; leave
-//    empty ("") for the public rate-limited tier.
+// 3. Poll interval is 4s to avoid 429s on the public Jito tier.
+//    The free tier is heavily rate-limited; reduce to 2s only if you
+//    have a Jito access UUID.
 //
-// 4. Jito does NOT operate on devnet. On devnet JITO_RPC_URL should point
-//    to a testnet block engine (https://dallas.testnet.block-engine.jito.wtf/api/v1)
-//    or submissions will fail with NOTFOUND. This is expected behaviour and
-//    the stack logs it clearly rather than crashing.
+// 4. Jito does NOT operate on devnet.
 
 export class BundleSubmitter {
   private jitoClient: JitoJsonRpcClient;
   private connection: Connection;
   private logger:     Logger;
 
-  // How long to poll for inflight bundle status after submission
   private readonly POLL_TIMEOUT_MS  = 30_000;
-  private readonly POLL_INTERVAL_MS = 2_000;
+  private readonly POLL_INTERVAL_MS = 4_000; // raised from 2s to reduce 429s on public tier
 
   constructor(connection: Connection, logger: Logger) {
     this.connection = connection;
     this.logger     = logger;
-    // Second arg is uuid for priority tier; empty string uses public tier
     this.jitoClient = new JitoJsonRpcClient(config.jito.rpcUrl, "");
   }
 
@@ -68,13 +62,8 @@ export class BundleSubmitter {
     });
 
     try {
-      // Serialize to base58 -- this is the required encoding for Jito's
-      // sendBundle API (same as the Solana wire transaction format)
       const encodedTxs = this.serializeToBase58(built);
-
-      // sendBundle expects [[tx1, tx2, ...]] as params
-      // jito-js-rpc's sendBundle(params) sends { params: params } directly
-      const response = await this.jitoClient.sendBundle([encodedTxs]);
+      const response   = await this.jitoClient.sendBundle([encodedTxs]);
 
       if (response?.result) {
         const bundleId = response.result as string;
@@ -83,7 +72,6 @@ export class BundleSubmitter {
           sig:      shortKey(sig),
         });
 
-        // Poll for landing confirmation
         const landed = await this.pollBundleStatus(bundleId);
 
         return {
@@ -96,7 +84,6 @@ export class BundleSubmitter {
         };
       }
 
-      // Block engine returned a JSON-RPC error in response.error
       const failure = this.classifyJitoError(response?.error);
       await this.logger.warn("[submitter] Bundle rejected by block engine", {
         failure,
@@ -135,31 +122,28 @@ export class BundleSubmitter {
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
   private serializeToBase58(built: BuiltBundle): string[] {
-    return [built.transaction].map((tx: Transaction) =>
+    return [built.transaction].map((tx: VersionedTransaction) =>
       bs58.encode(tx.serialize())
     );
   }
 
-  private extractSignatureBase58(tx: Transaction): string {
-    if (tx.signatures.length > 0 && tx.signatures[0].signature) {
-      return bs58.encode(tx.signatures[0].signature);
+  private extractSignatureBase58(tx: VersionedTransaction): string {
+    if (tx.signatures.length > 0 && tx.signatures[0]) {
+      return bs58.encode(tx.signatures[0]);
     }
     return "unknown";
   }
-
-  // Poll getInflightBundleStatuses until the bundle lands, fails, or times out.
-  // Returns true if landed, false otherwise.
 
   private async pollBundleStatus(bundleId: string): Promise<boolean> {
     const deadline = Date.now() + this.POLL_TIMEOUT_MS;
 
     while (Date.now() < deadline) {
       try {
-        const resp = await this.jitoClient.getInFlightBundleStatuses([[bundleId]]);
+        const resp     = await this.jitoClient.getInFlightBundleStatuses([[bundleId]]);
         const statuses = resp?.result?.value ?? [];
 
         if (statuses.length > 0) {
-          const status = statuses[0].status as string;
+          const status     = statuses[0].status as string;
           const landedSlot = statuses[0].landed_slot as number | null;
 
           await this.logger.debug("[submitter] Bundle inflight status", {

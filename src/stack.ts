@@ -1,9 +1,9 @@
 import {
   Connection,
   Keypair,
-  Transaction,
   SystemProgram,
-  sendAndConfirmTransaction,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import { Agent }                    from "./agent/agent";
 import { BundleBuilder }            from "./bundle/bundle-builder";
@@ -524,20 +524,31 @@ export class Stack {
 
   private async sendRealTx(blockhash: string): Promise<string | null> {
     try {
-      const tx = new Transaction({
+      const message = new TransactionMessage({
+        payerKey:        this.payer.publicKey,
         recentBlockhash: blockhash,
-        feePayer:        this.payer.publicKey,
-      });
-      tx.add(SystemProgram.transfer({
-        fromPubkey: this.payer.publicKey,
-        toPubkey:   this.payer.publicKey,
-        lamports:   0,
-      }));
+        instructions: [
+          SystemProgram.transfer({
+            fromPubkey: this.payer.publicKey,
+            toPubkey:   this.payer.publicKey,
+            lamports:   0,
+          }),
+        ],
+      }).compileToV0Message();
 
-      const sig = await sendAndConfirmTransaction(
-        this.connection, tx, [this.payer],
-        { commitment: "confirmed", skipPreflight: false }
+      const vtx = new VersionedTransaction(message);
+      vtx.sign([this.payer]);
+
+      const sig = await this.connection.sendTransaction(vtx, {
+        skipPreflight:       false,
+        preflightCommitment: "confirmed",
+      });
+
+      await this.connection.confirmTransaction(
+        { signature: sig, blockhash, lastValidBlockHeight: (await this.connection.getLatestBlockhash()).lastValidBlockHeight },
+        "confirmed"
       );
+
       await this.logger.ok("[stack] Real tx confirmed", { sig: shortKey(sig) });
       return sig;
     } catch (err) {
