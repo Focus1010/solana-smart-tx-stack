@@ -1,7 +1,3 @@
-import Client, {
-  CommitmentLevel as YellowstoneCommitment,
-  SubscribeRequest,
-} from "@triton-one/yellowstone-grpc";
 import { EventEmitter } from "events";
 import { Connection }   from "@solana/web3.js";
 import { SlotEvent }    from "../types";
@@ -9,40 +5,58 @@ import { Logger }       from "../utils/logger";
 import { sleep }        from "../utils/helpers";
 import { config }       from "../config";
 
-//  Yellowstone slot status constants 
-// From the Dragon's Mouth proto: PROCESSED=0, CONFIRMED=1, FINALIZED=2
-// Dead/skipped slots also appear and must be handled gracefully.
+// ─── Yellowstone slot status constants ────────────────────────────────────────
+// Dragon's Mouth proto: PROCESSED=0, CONFIRMED=1, FINALIZED=2
 
-const YS_STATUS_PROCESSED  = 0;
-const YS_STATUS_CONFIRMED   = 1;
-const YS_STATUS_FINALIZED   = 2;
+const YS_PROCESSED  = 0;
+const YS_CONFIRMED  = 1;
+const YS_FINALIZED  = 2;
+const YS_DEAD       = 6;
 
-// Ping interval: some cloud providers close idle gRPC streams after 60s.
-// Sending a ping every 30s keeps the connection alive.
-const PING_INTERVAL_MS      = 30_000;
+// Ping interval -- keeps gRPC stream alive through cloud load balancers
 
-//  SlotStream 
+const PING_INTERVAL_MS = 30_000;
+
+// ─── Safe Yellowstone import ──────────────────────────────────────────────────
+// @triton-one/yellowstone-grpc v5 uses a native Rust binding that may not be
+// available on the current platform (e.g. Windows). We catch the import error
+// and fall back to SlotPoller gracefully rather than crashing the process.
+
+let YellowstoneClient: any  = null;
+let YellowstoneCommitment: any = null;
+
+try {
+  const mod = require("@triton-one/yellowstone-grpc");
+  YellowstoneClient     = mod.default ?? mod;
+  YellowstoneCommitment = mod.CommitmentLevel;
+} catch {
+  // Native binding unavailable on this platform -- SlotPoller will be used
+}
+
+// ─── SlotStream ───────────────────────────────────────────────────────────────
 // Production Yellowstone gRPC slot subscription.
 //
-// Features:
-// - Correct endpoint format: https:// prefix required by SDK v5+
-// - Ping/pong keepalive to prevent cloud provider stream drops
-// - fromSlot replay on reconnect to avoid missing slots
-// - Separate high-water marks for processed, confirmed, finalized
-// - Exponential backoff reconnect, max 3 attempts before graceful fallback
-// - Dead slot detection and logging
+// Correctness notes:
+// - endpoint must have https:// prefix (SDK v5 requires it)
+// - slots filter: { solana: { filterByCommitment: false } } -- "solana" is an
+//   arbitrary label, filterByCommitment:false means we receive all levels
+// - fromSlot must be a string (proto int64 serialized as string in JS)
+// - Ping frame: must include full empty subscription fields alongside ping ID
+// - Token is passed as the second constructor arg (no x-token header needed)
+// - If native binding is unavailable, start() logs a warning and emits
+//   "fallback" so the stack switches to SlotPoller automatically
 
 export class SlotStream extends EventEmitter {
   private logger:  Logger;
-  private client:  Client | null = null;
+  private client:  any    = null;
   private running  = false;
 
-  private latestProcessedSlot  = 0;
-  private latestConfirmedSlot  = 0;
-  private latestFinalizedSlot  = 0;
-  private lastProcessedSlot    = 0;  // For fromSlot replay on reconnect
-  private slotTimestamps:        number[] = [];
-  private deadSlotsDetected      = 0;
+  private latestProcessedSlot = 0;
+  private latestConfirmedSlot = 0;
+  private latestFinalizedSlot = 0;
+  private lastProcessedSlot   = 0;
+  private slotTimestamps:       number[] = [];
+  private deadSlotsDetected     = 0;
   private readonly MAX_SLOT_HISTORY = 20;
 
   constructor(logger: Logger) {
@@ -50,21 +64,33 @@ export class SlotStream extends EventEmitter {
     this.logger = logger;
   }
 
-  getCurrentSlot():          number   { return this.latestProcessedSlot;  }
-  getLatestConfirmedSlot():  number   { return this.latestConfirmedSlot;  }
-  getLatestFinalizedSlot():  number   { return this.latestFinalizedSlot;  }
-  getRecentSlotTimes():      number[] { return [...this.slotTimestamps];   }
-  getDeadSlotsDetected():    number   { return this.deadSlotsDetected;     }
+  getCurrentSlot():          number   { return this.latestProcessedSlot; }
+  getLatestConfirmedSlot():  number   { return this.latestConfirmedSlot; }
+  getLatestFinalizedSlot():  number   { return this.latestFinalizedSlot; }
+  getRecentSlotTimes():      number[] { return [...this.slotTimestamps];  }
+  getDeadSlotsDetected():    number   { return this.deadSlotsDetected;    }
 
   async start(): Promise<void> {
-    if (!config.yellowstone.endpoint) {
-      await this.logger.warn("[stream] YELLOWSTONE_ENDPOINT not set -- using SlotPoller fallback");
+    if (!YellowstoneClient) {
+      await this.logger.warn(
+        "[stream] @triton-one/yellowstone-grpc native binding unavailable on this platform. " +
+        "Falling back to RPC slot poller."
+      );
+      this.emit("fallback");
       return;
     }
+
+    if (!config.yellowstone.endpoint) {
+      await this.logger.warn("[stream] YELLOWSTONE_ENDPOINT not set -- using SlotPoller fallback");
+      this.emit("fallback");
+      return;
+    }
+
     this.running = true;
     this.connectWithRetry().catch(async (err) => {
       await this.logger.warn("[stream] Stream permanently stopped: " + String(err));
       this.running = false;
+      this.emit("fallback");
     });
   }
 
@@ -73,7 +99,7 @@ export class SlotStream extends EventEmitter {
     this.client  = null;
   }
 
-  //  Reconnect loop with exponential backoff 
+  // ── Reconnect with exponential backoff ────────────────────────────────────
 
   private async connectWithRetry(): Promise<void> {
     let attempt = 0;
@@ -83,7 +109,7 @@ export class SlotStream extends EventEmitter {
       try {
         await this.logger.info(`[stream] Connecting to Yellowstone (attempt ${attempt})...`);
         await this.subscribe();
-        // subscribe() resolved cleanly -- stream ended, reset attempt counter
+        // subscribe() returned cleanly -- reset counter
         attempt = 0;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -91,15 +117,12 @@ export class SlotStream extends EventEmitter {
 
         if (attempt >= 3) {
           await this.logger.warn(
-            "[stream] 3 consecutive failures -- falling back to RPC poller. " +
-            "Stack continues normally."
+            "[stream] 3 consecutive failures -- falling back to RPC poller."
           );
           this.running = false;
           this.emit("fallback");
           return;
         }
-
-        this.emit("error", err);
       }
 
       if (!this.running) break;
@@ -110,18 +133,18 @@ export class SlotStream extends EventEmitter {
     }
   }
 
-  //  gRPC subscribe with ping keepalive and fromSlot replay 
+  // ── Core gRPC subscription ────────────────────────────────────────────────
 
   private async subscribe(): Promise<void> {
-    // Per Triton docs: endpoint must include https:// prefix for SDK v5+
+    // SDK v5 requires https:// prefix
     const endpoint = config.yellowstone.endpoint.startsWith("http")
       ? config.yellowstone.endpoint
       : `https://${config.yellowstone.endpoint}`;
 
-    this.client = new Client(
+    this.client = new YellowstoneClient(
       endpoint,
       config.yellowstone.token || undefined,
-      { "grpc.max_receive_message_length": 64 * 1024 * 1024 } as any
+      { "grpc.max_receive_message_length": 64 * 1024 * 1024 }
     );
 
     await this.client.connect();
@@ -136,12 +159,11 @@ export class SlotStream extends EventEmitter {
         if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
       };
 
-      //  Ping keepalive 
-      // Triton docs: send ping every 30s, server responds with pong.
-      // Required to keep stream alive through cloud load balancers.
+      // Ping keepalive -- required to prevent cloud providers dropping the stream
+      // Must include all empty subscription maps alongside ping, per Triton spec
 
       pingTimer = setInterval(() => {
-        const pingReq: SubscribeRequest = {
+        const pingReq = {
           ping:               { id: pingId++ },
           slots:              {},
           accounts:           {},
@@ -155,33 +177,27 @@ export class SlotStream extends EventEmitter {
         stream.write(pingReq, () => {});
       }, PING_INTERVAL_MS);
 
-      //  Data handler 
+      // Data handler
 
       stream.on("data", (data: any) => {
-        // Handle pong response
         if (data?.pong) return;
-
         if (!data?.slot) return;
 
         const raw       = data.slot;
         const slot      = Number(raw.slot);
         const parent    = Number(raw.parent ?? slot - 1);
-        const statusNum = typeof raw.status === "number" ? raw.status : 0;
+        const statusNum = typeof raw.status === "number" ? raw.status : YS_PROCESSED;
         const now       = Date.now();
 
-        // Track dead slots
-        if (statusNum === 6 /* SLOT_DEAD */) {
+        if (statusNum === YS_DEAD) {
           this.deadSlotsDetected++;
-          this.emit("slot", {
-            slot, parent, status: "dead", timestamp: now,
-          } as SlotEvent);
+          this.emit("slot", { slot, parent, status: "dead", timestamp: now } as SlotEvent);
           return;
         }
 
         const status = this.numericToStatus(statusNum);
 
-        // Update high-water marks per commitment level
-        if (status === "processed" || statusNum === YS_STATUS_PROCESSED) {
+        if (statusNum === YS_PROCESSED) {
           if (slot > this.latestProcessedSlot) {
             this.latestProcessedSlot = slot;
             this.lastProcessedSlot   = slot;
@@ -192,13 +208,11 @@ export class SlotStream extends EventEmitter {
           }
         }
 
-        if (statusNum === YS_STATUS_CONFIRMED || status === "confirmed") {
+        if (statusNum === YS_CONFIRMED) {
           this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
         }
 
-        if (statusNum === YS_STATUS_FINALIZED || status === "finalized") {
-          // Per Triton docs: when a slot is finalized, mark all ancestors as
-          // finalized too (quirk in how Geyser emits finalization events)
+        if (statusNum === YS_FINALIZED) {
           this.latestFinalizedSlot = Math.max(this.latestFinalizedSlot, slot);
           this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
         }
@@ -215,16 +229,12 @@ export class SlotStream extends EventEmitter {
       stream.on("end",   () => { cleanup(); resolve(); });
       stream.on("close", () => { cleanup(); resolve(); });
 
-      //  Initial subscription request 
-      // Subscribe to all slots. No filterByCommitment -- we want all levels
-      // so we can track processed, confirmed, finalized independently.
-      // fromSlot enables replay if reconnecting after a disconnect.
+      // Initial subscription request
+      // "solana" is just an arbitrary label for this slot filter slot.
+      // filterByCommitment: false means we get all commitment levels.
+      // fromSlot must be a string (int64 proto field).
 
-      const request: SubscribeRequest = {
-        // "solana" is just a label for this filter -- the gRPC API keys
-        // filters by an arbitrary string name. filterByCommitment: false
-        // means we receive updates for ALL commitment levels (processed,
-        // confirmed, finalized) so this stack can track each independently.
+      const request: any = {
         slots:              { solana: { filterByCommitment: false } },
         accounts:           {},
         transactions:       {},
@@ -232,13 +242,11 @@ export class SlotStream extends EventEmitter {
         blocks:             {},
         blocksMeta:         {},
         entry:              {},
-        commitment:         YellowstoneCommitment.PROCESSED,
+        commitment:         YellowstoneCommitment?.PROCESSED ?? 0,
         accountsDataSlice:  [],
         ping:               undefined,
       };
-      // Enable replay from last seen slot on reconnect to avoid missing slots.
-      // fromSlot is an int64 in the proto, represented as a string in JS to
-      // avoid precision loss for large slot numbers.
+
       if (this.lastProcessedSlot > 0) {
         request.fromSlot = String(this.lastProcessedSlot);
       }
@@ -250,32 +258,29 @@ export class SlotStream extends EventEmitter {
   }
 
   private numericToStatus(n: number): SlotEvent["status"] {
-    if (n === YS_STATUS_FINALIZED) return "finalized";
-    if (n === YS_STATUS_CONFIRMED) return "confirmed";
-    // SLOT_DEAD check
-    if (n === 6) return "dead";
+    if (n === YS_FINALIZED) return "finalized";
+    if (n === YS_CONFIRMED) return "confirmed";
+    if (n === YS_DEAD)      return "dead";
     return "processed";
   }
 }
 
-//  SlotPoller 
-// RPC fallback for when Yellowstone is unavailable.
-// Polls getSlot() at all three commitment levels with cycle-based scheduling
-// to avoid excessive RPC load.
+// ─── SlotPoller ───────────────────────────────────────────────────────────────
+// RPC fallback for when Yellowstone is unavailable or the native binding is
+// missing on the current platform.
 
 export class SlotPoller extends EventEmitter {
   private connection:          Connection;
   private logger:              Logger;
-  private latestProcessedSlot  = 0;
-  private latestConfirmedSlot  = 0;
-  private latestFinalizedSlot  = 0;
-  private slotTimestamps:        number[] = [];
-  private timer:                 NodeJS.Timeout | null = null;
-  private pollCycle              = 0;
-  private readonly MAX_SLOT_HISTORY  = 20;
-  private readonly POLL_INTERVAL_MS  = 400;
-  // Poll confirmed/finalized every 5 cycles (~2s) to reduce RPC load
-  private readonly DEEP_POLL_EVERY   = 5;
+  private latestProcessedSlot = 0;
+  private latestConfirmedSlot = 0;
+  private latestFinalizedSlot = 0;
+  private slotTimestamps:       number[] = [];
+  private timer:                NodeJS.Timeout | null = null;
+  private pollCycle             = 0;
+  private readonly MAX_SLOT_HISTORY = 20;
+  private readonly POLL_INTERVAL_MS = 400;
+  private readonly DEEP_POLL_EVERY  = 5;
 
   constructor(connection: Connection, logger: Logger) {
     super();
@@ -283,11 +288,11 @@ export class SlotPoller extends EventEmitter {
     this.logger     = logger;
   }
 
-  getCurrentSlot():          number   { return this.latestProcessedSlot;  }
-  getLatestConfirmedSlot():  number   { return this.latestConfirmedSlot;  }
-  getLatestFinalizedSlot():  number   { return this.latestFinalizedSlot;  }
-  getRecentSlotTimes():      number[] { return [...this.slotTimestamps];   }
-  getDeadSlotsDetected():    number   { return 0; }
+  getCurrentSlot():          number   { return this.latestProcessedSlot; }
+  getLatestConfirmedSlot():  number   { return this.latestConfirmedSlot; }
+  getLatestFinalizedSlot():  number   { return this.latestFinalizedSlot; }
+  getRecentSlotTimes():      number[] { return [...this.slotTimestamps];  }
+  getDeadSlotsDetected():    number   { return 0;                         }
 
   async start(): Promise<void> {
     await this.logger.info("[poller] Starting RPC slot polling (Yellowstone fallback)");
@@ -312,7 +317,6 @@ export class SlotPoller extends EventEmitter {
           }
           this.slotTimestamps.push(now);
           this.latestProcessedSlot = processed;
-
           this.emit("slot", {
             slot: processed, parent: processed - 1,
             status: "processed", timestamp: now,
@@ -342,7 +346,7 @@ export class SlotPoller extends EventEmitter {
           }
         }
       } catch {
-        // Transient RPC error -- continue polling
+        // Transient RPC error -- keep polling
       }
 
       this.poll();

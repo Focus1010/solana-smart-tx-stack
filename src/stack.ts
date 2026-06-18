@@ -72,14 +72,6 @@ export class Stack {
     this.leaderDetector  = new LeaderWindowDetector(logger);
     this.classifier      = new AdvancedFailureClassifier();
 
-    // If Yellowstone gives up, ensure slotSource keeps working via poller
-    this.slotSource.on("fallback", async () => {
-      await this.logger.warn("[stack] Yellowstone gave up -- switching to RPC poller");
-      const poller = new SlotPoller(this.connection, logger);
-      this.slotSource  = poller;
-      this.tracker     = new LifecycleTracker(this.connection, poller, logger);
-      await poller.start();
-    });
   }
 
   //  Initialise 
@@ -89,6 +81,24 @@ export class Stack {
     await this.logger.info("[stack] Network: " + config.solana.network);
     await this.logger.info("[stack] Payer:   " + shortKey(this.payer.publicKey.toBase58(), 12));
     this.agent = await Agent.create(this.logger);
+
+    // Register fallback handler BEFORE start() so we catch both:
+    //   (a) immediate emit from start() when native binding is unavailable
+    //   (b) deferred emit after 3 failed reconnect attempts
+    this.slotSource.on("fallback", async () => {
+      await this.logger.warn("[stack] Yellowstone unavailable -- switching to RPC poller");
+      if (this.slotSource instanceof SlotPoller) return; // already on poller
+      const poller = new SlotPoller(this.connection, this.logger);
+      // Re-register the slot timestamp forwarder on the new source
+      poller.on("slot", (ev: any) => {
+        if (ev?.status === "processed") {
+          this.networkObs.recordSlotTimestamp(ev.timestamp);
+        }
+      });
+      this.slotSource = poller;
+      this.tracker    = new LifecycleTracker(this.connection, poller, this.logger);
+      await poller.start();
+    });
 
     // Forward slot timestamps to NetworkStateObserver
     this.slotSource.on("slot", (ev: any) => {
