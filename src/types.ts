@@ -1,8 +1,8 @@
-//  Commitment levels 
+// Commitment levels
 
 export type CommitmentLevel = "processed" | "confirmed" | "finalized";
 
-//  Bundle lifecycle stages 
+// Bundle lifecycle stages
 
 export type BundleStage =
   | "submitted"
@@ -11,7 +11,7 @@ export type BundleStage =
   | "finalized"
   | "failed";
 
-//  Failure classifications 
+// Failure classifications
 
 export type FailureReason =
   | "EXPIRED_BLOCKHASH"
@@ -30,7 +30,7 @@ export type FailureReason =
   | "TIMEOUT"
   | "UNKNOWN";
 
-//  Fault injection modes 
+// Fault injection modes
 
 export type FaultMode =
   | "none"
@@ -38,7 +38,7 @@ export type FaultMode =
   | "low_tip"
   | "compute_exceeded";
 
-//  Recovery paths 
+// Recovery paths
 
 export type RecoveryPath =
   | "retry_refresh_blockhash"
@@ -47,16 +47,28 @@ export type RecoveryPath =
   | "hold_and_wait"
   | "abort";
 
-//  Per-stage timestamp record 
+// Commitment source identifies how a commitment level was resolved.
+// This satisfies the bounty requirement to show stream-first confirmation
+// with RPC as a fallback, not as the primary path.
+
+export type CommitmentSource =
+  | "yellowstone_slot_stream"
+  | "yellowstone_tx_stream"
+  | "rpc_signature_status"
+  | "rpc_polling_fallback"
+  | "bundle_result_subscription";
+
+// Per-stage timestamp record
 
 export interface StageRecord {
   stage:             BundleStage;
   slot:              number | null;
   timestamp:         number;
   latencyFromPrevMs: number | null;
+  commitmentSource?: CommitmentSource;
 }
 
-//  Leader window snapshot 
+// Leader window snapshot
 
 export interface LeaderWindow {
   observedAt:           string;
@@ -66,7 +78,7 @@ export interface LeaderWindow {
   isJitoLeaderWindow:   boolean;
 }
 
-//  Network conditions (captured at a specific point in time) 
+// Network conditions (captured at a specific point in time)
 
 export interface NetworkConditions {
   capturedAt:               string;
@@ -83,16 +95,15 @@ export interface NetworkConditions {
   slotSkipRate:      number;
   recentFailureRate: number;
 
-  // Derived proxies. Each is computed directly from real observations made by
-  // this stack (slot timing, fee percentiles, run outcomes). None are sourced
-  // from external "public metrics" or hardcoded estimates. See
-  // network-state-observer.ts for the exact derivation of each value.
-  bundleLandingRate:     number; // 1 - recentFailureRate, from this stack's own runs
-  feeDispersionRatio:    number; // p95/p25 fee ratio, a congestion proxy
-  validatorLoadProxy:    number; // derived from slotSkipRate, 0.0-1.0
+  // Derived proxies computed from real observations made by this stack.
+  // None are sourced from external dashboards or hardcoded estimates.
+  // See network-state-observer.ts for derivation details.
+  bundleLandingRate:     number; // 1 - recentFailureRate over last 10 runs
+  feeDispersionRatio:    number; // p95/p25 fee ratio (congestion proxy)
+  validatorLoadProxy:    number; // derived from slotSkipRate, range 0.0-1.0
 }
 
-//  Delta between submission-time and confirmation-time conditions 
+// Delta between submission-time and confirmation-time conditions
 
 export interface NetworkConditionsDelta {
   blockProductionRateDeltaMs: number;
@@ -105,7 +116,7 @@ export interface NetworkConditionsDelta {
   bundleLandingRateDelta:      number;
 }
 
-//  Network snapshot fed to agent on every run 
+// Network snapshot fed to agent on every run
 
 export interface NetworkSnapshot {
   currentSlot:               number;
@@ -117,7 +128,7 @@ export interface NetworkSnapshot {
   conditions:                NetworkConditions;
 }
 
-//  Failure classification with recovery recommendation 
+// Failure classification with recovery recommendation
 
 export interface FailureClassification {
   type:         FailureReason;
@@ -128,7 +139,7 @@ export interface FailureClassification {
   reasoning:    string;
 }
 
-//  Trigger event context (Marinade or manual) 
+// Trigger event context (Marinade or manual)
 
 export interface MarinadeTriggerEvent {
   eventType:      "stake" | "unstake" | "deposit" | "withdraw";
@@ -144,7 +155,10 @@ export interface TriggerEvent {
   detectedAt: string;
 }
 
-//  AI decision evidence written into lifecycle logs 
+// AI decision evidence written into lifecycle logs.
+// Every call to the LLM provider produces a promptHash (sha256 of the raw
+// prompt) and an llmLatencyMs measurement. These are stored here alongside
+// the verbatim reasoning string. The raw prompt itself is not stored.
 
 export type AgentDecisionType =
   | "tip_intelligence"
@@ -175,7 +189,7 @@ export interface AgentDecisionEvidence {
   createdAt:                  string;
 }
 
-//  Full lifecycle log entry 
+// Full lifecycle log entry
 
 export interface LifecycleEntry {
   runId:            string;
@@ -190,12 +204,28 @@ export interface LifecycleEntry {
   stages:           StageRecord[];
   finalStage:       BundleStage;
   failure:          FailureReason | null;
+  failureClass?:    FailureReason | null;
+  failureMessage?:  string | null;
   faultInjected:    FaultMode;
   agentReasoning:   string;
   agentConfidence:  number;
   agentAction:      string;
   agentDecisionType?: AgentDecisionType;
   agentDecisionTrace?: AgentDecisionEvidence[];
+
+  // Structured agent decision block (new -- superset of agentDecisionTrace)
+  agentDecision?: {
+    engine:                    string;
+    model:                     string;
+    action:                    string;
+    selectedTipLamports:       number;
+    landingProbabilityEstimate: number;
+    reasoning:                 string;
+    promptHash:                string;
+    llmLatencyMs:              number;
+    guardrailAdjusted:         boolean;
+  };
+
   leaderWindow:     LeaderWindow | null;
   networkSnapshot:  NetworkSnapshot | null;
 
@@ -212,6 +242,7 @@ export interface LifecycleEntry {
   blockhashUsed:   string;
   slotAtSubmission: number | null;
   explorerUrl:     string | null;
+  bundleExplorerUrl?: string | null;
   latencyMs: {
     submittedToProcessed:  number | null;
     processedToConfirmed:  number | null;
@@ -220,7 +251,7 @@ export interface LifecycleEntry {
   };
 }
 
-//  Slot stream event 
+// Slot stream event
 
 export interface SlotEvent {
   slot:      number;
@@ -229,7 +260,7 @@ export interface SlotEvent {
   timestamp: number;
 }
 
-//  Tip stats 
+// Tip stats
 
 export interface TipStats {
   p25Lamports: number;
@@ -241,7 +272,7 @@ export interface TipStats {
   source:      "jito-tip-floor" | "rpc-prioritization-fees" | "fallback";
 }
 
-//  AI agent inputs / outputs 
+// AI agent inputs / outputs
 
 export interface TipDecisionInput {
   tipStats:            TipStats;

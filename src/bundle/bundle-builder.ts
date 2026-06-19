@@ -13,11 +13,8 @@ import { Logger } from "../utils/logger";
 
 const { Bundle } = JitoBundle;
 
-// ─── Jito tip accounts ────────────────────────────────────────────────────────
-// Full set of 8 official Jito tip accounts (mainnet).
+// Jito tip accounts (mainnet)
 // Source: https://docs.jito.wtf/lowlatencytxnsend/#tip-accounts
-// Pick one at random per submission to distribute contention.
-
 const TIP_ACCOUNTS = [
   "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
   "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
@@ -33,13 +30,27 @@ function pickTipAccount(): PublicKey {
   return new PublicKey(TIP_ACCOUNTS[Math.floor(Math.random() * TIP_ACCOUNTS.length)]);
 }
 
-// ─── BlockhashCache ───────────────────────────────────────────────────────────
+// BlockhashCache
+//
+// Correctness fix: the old implementation compared slot numbers to
+// lastValidBlockHeight, which are measured in different units on some RPC
+// implementations (slots vs block heights can diverge during skip events).
+//
+// This implementation uses getBlockHeight() to obtain the actual current
+// block height and compares it to lastValidBlockHeight with a safety margin
+// of 2 blocks. This is the only way to reliably detect expiry before
+// submitting a transaction.
+//
+// The cache refreshes proactively every REFRESH_SLOTS slots so the blockhash
+// is never near expiry at submission time.
+
+const SAFETY_MARGIN_BLOCKS = 2;
+const REFRESH_SLOTS        = 100;
 
 export class BlockhashCache {
   private connection:    Connection;
   private cached:        BlockhashWithExpiryBlockHeight | null = null;
   private fetchedAtSlot  = 0;
-  private readonly REFRESH_SLOTS = 100;
 
   constructor(connection: Connection) {
     this.connection = connection;
@@ -49,7 +60,7 @@ export class BlockhashCache {
     const needsRefresh =
       forceRefresh ||
       !this.cached ||
-      currentSlot - this.fetchedAtSlot > this.REFRESH_SLOTS;
+      currentSlot - this.fetchedAtSlot > REFRESH_SLOTS;
 
     if (needsRefresh) {
       this.cached        = await this.connection.getLatestBlockhash("confirmed");
@@ -59,6 +70,29 @@ export class BlockhashCache {
     return this.cached!;
   }
 
+  // isExpiredNow performs a real block height check against lastValidBlockHeight.
+  // Call this before using a cached blockhash in a new transaction. If it
+  // returns true the caller must call forceRefresh on the next get() call.
+  async isExpiredNow(): Promise<boolean> {
+    if (!this.cached) return true;
+    try {
+      const currentHeight = await this.connection.getBlockHeight("confirmed");
+      return currentHeight >= this.cached.lastValidBlockHeight - SAFETY_MARGIN_BLOCKS;
+    } catch {
+      // If the check itself fails, treat as expired to be safe
+      return true;
+    }
+  }
+
+  // isExpiredAtHeight allows the caller to pass an already-fetched block
+  // height to avoid an extra RPC call when the caller has the height handy.
+  isExpiredAtHeight(currentBlockHeight: number): boolean {
+    if (!this.cached) return true;
+    return currentBlockHeight >= this.cached.lastValidBlockHeight - SAFETY_MARGIN_BLOCKS;
+  }
+
+  // Kept for backward compatibility; checks by slot number (less accurate).
+  // Prefer isExpiredNow() for correctness.
   isExpiredAt(slot: number): boolean {
     if (!this.cached) return true;
     return slot > this.cached.lastValidBlockHeight + 5;
@@ -70,7 +104,7 @@ export class BlockhashCache {
   }
 }
 
-// ─── BundleBuilder ────────────────────────────────────────────────────────────
+// BundleBuilder
 
 export interface BuiltBundle {
   bundle:      InstanceType<typeof Bundle>;
@@ -93,23 +127,29 @@ export class BundleBuilder {
     this.blockhashCache = new BlockhashCache(connection);
   }
 
-  // Build a VersionedTransaction (V0) bundle with:
-  //   - ComputeBudget instructions (required for block engine cost-model check)
-  //   - A 1-lamport self-transfer as the primary instruction
-  //   - A Jito tip transfer as the last instruction
+  // Build a VersionedTransaction (V0) bundle.
+  // Before using the cached blockhash the builder checks isExpiredNow() and
+  // forces a refresh if it is within SAFETY_MARGIN_BLOCKS of expiry.
   //
-  // Key points:
-  //   1. Must be VersionedTransaction -- legacy Transaction is rejected
-  //   2. Transactions are sent base64-encoded; the submitter handles that
-  //   3. Tip must be >= 1000 lamports and go to one of the 8 tip accounts
-  //   4. Do NOT use Address Lookup Tables for tip account (Jito requirement)
-  //   5. 1 lamport self-transfer (not 0) avoids dust-spam heuristic filters
+  // Key constraints:
+  //   1. Must be VersionedTransaction (V0) -- legacy Transaction is rejected
+  //   2. Tip must be >= 1000 lamports to one of the 8 official tip accounts
+  //   3. Do NOT use Address Lookup Tables for the tip account (Jito requirement)
+  //   4. forceBlockhashRefresh skips the expiry check and always fetches fresh
 
   async build(
     tipLamports: number,
     currentSlot: number,
     forceBlockhashRefresh = false
   ): Promise<BuiltBundle> {
+    // Check expiry before building -- refresh if near or past validity window
+    if (!forceBlockhashRefresh && this.blockhashCache) {
+      const expired = await this.blockhashCache.isExpiredNow();
+      if (expired) {
+        forceBlockhashRefresh = true;
+      }
+    }
+
     const blockhashInfo = await this.blockhashCache.get(currentSlot, forceBlockhashRefresh);
     const tipAccount    = pickTipAccount();
 
@@ -117,13 +157,7 @@ export class BundleBuilder {
       payerKey:        this.payer.publicKey,
       recentBlockhash: blockhashInfo.blockhash,
       instructions: [
-        // Explicit compute unit limit -- required for block engine cost-model check
         ComputeBudgetProgram.setComputeUnitLimit({ units: 10_000 }),
-        // Jito tip -- the ONLY SOL-transfer instruction in this transaction.
-        // Keeping this as the sole transfer (no self-transfer) ensures this tx
-        // always has a different signature from the sendRealTx self-transfer,
-        // even when they share a blockhash. Jito marks duplicate-signature bundles
-        // as Invalid immediately. Do NOT use an ALT for the tip account.
         SystemProgram.transfer({
           fromPubkey: this.payer.publicKey,
           toPubkey:   tipAccount,
@@ -146,7 +180,12 @@ export class BundleBuilder {
     };
   }
 
-  isBlockhashExpired(slot: number): boolean {
+  async isBlockhashExpired(): Promise<boolean> {
+    return this.blockhashCache.isExpiredNow();
+  }
+
+  // Kept for callers that already have a current slot or block height
+  isBlockhashExpiredAt(slot: number): boolean {
     return this.blockhashCache.isExpiredAt(slot);
   }
 

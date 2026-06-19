@@ -1,10 +1,10 @@
-import { Connection }           from "@solana/web3.js";
+import { Connection }                   from "@solana/web3.js";
 import { CommitmentTracker, SlotSource } from "./commitment-tracker";
-import { BundleStage, StageRecord, FailureReason } from "../types";
-import { Logger }               from "../utils/logger";
-import { sleep, shortKey }      from "../utils/helpers";
+import { BundleStage, StageRecord, FailureReason, CommitmentSource } from "../types";
+import { Logger }                        from "../utils/logger";
+import { sleep, shortKey }               from "../utils/helpers";
 
-//  TrackResult 
+// TrackResult
 
 export interface TrackResult {
   finalStage: BundleStage;
@@ -18,12 +18,14 @@ export interface TrackResult {
   };
 }
 
-//  LifecycleTracker 
+// LifecycleTracker
 // Stream-first: uses CommitmentTracker to resolve confirmed and finalized
-// purely from Yellowstone slot events (no RPC polling for those stages).
+// purely from Yellowstone slot events. Each stage record now includes a
+// commitmentSource field that identifies whether the commitment was resolved
+// from the stream or from an RPC fallback.
 //
 // For the processed stage we still poll getSignatureStatus() because we need
-// the actual transaction slot number -- the stream only tells us the cluster
+// the actual transaction slot number; the stream only tells us the cluster
 // has passed that slot, not which slot the tx landed in.
 
 export class LifecycleTracker {
@@ -31,13 +33,12 @@ export class LifecycleTracker {
   private logger:            Logger;
   private commitmentTracker: CommitmentTracker;
 
-  private readonly PROCESSED_TIMEOUT_MS  = 20_000;
-  private readonly CONFIRMED_TIMEOUT_MS  = 45_000;
-  private readonly FINALIZED_TIMEOUT_MS  = 90_000;
-  // 2s between RPC polls -- 600ms was too aggressive for the free public RPC
-  // (api.mainnet-beta.solana.com) and caused 429 spam. If you have a paid
-  // RPC endpoint set in SOLANA_RPC_URL you can lower this safely.
-  private readonly POLL_INTERVAL_MS      = 2_000;
+  private readonly PROCESSED_TIMEOUT_MS = 20_000;
+  private readonly CONFIRMED_TIMEOUT_MS = 45_000;
+  private readonly FINALIZED_TIMEOUT_MS = 90_000;
+  // 2s between RPC polls. If you have a paid RPC endpoint set in
+  // SOLANA_RPC_URL you can safely lower this.
+  private readonly POLL_INTERVAL_MS     = 2_000;
 
   constructor(connection: Connection, slotSource: SlotSource, logger: Logger) {
     this.connection        = connection;
@@ -55,21 +56,27 @@ export class LifecycleTracker {
       slot:              submissionSlot || null,
       timestamp:         submittedAt,
       latencyFromPrevMs: null,
+      commitmentSource:  "rpc_signature_status",
     }];
 
     await this.logger.info("[tracker] Tracking lifecycle", { sig: shortKey(signature) });
 
-    //  Stage: processed (RPC poll to get the landing slot) 
+    // Stage: processed (RPC poll -- we need the landing slot number)
 
     const processedResult = await this.waitForProcessed(signature, submittedAt);
 
     if (!processedResult) {
-      stages.push(this.failedRecord("failed", submittedAt));
+      stages.push(this.failedRecord("failed", submittedAt, "rpc_signature_status"));
       return {
         finalStage: "failed",
         stages,
         failure: "TIMEOUT",
-        latencyMs: { submittedToProcessed: null, processedToConfirmed: null, confirmedToFinalized: null, submittedToFinalized: null },
+        latencyMs: {
+          submittedToProcessed:  null,
+          processedToConfirmed:  null,
+          confirmedToFinalized:  null,
+          submittedToFinalized:  null,
+        },
       };
     }
 
@@ -80,27 +87,34 @@ export class LifecycleTracker {
     await this.logger.info("[tracker] Processed", {
       slot:    processedResult.slot,
       latency: `${submittedToProcessed}ms`,
+      source:  processedResult.commitmentSource,
     });
 
-    // Check if tx itself errored on-chain
+    // Check if the transaction itself errored on-chain
     const txError = await this.getTxError(signature);
     if (txError) {
       const failure = this.classifyTxError(txError);
-      stages.push(this.failedRecord("failed", processedResult.timestamp));
+      stages.push(this.failedRecord("failed", processedResult.timestamp, "rpc_signature_status"));
       await this.logger.error("[tracker] On-chain error", { txError, failure });
       return {
         finalStage: "failed",
         stages,
         failure,
-        latencyMs: { submittedToProcessed, processedToConfirmed: null, confirmedToFinalized: null, submittedToFinalized: null },
+        latencyMs: {
+          submittedToProcessed,
+          processedToConfirmed:  null,
+          confirmedToFinalized:  null,
+          submittedToFinalized:  null,
+        },
       };
     }
 
-    //  Stage: confirmed (stream-based via CommitmentTracker) 
+    // Stage: confirmed (stream-first, RPC fallback)
 
     const landingSlot = processedResult.slot ?? submissionSlot;
-    let confirmedAt:  number | null = null;
-    let confirmedSlot: number | null = null;
+    let confirmedAt:    number | null = null;
+    let confirmedSlot:  number | null = null;
+    let confirmedSource: CommitmentSource = "yellowstone_slot_stream";
 
     try {
       const obs = await this.commitmentTracker.waitForCommitment(
@@ -108,14 +122,17 @@ export class LifecycleTracker {
         "confirmed",
         this.CONFIRMED_TIMEOUT_MS
       );
-      confirmedAt   = obs.observedAt;
-      confirmedSlot = obs.slot;
+      confirmedAt    = obs.observedAt;
+      confirmedSlot  = obs.slot;
+      confirmedSource = "yellowstone_slot_stream";
     } catch {
-      // Stream timed out -- fall back to RPC poll
+      // Stream timed out -- fall back to RPC polling
       const rpcResult = await this.pollForCommitment(signature, "confirmed", this.CONFIRMED_TIMEOUT_MS);
       if (rpcResult) {
-        confirmedAt   = rpcResult.timestamp;
-        confirmedSlot = rpcResult.slot;
+        confirmedAt    = rpcResult.timestamp;
+        confirmedSlot  = rpcResult.slot;
+        confirmedSource = "rpc_polling_fallback";
+        await this.logger.warn("[tracker] Confirmed via RPC fallback (stream timeout)");
       }
     }
 
@@ -124,7 +141,12 @@ export class LifecycleTracker {
         finalStage: "processed",
         stages,
         failure: "TIMEOUT",
-        latencyMs: { submittedToProcessed, processedToConfirmed: null, confirmedToFinalized: null, submittedToFinalized: null },
+        latencyMs: {
+          submittedToProcessed,
+          processedToConfirmed:  null,
+          confirmedToFinalized:  null,
+          submittedToFinalized:  null,
+        },
       };
     }
 
@@ -134,17 +156,20 @@ export class LifecycleTracker {
       slot:              confirmedSlot,
       timestamp:         confirmedAt,
       latencyFromPrevMs: processedToConfirmed,
+      commitmentSource:  confirmedSource,
     });
 
     await this.logger.ok("[tracker] Confirmed", {
-      slot:                    confirmedSlot,
-      processedToConfirmedMs:  processedToConfirmed,
+      slot:                   confirmedSlot,
+      processedToConfirmedMs: processedToConfirmed,
+      source:                 confirmedSource,
     });
 
-    //  Stage: finalized (stream-based) 
+    // Stage: finalized (stream-first, RPC fallback)
 
-    let finalizedAt:   number | null = null;
-    let finalizedSlot: number | null = null;
+    let finalizedAt:    number | null = null;
+    let finalizedSlot:  number | null = null;
+    let finalizedSource: CommitmentSource = "yellowstone_slot_stream";
 
     try {
       const obs = await this.commitmentTracker.waitForCommitment(
@@ -152,13 +177,16 @@ export class LifecycleTracker {
         "finalized",
         this.FINALIZED_TIMEOUT_MS
       );
-      finalizedAt   = obs.observedAt;
-      finalizedSlot = obs.slot;
+      finalizedAt    = obs.observedAt;
+      finalizedSlot  = obs.slot;
+      finalizedSource = "yellowstone_slot_stream";
     } catch {
       const rpcResult = await this.pollForCommitment(signature, "finalized", this.FINALIZED_TIMEOUT_MS);
       if (rpcResult) {
-        finalizedAt   = rpcResult.timestamp;
-        finalizedSlot = rpcResult.slot;
+        finalizedAt    = rpcResult.timestamp;
+        finalizedSlot  = rpcResult.slot;
+        finalizedSource = "rpc_polling_fallback";
+        await this.logger.warn("[tracker] Finalized via RPC fallback (stream timeout)");
       }
     }
 
@@ -167,7 +195,12 @@ export class LifecycleTracker {
         finalStage: "confirmed",
         stages,
         failure: null,
-        latencyMs: { submittedToProcessed, processedToConfirmed, confirmedToFinalized: null, submittedToFinalized: null },
+        latencyMs: {
+          submittedToProcessed,
+          processedToConfirmed,
+          confirmedToFinalized:  null,
+          submittedToFinalized:  null,
+        },
       };
     }
 
@@ -179,12 +212,14 @@ export class LifecycleTracker {
       slot:              finalizedSlot,
       timestamp:         finalizedAt,
       latencyFromPrevMs: confirmedToFinalized,
+      commitmentSource:  finalizedSource,
     });
 
     await this.logger.ok("[tracker] Finalized", {
-      slot:                      finalizedSlot,
-      confirmedToFinalizedMs:    confirmedToFinalized,
-      submittedToFinalizedMs:    submittedToFinalized,
+      slot:                   finalizedSlot,
+      confirmedToFinalizedMs: confirmedToFinalized,
+      submittedToFinalizedMs: submittedToFinalized,
+      source:                 finalizedSource,
     });
 
     return {
@@ -200,7 +235,9 @@ export class LifecycleTracker {
     };
   }
 
-  //  Poll for processed stage to get the landing slot number 
+  // Poll for the processed stage to get the landing slot number.
+  // RPC polling is required here because only the RPC can tell us which
+  // specific slot the transaction landed in.
 
   private async waitForProcessed(
     signature: string,
@@ -220,17 +257,18 @@ export class LifecycleTracker {
             slot:              status.value.slot ?? null,
             timestamp:         Date.now(),
             latencyFromPrevMs: null,
+            commitmentSource:  "rpc_signature_status",
           };
         }
       } catch {
-        // Transient error
+        // Transient error -- keep polling
       }
       await sleep(this.POLL_INTERVAL_MS);
     }
     return null;
   }
 
-  //  RPC fallback for confirmed/finalized if stream times out 
+  // RPC fallback for confirmed/finalized when the stream times out.
 
   private async pollForCommitment(
     signature: string,
@@ -282,8 +320,18 @@ export class LifecycleTracker {
     return "UNKNOWN";
   }
 
-  private failedRecord(stage: BundleStage, prevTimestamp: number): StageRecord {
+  private failedRecord(
+    stage: BundleStage,
+    prevTimestamp: number,
+    source: CommitmentSource
+  ): StageRecord {
     const now = Date.now();
-    return { stage, slot: null, timestamp: now, latencyFromPrevMs: now - prevTimestamp };
+    return {
+      stage,
+      slot:              null,
+      timestamp:         now,
+      latencyFromPrevMs: now - prevTimestamp,
+      commitmentSource:  source,
+    };
   }
 }

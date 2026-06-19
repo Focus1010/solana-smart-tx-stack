@@ -227,6 +227,34 @@ console.log('Private:', bs58.default.encode(kp.secretKey));
 
 ## Running
 
+### Preflight check
+
+```bash
+npm run challenge:doctor
+```
+
+Verifies environment variables, Yellowstone native binding availability, Solana RPC responsiveness, wallet balance, Jito block engine reachability, tip floor endpoint reachability, and AI provider configuration. Run this before any evidence collection. It prints PASS / WARN / FAIL per check and exits non-zero if any required check fails.
+
+### Full evidence collection (10 runs + 3 fault injections)
+
+```bash
+npm run build
+npm run challenge:doctor
+npm run challenge:reset-evidence
+npm run challenge:run
+npm run run:inject
+npm run challenge:export-evidence
+npm run challenge:verify-evidence
+```
+
+### Unit tests
+
+```bash
+npm test
+```
+
+Runs the unit test suite (Node assert, no external framework). Tests cover `RateLimiter`, `BlockhashCache.isExpiredNow`, Yellowstone frame helpers, and `ReconnectingYellowstoneStream` fallback behaviour.
+
 ### Full stack (10 bundles)
 
 ```bash
@@ -428,6 +456,9 @@ Full architecture with data flow diagrams, infrastructure decisions, and observe
 | `BUNDLE_COUNT` | No | 10 | Bundles per batch run |
 | `MAX_RETRIES` | No | 3 | Max retries per bundle |
 | `LOG_DIR` | No | ./logs | Directory for lifecycle logs |
+| `STREAM_HIGH_WATERMARK` | No | 5000 | bufferedEvents threshold for backpressure event |
+| `STREAM_RESUME_WATERMARK` | No | 2500 | Backpressure resume threshold |
+| `JITO_RATE_LIMIT_MS` | No | 1100 | Minimum ms between Jito block engine calls |
 
 ---
 

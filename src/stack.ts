@@ -5,18 +5,19 @@ import {
   TransactionMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
-import { Agent }                    from "./agent/agent";
-import { BundleBuilder }            from "./bundle/bundle-builder";
-import { BundleSubmitter }          from "./bundle/bundle-submitter";
-import { LifecycleTracker }         from "./lifecycle/lifecycle-tracker";
-import { SlotPoller, SlotStream }   from "./stream/slot-stream";
-import { TipOracle }                from "./stream/tip-oracle";
-import { NetworkStateObserver }     from "./stream/network-state-observer";
-import { LeaderWindowDetector }     from "./jito/leader-window-detector";
+import { Agent }                     from "./agent/agent";
+import { BundleBuilder }             from "./bundle/bundle-builder";
+import { BundleSubmitter }           from "./bundle/bundle-submitter";
+import { LifecycleTracker }          from "./lifecycle/lifecycle-tracker";
+import { SlotPoller, SlotStream }    from "./stream/slot-stream";
+import { TipOracle }                 from "./stream/tip-oracle";
+import { NetworkStateObserver }      from "./stream/network-state-observer";
+import { LeaderWindowDetector }      from "./jito/leader-window-detector";
+import { JitoJsonRpcClientImpl }     from "./jito/jito-jsonrpc-client";
 import { AdvancedFailureClassifier } from "./bundle/failure-classifier";
-import { Logger }                   from "./utils/logger";
+import { Logger }                    from "./utils/logger";
 import { newRunId, sleep, shortKey, estimateSlotTimeMs } from "./utils/helpers";
-import { config }                   from "./config";
+import { config }                    from "./config";
 import {
   LifecycleEntry,
   TipDecisionInput,
@@ -64,12 +65,14 @@ export class Stack {
       ? new SlotStream(logger)
       : new SlotPoller(this.connection, logger);
 
+    const jitoClient     = new JitoJsonRpcClientImpl(config.jito.rpcUrl);
+
     this.builder         = new BundleBuilder(this.connection, payer, logger);
-    this.submitter       = new BundleSubmitter(this.connection, logger);
+    this.submitter       = new BundleSubmitter(this.connection, payer, logger);
     this.tracker         = new LifecycleTracker(this.connection, this.slotSource, logger);
     this.tipOracle       = new TipOracle(this.connection, logger);
     this.networkObs      = new NetworkStateObserver(this.connection, logger);
-    this.leaderDetector  = new LeaderWindowDetector(logger);
+    this.leaderDetector  = new LeaderWindowDetector(jitoClient, logger);
     this.classifier      = new AdvancedFailureClassifier();
 
   }
@@ -636,6 +639,22 @@ export class Stack {
           }
         : null;
 
+    // Build the structured agentDecision block from the last tip decision trace
+    const lastTipTrace = p.agentDecisionTrace?.find(
+      (t) => t.decisionType === "tip_intelligence"
+    );
+    const agentDecision = lastTipTrace ? {
+      engine:                     lastTipTrace.engine    ?? "",
+      model:                      lastTipTrace.model     ?? "",
+      action:                     lastTipTrace.action,
+      selectedTipLamports:        lastTipTrace.tipLamports ?? 0,
+      landingProbabilityEstimate: lastTipTrace.landingProbabilityEstimate ?? 0,
+      reasoning:                  lastTipTrace.reasoning,
+      promptHash:                 lastTipTrace.promptHash  ?? "",
+      llmLatencyMs:               lastTipTrace.llmLatencyMs ?? 0,
+      guardrailAdjusted:          lastTipTrace.guardrailAdjusted ?? false,
+    } : undefined;
+
     return {
       runId:           p.runId,
       bundleId:        p.bundleId,
@@ -649,10 +668,13 @@ export class Stack {
       stages:          p.stages,
       finalStage:      p.finalStage,
       failure:         p.failure,
+      failureClass:    p.failure,
+      failureMessage:  null,
       faultInjected:   "none",
       agentReasoning:  p.agentReasoning,
       agentConfidence: p.agentConfidence,
       agentAction:     p.agentAction,
+      agentDecision,
       agentDecisionType: p.agentDecisionTrace?.[p.agentDecisionTrace.length - 1]?.decisionType ?? undefined,
       agentDecisionTrace: p.agentDecisionTrace ?? [],
       leaderWindow:    p.leaderWindow,
@@ -670,6 +692,9 @@ export class Stack {
         null,
       explorerUrl: p.signature
         ? `https://explorer.solana.com/tx/${p.signature}?cluster=${network}`
+        : null,
+      bundleExplorerUrl: p.bundleId
+        ? `https://explorer.jito.wtf/bundle/${p.bundleId}`
         : null,
       latencyMs: p.latencyMs ?? {
         submittedToProcessed:  null,

@@ -2,61 +2,29 @@ import { EventEmitter } from "events";
 import { Connection }   from "@solana/web3.js";
 import { SlotEvent }    from "../types";
 import { Logger }       from "../utils/logger";
-import { sleep }        from "../utils/helpers";
 import { config }       from "../config";
+import { ReconnectingYellowstoneStream } from "../geyser/reconnecting-stream";
 
-// ─── Yellowstone slot status constants ────────────────────────────────────────
-// Dragon's Mouth proto: PROCESSED=0, CONFIRMED=1, FINALIZED=2
-
-const YS_PROCESSED  = 0;
-const YS_CONFIRMED  = 1;
-const YS_FINALIZED  = 2;
-const YS_DEAD       = 6;
-
-// Ping interval -- keeps gRPC stream alive through cloud load balancers
-
-const PING_INTERVAL_MS = 30_000;
-
-// ─── Safe Yellowstone import ──────────────────────────────────────────────────
-// @triton-one/yellowstone-grpc v5 uses a native Rust binding that may not be
-// available on the current platform (e.g. Windows). We catch the import error
-// and fall back to SlotPoller gracefully rather than crashing the process.
-
-let YellowstoneClient: any  = null;
-let YellowstoneCommitment: any = null;
-
-try {
-  const mod = require("@triton-one/yellowstone-grpc");
-  YellowstoneClient     = mod.default ?? mod;
-  YellowstoneCommitment = mod.CommitmentLevel;
-} catch {
-  // Native binding unavailable on this platform -- SlotPoller will be used
-}
-
-// ─── SlotStream ───────────────────────────────────────────────────────────────
-// Production Yellowstone gRPC slot subscription.
+// SlotStream
+// Production Yellowstone gRPC slot subscription built on top of
+// ReconnectingYellowstoneStream. All reconnection, ping keepalive, fromSlot
+// replay, and backpressure logic live in the reconnecting wrapper; this class
+// only translates raw geyser data events into typed SlotEvents and maintains
+// the three commitment high-water marks the rest of the stack reads.
 //
-// Correctness notes:
-// - endpoint must have https:// prefix (SDK v5 requires it)
-// - slots filter: { solana: { filterByCommitment: false } } -- "solana" is an
-//   arbitrary label, filterByCommitment:false means we receive all levels
-// - fromSlot must be a string (proto int64 serialized as string in JS)
-// - Ping frame: must include full empty subscription fields alongside ping ID
-// - Token is passed as the second constructor arg (no x-token header needed)
-// - If native binding is unavailable, start() logs a warning and emits
-//   "fallback" so the stack switches to SlotPoller automatically
+// If the Yellowstone native binding is absent or YELLOWSTONE_ENDPOINT is not
+// set, start() emits 'fallback' immediately so the stack can switch to
+// SlotPoller without any code changes in the orchestrator.
 
 export class SlotStream extends EventEmitter {
-  private logger:  Logger;
-  private client:  any    = null;
-  private running  = false;
+  private readonly logger:  Logger;
+  private inner:            ReconnectingYellowstoneStream | null = null;
 
   private latestProcessedSlot = 0;
   private latestConfirmedSlot = 0;
   private latestFinalizedSlot = 0;
-  private lastProcessedSlot   = 0;
-  private slotTimestamps:       number[] = [];
-  private deadSlotsDetected     = 0;
+  private slotTimestamps:      number[] = [];
+  private deadSlotsDetected    = 0;
   private readonly MAX_SLOT_HISTORY = 20;
 
   constructor(logger: Logger) {
@@ -71,203 +39,95 @@ export class SlotStream extends EventEmitter {
   getDeadSlotsDetected():    number   { return this.deadSlotsDetected;    }
 
   async start(): Promise<void> {
-    if (!YellowstoneClient) {
-      await this.logger.warn(
-        "[stream] @triton-one/yellowstone-grpc native binding unavailable on this platform. " +
-        "Falling back to RPC slot poller."
-      );
-      this.emit("fallback");
-      return;
-    }
+    const endpoint = config.yellowstone.endpoint;
+    const token    = config.yellowstone.token;
 
-    if (!config.yellowstone.endpoint) {
-      await this.logger.warn("[stream] YELLOWSTONE_ENDPOINT not set -- using SlotPoller fallback");
-      this.emit("fallback");
-      return;
-    }
+    const stream = new ReconnectingYellowstoneStream(
+      {
+        endpoint,
+        token,
+        highWatermark:  parseInt(process.env.STREAM_HIGH_WATERMARK  ?? "5000", 10),
+        resumeWatermark: parseInt(process.env.STREAM_RESUME_WATERMARK ?? "2500", 10),
+        maxRetries:     3,
+      },
+      this.logger
+    );
 
-    this.running = true;
-    this.connectWithRetry().catch(async (err) => {
-      await this.logger.warn("[stream] Stream permanently stopped: " + String(err));
-      this.running = false;
+    this.inner = stream;
+
+    // Forward fallback signal
+    stream.on("fallback", () => {
       this.emit("fallback");
     });
+
+    // Forward backpressure signal
+    stream.on("backpressure", (info: { bufferedEvents: number }) => {
+      this.emit("backpressure", info);
+    });
+
+    stream.on("connected", () => {
+      this.logger.info("[stream] Yellowstone connected").catch(() => {});
+    });
+
+    stream.on("disconnected", () => {
+      this.logger.info("[stream] Yellowstone disconnected").catch(() => {});
+    });
+
+    // Translate raw data events into typed SlotEvents
+    stream.on("data", (raw: any) => {
+      stream.ack();
+
+      const { slot, parent, status, statusNum, timestamp } = raw as {
+        slot: number;
+        parent: number;
+        status: SlotEvent["status"];
+        statusNum: number;
+        timestamp: number;
+      };
+
+      if (status === "dead") {
+        this.deadSlotsDetected++;
+        this.emit("slot", { slot, parent, status: "dead", timestamp } as SlotEvent);
+        return;
+      }
+
+      // Update high-water marks
+      if (status === "processed") {
+        if (slot > this.latestProcessedSlot) {
+          this.latestProcessedSlot = slot;
+          if (this.slotTimestamps.length >= this.MAX_SLOT_HISTORY) {
+            this.slotTimestamps.shift();
+          }
+          this.slotTimestamps.push(timestamp);
+        }
+      }
+
+      if (status === "confirmed") {
+        this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
+      }
+
+      if (status === "finalized") {
+        this.latestFinalizedSlot = Math.max(this.latestFinalizedSlot, slot);
+        this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
+      }
+
+      this.emit("slot", { slot, parent, status, timestamp } as SlotEvent);
+    });
+
+    await stream.start();
   }
 
   stop(): void {
-    this.running = false;
-    this.client  = null;
-  }
-
-  // ── Reconnect with exponential backoff ────────────────────────────────────
-
-  private async connectWithRetry(): Promise<void> {
-    let attempt = 0;
-
-    while (this.running) {
-      attempt++;
-      try {
-        await this.logger.info(`[stream] Connecting to Yellowstone (attempt ${attempt})...`);
-        await this.subscribe();
-        // subscribe() returned cleanly -- reset counter
-        attempt = 0;
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        await this.logger.warn(`[stream] Connection lost: ${msg}`);
-
-        if (attempt >= 3) {
-          await this.logger.warn(
-            "[stream] 3 consecutive failures -- falling back to RPC poller."
-          );
-          this.running = false;
-          this.emit("fallback");
-          return;
-        }
-      }
-
-      if (!this.running) break;
-
-      const delayMs = Math.min(1_000 * Math.pow(2, attempt - 1), 16_000);
-      await this.logger.info(`[stream] Reconnecting in ${delayMs}ms...`);
-      await sleep(delayMs);
-    }
-  }
-
-  // ── Core gRPC subscription ────────────────────────────────────────────────
-
-  private async subscribe(): Promise<void> {
-    // SDK v5 requires https:// prefix
-    const endpoint = config.yellowstone.endpoint.startsWith("http")
-      ? config.yellowstone.endpoint
-      : `https://${config.yellowstone.endpoint}`;
-
-    this.client = new YellowstoneClient(
-      endpoint,
-      config.yellowstone.token || undefined,
-      { "grpc.max_receive_message_length": 64 * 1024 * 1024 }
-    );
-
-    await this.client.connect();
-
-    const stream = await this.client.subscribe();
-
-    return new Promise<void>((resolve, reject) => {
-      let pingTimer: NodeJS.Timeout | null = null;
-      let pingId = 1;
-
-      const cleanup = () => {
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-      };
-
-      // Ping keepalive -- required to prevent cloud providers dropping the stream
-      // Must include all empty subscription maps alongside ping, per Triton spec
-
-      pingTimer = setInterval(() => {
-        const pingReq = {
-          ping:               { id: pingId++ },
-          slots:              {},
-          accounts:           {},
-          transactions:       {},
-          transactionsStatus: {},
-          blocks:             {},
-          blocksMeta:         {},
-          entry:              {},
-          accountsDataSlice:  [],
-        };
-        stream.write(pingReq, () => {});
-      }, PING_INTERVAL_MS);
-
-      // Data handler
-
-      stream.on("data", (data: any) => {
-        if (data?.pong) return;
-        if (!data?.slot) return;
-
-        const raw       = data.slot;
-        const slot      = Number(raw.slot);
-        const parent    = Number(raw.parent ?? slot - 1);
-        const statusNum = typeof raw.status === "number" ? raw.status : YS_PROCESSED;
-        const now       = Date.now();
-
-        if (statusNum === YS_DEAD) {
-          this.deadSlotsDetected++;
-          this.emit("slot", { slot, parent, status: "dead", timestamp: now } as SlotEvent);
-          return;
-        }
-
-        const status = this.numericToStatus(statusNum);
-
-        if (statusNum === YS_PROCESSED) {
-          if (slot > this.latestProcessedSlot) {
-            this.latestProcessedSlot = slot;
-            this.lastProcessedSlot   = slot;
-            if (this.slotTimestamps.length >= this.MAX_SLOT_HISTORY) {
-              this.slotTimestamps.shift();
-            }
-            this.slotTimestamps.push(now);
-          }
-        }
-
-        if (statusNum === YS_CONFIRMED) {
-          this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
-        }
-
-        if (statusNum === YS_FINALIZED) {
-          this.latestFinalizedSlot = Math.max(this.latestFinalizedSlot, slot);
-          this.latestConfirmedSlot = Math.max(this.latestConfirmedSlot, slot);
-        }
-
-        this.emit("slot", { slot, parent, status, timestamp: now } as SlotEvent);
-      });
-
-      stream.on("error", (err: Error) => {
-        cleanup();
-        stream.destroy();
-        reject(err);
-      });
-
-      stream.on("end",   () => { cleanup(); resolve(); });
-      stream.on("close", () => { cleanup(); resolve(); });
-
-      // Initial subscription request
-      // "solana" is just an arbitrary label for this slot filter slot.
-      // filterByCommitment: false means we get all commitment levels.
-      // fromSlot must be a string (int64 proto field).
-
-      const request: any = {
-        slots:              { solana: { filterByCommitment: false } },
-        accounts:           {},
-        transactions:       {},
-        transactionsStatus: {},
-        blocks:             {},
-        blocksMeta:         {},
-        entry:              {},
-        commitment:         YellowstoneCommitment?.PROCESSED ?? 0,
-        accountsDataSlice:  [],
-        ping:               undefined,
-      };
-
-      if (this.lastProcessedSlot > 0) {
-        request.fromSlot = String(this.lastProcessedSlot);
-      }
-
-      stream.write(request, (err: Error | null | undefined) => {
-        if (err) { cleanup(); reject(err); }
-      });
-    });
-  }
-
-  private numericToStatus(n: number): SlotEvent["status"] {
-    if (n === YS_FINALIZED) return "finalized";
-    if (n === YS_CONFIRMED) return "confirmed";
-    if (n === YS_DEAD)      return "dead";
-    return "processed";
+    this.inner?.stop();
   }
 }
 
-// ─── SlotPoller ───────────────────────────────────────────────────────────────
+// SlotPoller
 // RPC fallback for when Yellowstone is unavailable or the native binding is
-// missing on the current platform.
+// missing on the current platform. Behaviour is unchanged from the previous
+// implementation; this class is kept stable so all upstream consumers that
+// listen for 'slot' events work identically regardless of which source is
+// active.
 
 export class SlotPoller extends EventEmitter {
   private connection:          Connection;
