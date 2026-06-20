@@ -116,6 +116,16 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
     });
   }
 
+  // getNextScheduledLeader is only exposed by Jito's gRPC SearcherClient.
+  // It is not part of the public JSON-RPC /api/v1/bundles surface, so this
+  // call will fail on every regional endpoint regardless of uptime or
+  // configuration. This is a transport limitation, not a transient outage --
+  // do not expect this to start succeeding. The leader-pricing logic in
+  // src/agent/agent.ts treats a null result here as a genuine pricing risk
+  // (see computeLeaderMultiplier), not as "safe to assume calm conditions."
+  // A real fix requires adding a gRPC SearcherClient transport alongside
+  // this JSON-RPC client; see src/jito/jito-bundle-client.ts for the shared
+  // interface both transports implement.
   async getNextScheduledLeader(): Promise<LeaderInfo> {
     const now = Date.now();
 

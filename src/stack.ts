@@ -313,15 +313,31 @@ export class Stack {
         network:   config.solana.network,
       });
 
-      //  4. Send real transaction (ensures verifiable on-chain evidence) 
+      //  4. Submit bundle to Jito immediately, in parallel with the real
+      //     evidence transaction.
+      //
+      // CRITICAL ORDERING: a Jito bundle is only valid for its target
+      // leader's slot window, roughly 1 to 4 slots (400ms to 1.6s on
+      // mainnet). The bundle's blockhash was fetched moments ago inside
+      // builder.build(). If we wait for sendRealTx() to fully confirm
+      // on-chain (a separate, unrelated decoy transaction sent purely for
+      // evidence purposes) before submitting the bundle, the bundle's
+      // blockhash can age by several seconds -- observed up to 5.6s (about
+      // 14 slots) during RPC throttling -- well past its own live window,
+      // before it ever reaches the block engine. That guarantees the
+      // bundle arrives too late to compete, independent of tip size or
+      // leader luck.
+      //
+      // Running both concurrently means the bundle reaches Jito as soon as
+      // it is built, while the evidence transaction's confirmation latency
+      // no longer sits in the bundle's critical path.
 
-      const realSig = await this.sendRealTx(built.blockhash);
+      const [submitResult, realSig] = await Promise.all([
+        this.submitter.submit(built, currentSlot),
+        this.sendRealTx(built.blockhash),
+      ]);
 
-      //  5. Attempt Jito bundle 
-
-      const submitResult = await this.submitter.submit(built, currentSlot);
-
-      //  6. Track lifecycle 
+      //  5. Track lifecycle 
 
       const tracksBundleTransaction =
         submitResult.success &&

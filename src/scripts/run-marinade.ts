@@ -33,7 +33,7 @@ async function main(): Promise<void> {
   await logger.info(`Payer: ${payer.publicKey.toBase58()}`);
 
   const connection = new Connection(config.solana.rpcUrl, "confirmed");
-  await requestAirdropIfNeeded(connection, payer, 0.01);
+  await requestAirdropIfNeeded(connection, payer, 0.001);
 
   const stack = new Stack(payer, logger);
   await stack.start();

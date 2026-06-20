@@ -98,7 +98,11 @@ ${leaderSection}
 
 ## Pre-computed baseline estimate
 - Congestion multiplier: ${congestion.toFixed(3)}x (derived from slot time and failure rate)
-- Leader urgency multiplier: ${leaderMult.toFixed(3)}x (derived from slots until next Jito leader)
+- Leader pricing multiplier: ${leaderMult.toFixed(3)}x (${
+      input.networkSnapshot.leaderWindow.slotsUntilJitoLeader === null
+        ? "leader schedule UNKNOWN -- this is an uncertainty premium, not a known-urgent signal"
+        : "derived from confirmed slots until next Jito leader"
+    })
 - Estimated tip: ${clamped} lamports (approx ${percentileLabel})
 
 ## Decision rules
@@ -106,6 +110,10 @@ ${leaderSection}
 2. Congested (slot time > 500ms OR failure rate > 20%): use p75
 3. Fast and recent success (slot time < 350ms, last run confirmed): use p25 to save cost
 4. Inside Jito leader window (slotsUntilJitoLeader <= 4): apply 1.25x urgency multiplier
+4b. Leader schedule UNKNOWN (no slotsUntilJitoLeader data): do not default to p50. The
+    bundle may be addressed to a non-Jito leader, in which case no tip lands it. Treat
+    this the same as or worse than a known-urgent window: use at least p75, and prefer
+    p75 over p50 even when other signals look calm.
 5. Previous FEE_TOO_LOW failure: must exceed p75 minimum
 6. Fault mode low_tip: use p25 deliberately to demonstrate failure detection
 7. High fee dispersion ratio (above 5x): fees are volatile, prefer p75 over p50 for safety margin
@@ -363,7 +371,14 @@ Respond with ONLY valid JSON, no markdown fences:
   private formatLeaderSection(snapshot: NetworkSnapshot): string {
     const lw = snapshot.leaderWindow;
     if (lw.slotsUntilJitoLeader === null) {
-      return "## Jito leader window\n- Status: unknown (getNextScheduledLeader unavailable on this endpoint)";
+      return [
+        "## Jito leader window",
+        "- Status: UNKNOWN -- this endpoint cannot report the Jito leader schedule",
+        "- Risk: a bundle sent right now may be addressed to a slot where no Jito-connected",
+        "  validator is leader. If that happens, the bundle cannot land at ANY tip price --",
+        "  there is no auction to win. This is a real risk, not a minor inconvenience.",
+        "- Mitigation: price this submission as if it is competing for a contested slot.",
+      ].join("\n");
     }
     return [
       "## Jito leader window",
@@ -385,7 +400,13 @@ Respond with ONLY valid JSON, no markdown fences:
 
   private computeLeaderMultiplier(snapshot: NetworkSnapshot): number {
     const slots = snapshot.leaderWindow.slotsUntilJitoLeader;
-    if (slots === null)  return 1.15;
+    // null means we have no idea whether a Jito-connected validator is even
+    // leader for the upcoming slots. This is not a mild "1.15x urgency"
+    // case -- it is genuine pricing-under-uncertainty, since a bundle sent
+    // to a non-Jito leader cannot land at any price. We price this above
+    // the known-urgent case (1.25x) specifically so the agent treats
+    // "unknown" as riskier than "known and close", not as a minor bump.
+    if (slots === null)  return 1.35;
     if (slots <= 1)      return 1.25;
     if (slots <= 3)      return 1.10;
     if (slots <= 10)     return 1.00;

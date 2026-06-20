@@ -54,21 +54,48 @@ export class BundleSubmitter {
   private readonly logger:         Logger;
   private readonly jitoClient:     JitoJsonRpcClientImpl;
   private readonly limiter:        RateLimiter;
+  private readonly statusLimiter:  RateLimiter;
   private leaderDetector:          LeaderWindowDetector | null = null;
 
   // Raw bundle-result events collected from subscribeBundleResults()
   private pendingRawResults: unknown[] = [];
 
-  private readonly POLL_TIMEOUT_MS  = 30_000;
-  private readonly POLL_INTERVAL_MS = 4_000;
+  // A Jito bundle is only valid for the single target leader slot it is
+  // submitted into -- roughly 1 to 4 slots, around 400ms to 1.6s on mainnet.
+  // The previous flat 4s interval meant the FIRST status check happened
+  // after the bundle's entire live window had already elapsed (roughly 10
+  // slots), so every poll was reading a result that was already decided
+  // before we ever looked. Jito's own integration guide explicitly warns
+  // about this: add a short delay before the first check, then poll fast,
+  // because getInflightBundleStatuses can otherwise return Invalid for a
+  // bundle that was actually still being processed.
+  //
+  // FAST_POLL_INTERVAL_MS matches slot cadence so we catch the bundle while
+  // it can still report Pending or Landed. After FAST_POLL_WINDOW_MS we
+  // back off, since by then the bundle has either landed or is genuinely
+  // gone and there is no value in continuing to hammer the endpoint.
+  //
+  // statusLimiter is intentionally separate from the sendBundle limiter.
+  // getInflightBundleStatuses is a read-only lookup; reusing the same
+  // 1100ms-minimum limiter used for sendBundle would silently throttle fast
+  // polling back down to ~1100ms regardless of FAST_POLL_INTERVAL_MS, which
+  // would reintroduce the exact timing problem this fix addresses.
+  private readonly POLL_TIMEOUT_MS        = 30_000;
+  private readonly INITIAL_POLL_DELAY_MS  = 600;
+  private readonly FAST_POLL_INTERVAL_MS  = 500;
+  private readonly FAST_POLL_WINDOW_MS    = 4_000;
+  private readonly SLOW_POLL_INTERVAL_MS  = 2_000;
 
   constructor(connection: Connection, payer: Keypair, logger: Logger) {
-    this.connection = connection;
-    this.payer      = payer;
-    this.logger     = logger;
-    this.jitoClient = new JitoJsonRpcClientImpl(config.jito.rpcUrl);
-    this.limiter    = new RateLimiter(
+    this.connection    = connection;
+    this.payer         = payer;
+    this.logger        = logger;
+    this.jitoClient    = new JitoJsonRpcClientImpl(config.jito.rpcUrl);
+    this.limiter       = new RateLimiter(
       parseInt(process.env.JITO_RATE_LIMIT_MS ?? "1100", 10)
+    );
+    this.statusLimiter = new RateLimiter(
+      parseInt(process.env.JITO_STATUS_POLL_RATE_LIMIT_MS ?? "250", 10)
     );
   }
 
@@ -363,24 +390,46 @@ export class BundleSubmitter {
   }
 
   // Poll getInflightBundleStatuses until the bundle lands, fails, or expires.
+  //
+  // Strategy: wait a short fixed delay first (matches Jito's own guidance --
+  // checking immediately after sendBundle can race the block engine's own
+  // bookkeeping), then poll at FAST_POLL_INTERVAL_MS (roughly slot cadence)
+  // for FAST_POLL_WINDOW_MS, since that covers the bundle's actual live
+  // window. After that, back off to SLOW_POLL_INTERVAL_MS -- if the bundle
+  // hasn't resolved by then it almost certainly already has, and we are
+  // just waiting out POLL_TIMEOUT_MS for bookkeeping to catch up.
+  //
+  // A single "Invalid" read is not treated as final. The block engine's
+  // status table can lag the real outcome by a beat right after submission;
+  // a genuinely dropped bundle will keep reading Invalid on the next fast
+  // poll, while a bundle that actually landed will flip to Landed within
+  // one or two polls. Two consecutive Invalid reads are required before we
+  // report the bundle as dropped.
 
   private async pollBundleStatus(bundleId: string): Promise<boolean> {
     const deadline = Date.now() + this.POLL_TIMEOUT_MS;
+    const fastUntil = Date.now() + this.FAST_POLL_WINDOW_MS;
+
+    await sleep(this.INITIAL_POLL_DELAY_MS);
+
+    let consecutiveInvalid = 0;
 
     while (Date.now() < deadline) {
-      await sleep(this.POLL_INTERVAL_MS);
-
       let status: string | null = null;
       try {
-        status = await this.limiter.runWithBackoff(async () => {
+        status = await this.statusLimiter.runWithBackoff(async () => {
           return this.jitoClient.getInflightBundleStatus(bundleId);
         });
       } catch {
         // 429 exhausted or network error -- keep polling
+        await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);
         continue;
       }
 
-      if (!status) continue;
+      if (!status) {
+        await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);
+        continue;
+      }
 
       await this.logger.debug("[submitter] Bundle inflight status", {
         bundleId: bundleId.slice(0, 12) + "...",
@@ -401,17 +450,26 @@ export class BundleSubmitter {
         return false;
       }
 
-      // "Invalid" = bundle no longer in the block engine's 5-minute window.
-      // At 4s poll intervals this means the bundle lost the auction or was
-      // never forwarded to the validator.
       if (status === "Invalid") {
+        consecutiveInvalid++;
+
+        // First Invalid read this early could be a bookkeeping race --
+        // confirm with one more fast check before concluding it is dropped.
+        if (consecutiveInvalid < 2 && Date.now() < fastUntil) {
+          await sleep(this.FAST_POLL_INTERVAL_MS);
+          continue;
+        }
+
         await this.logger.warn("[submitter] Bundle dropped (lost auction or expired)", {
           bundleId: bundleId.slice(0, 12) + "...",
+          confirmedAfterReads: consecutiveInvalid,
         });
         return false;
       }
 
-      // "Pending" -- keep polling
+      // "Pending" -- keep polling, reset the Invalid counter
+      consecutiveInvalid = 0;
+      await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);
     }
 
     await this.logger.warn("[submitter] Bundle status poll timed out", {
