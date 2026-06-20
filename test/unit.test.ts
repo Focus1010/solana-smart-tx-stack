@@ -96,6 +96,45 @@ await test("releases lock even when wrapped function throws", async () => {
   assert.strictEqual(result, "recovered");
 });
 
+await test("runWithBackoff retries on 429 and succeeds on second attempt", async () => {
+  const limiter = new RateLimiter(0);
+  let calls = 0;
+  const result = await limiter.runWithBackoff(async () => {
+    calls++;
+    if (calls === 1) throw new Error("429 Too Many Requests");
+    return "success";
+  });
+  assert.strictEqual(result, "success");
+  assert.strictEqual(calls, 2, "Should have retried once after 429");
+});
+
+await test("runWithBackoff propagates non-429 errors immediately", async () => {
+  const limiter = new RateLimiter(0);
+  let calls = 0;
+  await assert.rejects(
+    () => limiter.runWithBackoff(async () => {
+      calls++;
+      throw new Error("Internal Server Error");
+    }),
+    /Internal Server Error/
+  );
+  assert.strictEqual(calls, 1, "Should not retry on non-429 errors");
+});
+
+await test("runWithBackoff exhausts retries on persistent 429", async () => {
+  const limiter = new RateLimiter(0);
+  let calls = 0;
+  await assert.rejects(
+    () => limiter.runWithBackoff(async () => {
+      calls++;
+      throw new Error("429 rate limit");
+    }),
+    /429 rate limit/
+  );
+  // BACKOFF_MAX_RETRY = 4, so 1 initial + 4 retries = 5 total
+  assert.ok(calls >= 2, `Expected at least 2 calls, got ${calls}`);
+});
+
 // ── BlockhashCache ────────────────────────────────────────────────────────────
 
 console.log("\nBlockhashCache.isExpiredNow");

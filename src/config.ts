@@ -36,6 +36,13 @@ export const config = {
       "JITO_RPC_URL",
       "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1"
     ),
+    // Slots ahead of the next Jito leader to consider an active leader window.
+    // If slotsUntil <= this value the submitter gates on leader-window.
+    leaderWindowSlots: parseInt(optionalEnv("JITO_LEADER_WINDOW_SLOTS", "4"), 10),
+    // When true the submitter bypasses leader-window gating (emergency use only).
+    emergencyOverride: optionalEnv("JITO_EMERGENCY_OVERRIDE", "false") === "true",
+    // Minimum tip in lamports for emergency (no-leader-window) submissions.
+    emergencyMinTipLamports: parseInt(optionalEnv("JITO_EMERGENCY_MIN_TIP_LAMPORTS", "10000"), 10),
   },
   yellowstone: {
     endpoint: optionalEnv(
@@ -61,6 +68,12 @@ export const config = {
     retryDelayMs: parseInt(optionalEnv("RETRY_DELAY_MS", "2000"), 10),
     bundleCount: parseInt(optionalEnv("BUNDLE_COUNT", "10"), 10),
     logDir: optionalEnv("LOG_DIR", "./logs"),
+  },
+  tip: {
+    // Hard guardrail floor — no tip below this, even after agent decision
+    minLamports: parseInt(optionalEnv("MIN_TIP_LAMPORTS", "1000"), 10),
+    // Hard guardrail ceiling — no tip above this, even after agent decision
+    maxLamports: parseInt(optionalEnv("MAX_TIP_LAMPORTS", "1000000"), 10),
   },
 } as const;
 

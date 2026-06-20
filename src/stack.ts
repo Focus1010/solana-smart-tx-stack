@@ -75,6 +75,8 @@ export class Stack {
     this.leaderDetector  = new LeaderWindowDetector(jitoClient, logger);
     this.classifier      = new AdvancedFailureClassifier();
 
+    // Wire the leader detector into the submitter so it can gate on leader windows
+    this.submitter.setLeaderDetector(this.leaderDetector);
   }
 
   //  Initialise 
@@ -431,6 +433,8 @@ export class Stack {
         retryCount,
         latencyMs:        trackResult.latencyMs,
         agentDecisionTrace,
+        rawBundleResults: submitResult.rawBundleResults ?? [],
+        bundleTxSignature: built?.bundleTxSignature ?? null,
       });
       // If on-chain tx failed after landing, ask agent about retry
       if (trackResult.finalStage === "failed" && submitResult.success) {
@@ -616,6 +620,8 @@ export class Stack {
     retryCount:                   number;
     latencyMs?:                   LifecycleEntry["latencyMs"];
     agentDecisionTrace?:          AgentDecisionEvidence[];
+    rawBundleResults?:             unknown[];
+    bundleTxSignature?:            string | null;
   }): LifecycleEntry {
     const network = config.solana.network === "mainnet-beta" ? "mainnet-beta" : "devnet";
 
@@ -696,6 +702,7 @@ export class Stack {
       bundleExplorerUrl: p.bundleId
         ? `https://explorer.jito.wtf/bundle/${p.bundleId}`
         : null,
+      rawBundleResults: p.rawBundleResults ?? [],
       latencyMs: p.latencyMs ?? {
         submittedToProcessed:  null,
         processedToConfirmed:  null,

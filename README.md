@@ -38,6 +38,40 @@ No hardcoded submitted tip values. Retry decisions are made through the agent pa
 | Built | 15 advanced failure types including ACCOUNT_NOT_FOUND, INSTRUCTION_ERROR, BLOCKHASH_NOT_FOUND | `src/bundle/failure-classifier.ts` |
 | Built | Network load proxies derived from real observations (no estimated/public-metric placeholders) | `src/stream/network-state-observer.ts` (bundleLandingRate, feeDispersionRatio, validatorLoadProxy) |
 | Built | Mainnet observation report generator | `src/scripts/generate-mainnet-report.ts` |
+---
+
+## Hardening Pass (v2.1)
+
+The following production hardening changes were applied after the initial submission.
+See [`HARDENING_CHANGELOG.md`](./HARDENING_CHANGELOG.md) for the full details.
+
+### What changed
+
+| Area | Change |
+|---|---|
+| `RateLimiter` | Added `runWithBackoff()`: exponential backoff (500ms×2ⁿ+jitter, max 10s) for 429 responses |
+| `BlockhashCache` | `isExpiredNow()` now uses real `getBlockHeight()` vs `lastValidBlockHeight`; pre-build expiry check added |
+| `BundleBuilder` | Tip guardrail clamping applied before every build; `bundleTxSignature` logged for uniqueness audit |
+| `BundleSubmitter` | Leader-window gating: bundles blocked on mainnet unless inside Jito window or emergency override set; raw bundle-result events persisted |
+| `Config` | Six new env vars: `MIN_TIP_LAMPORTS`, `MAX_TIP_LAMPORTS`, `JITO_LEADER_WINDOW_SLOTS`, `JITO_EMERGENCY_OVERRIDE`, `JITO_EMERGENCY_MIN_TIP_LAMPORTS`, `JITO_RATE_LIMIT_MS` |
+| `Stack` | Wired `setLeaderDetector()` so submitter can gate on leader windows; `rawBundleResults` and `bundleTxSignature` persisted to lifecycle |
+| `LifecycleEntry` | Added `rawBundleResults` field for audit trail of bundle outcomes |
+| Tests | Three new `runWithBackoff` unit tests |
+
+### New config defaults
+
+```
+MIN_TIP_LAMPORTS=1000              # hard floor — no tip below this
+MAX_TIP_LAMPORTS=1000000           # hard ceiling — no tip above this
+JITO_LEADER_WINDOW_SLOTS=4         # gate window in slots
+JITO_EMERGENCY_OVERRIDE=false      # bypass gate only in emergencies
+JITO_EMERGENCY_MIN_TIP_LAMPORTS=10000  # auto-raised tip when override active
+JITO_RATE_LIMIT_MS=1100            # min ms between Jito API calls
+STREAM_HIGH_WATERMARK=5000         # backpressure threshold
+STREAM_RESUME_WATERMARK=2500       # resume level after backpressure
+```
+
+
 | Built | Architecture document | `ARCHITECTURE.md` + Notion public URL |
 | Built | Verification report | `evidence/verification-report.md` |
 | Built | MIT license | `LICENSE` |

@@ -48,13 +48,19 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
   private readonly limiter:     RateLimiter;
 
   // Leader cache: 2-second TTL
-  private leaderCache:    LeaderInfo | null = null;
-  private leaderCachedAt  = 0;
+  private leaderCache:         LeaderInfo | null = null;
+  private leaderCachedAt        = 0;
   private readonly LEADER_TTL_MS = 2_000;
 
-  // Negative-result cache for leader failures: 500ms TTL
-  private leaderFailedAt  = 0;
-  private readonly LEADER_FAIL_TTL_MS = 500;
+  // Negative-result cache for leader failures.
+  // After the first failure we back off 500ms; after 3 consecutive failures we
+  // assume the endpoint does not support getNextScheduledLeader and back off
+  // 30s so we stop hammering it. The cache is cleared on the first success.
+  private leaderFailedAt          = 0;
+  private leaderConsecutiveFails  = 0;
+  private readonly LEADER_FAIL_TTL_MS      = 500;
+  private readonly LEADER_FAIL_TTL_LONG_MS = 30_000;
+  private readonly LEADER_FAIL_MAX_FAST    = 3;
 
   constructor(rpcUrl: string) {
     // Normalise so the URL always ends at /api/v1 and we append /bundles
@@ -118,8 +124,15 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
       return this.leaderCache;
     }
 
-    // Back off after a recent failure
-    if (now - this.leaderFailedAt < this.LEADER_FAIL_TTL_MS) {
+    // Adaptive back-off after failures.
+    // Short TTL (500ms) for first few failures; long TTL (30s) after the
+    // endpoint has consistently failed -- avoids hammering an endpoint that
+    // simply does not support getNextScheduledLeader.
+    const failTtl = this.leaderConsecutiveFails >= this.LEADER_FAIL_MAX_FAST
+      ? this.LEADER_FAIL_TTL_LONG_MS
+      : this.LEADER_FAIL_TTL_MS;
+
+    if (this.leaderFailedAt > 0 && now - this.leaderFailedAt < failTtl) {
       return this.synthesizeLeaderFallback();
     }
 
@@ -140,6 +153,7 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
 
         if (!res.ok) {
           this.leaderFailedAt = Date.now();
+          this.leaderConsecutiveFails++;
           return this.synthesizeLeaderFallback();
         }
 
@@ -150,6 +164,7 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
 
         if (json.error || !json.result) {
           this.leaderFailedAt = Date.now();
+          this.leaderConsecutiveFails++;
           return this.synthesizeLeaderFallback();
         }
 
@@ -159,11 +174,14 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
           nextLeaderIdentity: json.result.nextLeaderIdentity ?? null,
         };
 
-        this.leaderCache    = info;
-        this.leaderCachedAt = Date.now();
+        this.leaderCache           = info;
+        this.leaderCachedAt         = Date.now();
+        this.leaderConsecutiveFails = 0;   // reset on success
+        this.leaderFailedAt         = 0;
         return info;
       } catch {
         this.leaderFailedAt = Date.now();
+        this.leaderConsecutiveFails++;
         return this.synthesizeLeaderFallback();
       }
     });

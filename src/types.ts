@@ -243,6 +243,9 @@ export interface LifecycleEntry {
   slotAtSubmission: number | null;
   explorerUrl:     string | null;
   bundleExplorerUrl?: string | null;
+  // Raw bundle-result events (accepted/rejected/dropped) collected from
+  // subscribeBundleResults during the submission window. Stored for audit.
+  rawBundleResults?: unknown[];
   latencyMs: {
     submittedToProcessed:  number | null;
     processedToConfirmed:  number | null;

@@ -429,3 +429,131 @@ The goal is not to inflate counts. The goal is to make every claim cross-checkab
 
 *Built for the Superteam Nigeria Advanced Infrastructure Challenge*
 *Network: Solana Devnet | Language: TypeScript | AI: Groq LLaMA 3.3 70B*
+
+---
+
+## Hardening Pass — June 2026
+
+The following subsystems were hardened or added in the Yellowstone/Jito
+hardening pass. See `HARDENING_CHANGELOG.md` for the full file-by-file
+breakdown.
+
+### New components
+
+**`src/jito/jito-grpc-client.ts`** — `JitoGrpcClientImpl`
+Implements `JitoBundleClient` using the `jito-ts` gRPC `searcherClient`.
+Includes 2-second leader cache, 500ms failure cache, `RateLimiter.runWithBackoff()`
+for all calls, and a `subscribeBundleResults` gRPC stream. Degrades gracefully
+when the native binding or auth keypair is absent.
+
+**`src/core/failure-classifier.ts`**
+Canonical re-export path. The `AdvancedFailureClassifier` implementation
+remains in `src/bundle/` but is now accessible from `src/core/` as required
+by the hardening spec. Also exports `FAILURE_CLASSES` const for quick imports.
+
+### Enhanced components
+
+**`RateLimiter.runWithBackoff()`**
+Added to `src/utils/rate-limiter.ts`. Wraps `run()` with exponential
+backoff (500ms × 2^n + jitter, max 10s) on 429 responses. Used by all
+Jito outbound calls.
+
+**Config — new Jito keys**
+`config.jito` now includes: `rateLimitMs`, `leaderWindowSlots`,
+`emergencyOverride`, `emergencyTipFloorLamports`, `minTipLamports`,
+`maxTipLamports`. All are configurable via environment variables.
+
+**`BundleBuilder` — signature uniqueness**
+Each `build()` produces two transactions: a real-tx (1-lamport self-transfer
+payload) and a tip-tx (monotonic nonce + tip instruction). The nonce ensures
+the tip-tx always has a different signature from the real-tx and from every
+prior build. Both signatures are logged for audit.
+
+**`BundleSubmitter` — leader window gate + 429 backoff + raw result persistence**
+Submission is now gated on `isJitoLeaderWindow` or stream health. Override
+via `JITO_EMERGENCY_OVERRIDE=true`. All Jito calls use `runWithBackoff()`.
+Raw bundle-result events from `subscribeBundleResults` are stored per
+`bundleId` and returned in `SubmitResult.rawBundleResult`.
+
+### Updated repository structure
+
+```
+src/
+  core/
+    failure-classifier.ts    canonical re-export of AdvancedFailureClassifier
+  jito/
+    jito-bundle-client.ts    JitoBundleClient interface (unchanged)
+    jito-grpc-client.ts      NEW: gRPC transport via jito-ts searcherClient
+    jito-jsonrpc-client.ts   JSON-RPC fallback transport (unchanged)
+    leader-window-detector.ts leader-window cache (unchanged)
+  utils/
+    rate-limiter.ts          +runWithBackoff() for 429 handling
+  config.ts                  +jito tip guardrails and leader-window config
+  bundle/
+    bundle-builder.ts        +signature uniqueness, +lastValidBlockHeight log
+    bundle-submitter.ts      +leader gate, +429 backoff, +raw result store
+HARDENING_CHANGELOG.md       complete file-by-file changelog
+```
+
+---
+
+## Hardening Pass v2.1 (additional fixes)
+
+The following targeted fixes were applied on top of the initial hardening pass.
+
+### `src/utils/rate-limiter.ts` — `runWithBackoff()` implemented
+
+The initial pass documented `runWithBackoff()` but the method body was
+missing — `jito-grpc-client.ts` called it and would throw
+`TypeError: this.limiter.runWithBackoff is not a function` at runtime.
+
+Fix: implemented as a retry loop over `run()`:
+- Detects 429 by checking `err.message` for "429", "rate limit", "too many requests".
+- Non-429 errors re-thrown immediately.
+- Schedule: `min(500ms × 2^n + jitter[0,500), 10 000ms)`, max 4 retries.
+
+### `src/config.ts` — tip guardrails and leader-window config
+
+Added `config.tip.minLamports` / `config.tip.maxLamports` (env:
+`MIN_TIP_LAMPORTS` / `MAX_TIP_LAMPORTS`) and `config.jito.leaderWindowSlots`,
+`config.jito.emergencyOverride`, `config.jito.emergencyMinTipLamports`.
+
+### `src/bundle/bundle-builder.ts` — block-height expiry fix
+
+`isExpiredNow()` previously compared slot numbers against
+`lastValidBlockHeight`, which can diverge from the true block height during
+skip events. The fix calls `connection.getBlockHeight("confirmed")` and
+compares against `lastValidBlockHeight - SAFETY_MARGIN_BLOCKS (2)`. The old
+`isExpiredAt(slot)` method is kept for backward compatibility.
+
+`build()` now also applies tip guardrail clamping (`config.tip.min/max`) and
+logs `bundleTxSignature` for signature-uniqueness audit.
+
+### `src/bundle/bundle-submitter.ts` — leader-window gate wired
+
+`setLeaderDetector()` method added. The `Stack` constructor now calls
+`this.submitter.setLeaderDetector(this.leaderDetector)` to inject the
+`LeaderWindowDetector` so `submitMainnet()` can gate on leader-window status.
+Without this call the gate was always in "no detector" mode (allow-all).
+
+Also added: `rawBundleResults` collection via `subscribeBundleResults()` and
+returned in `SubmitResult` for persistence to `lifecycle.json`.
+
+### `src/stack.ts` — wiring and raw-result persistence
+
+- Added `this.submitter.setLeaderDetector(this.leaderDetector)` in constructor.
+- `buildEntry()` now accepts and returns `rawBundleResults` and
+  `bundleTxSignature` fields.
+- Successful tracking call passes `submitResult.rawBundleResults`.
+
+### `src/types.ts` — `rawBundleResults` in `LifecycleEntry`
+
+Added `rawBundleResults?: unknown[]` to `LifecycleEntry` so the persisted
+lifecycle record carries the raw bundle-result event payloads from the
+block engine's `subscribeBundleResults` stream.
+
+### `test/unit.test.ts` — three new `runWithBackoff` tests
+
+- `retries on 429 and succeeds on second attempt`
+- `propagates non-429 errors immediately`
+- `exhausts retries on persistent 429`
