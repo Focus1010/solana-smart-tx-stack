@@ -11,7 +11,7 @@ import { FailureReason }            from "../types";
 import { Logger }                   from "../utils/logger";
 import { shortKey, sleep }          from "../utils/helpers";
 import { config }                   from "../config";
-import { JitoJsonRpcClientImpl }    from "../jito/jito-jsonrpc-client";
+import { JitoBundleClient }         from "../jito/jito-bundle-client";
 import { RateLimiter }              from "../utils/rate-limiter";
 import { LeaderWindowDetector }     from "../jito/leader-window-detector";
 
@@ -52,7 +52,7 @@ export class BundleSubmitter {
   private readonly connection:     Connection;
   private readonly payer:          Keypair;
   private readonly logger:         Logger;
-  private readonly jitoClient:     JitoJsonRpcClientImpl;
+  private readonly jitoClient:     JitoBundleClient;
   private readonly limiter:        RateLimiter;
   private readonly statusLimiter:  RateLimiter;
   private leaderDetector:          LeaderWindowDetector | null = null;
@@ -86,13 +86,18 @@ export class BundleSubmitter {
   private readonly FAST_POLL_WINDOW_MS    = 4_000;
   private readonly SLOW_POLL_INTERVAL_MS  = 2_000;
 
-  constructor(connection: Connection, payer: Keypair, logger: Logger) {
+  constructor(
+    connection: Connection,
+    payer: Keypair,
+    logger: Logger,
+    jitoClient: JitoBundleClient
+  ) {
     this.connection    = connection;
     this.payer         = payer;
     this.logger        = logger;
-    this.jitoClient    = new JitoJsonRpcClientImpl(config.jito.rpcUrl);
+    this.jitoClient    = jitoClient;
     this.limiter       = new RateLimiter(
-      parseInt(process.env.JITO_RATE_LIMIT_MS ?? "1100", 10)
+      parseInt(process.env.JITO_RATE_LIMIT_MS ?? "1500", 10)
     );
     this.statusLimiter = new RateLimiter(
       parseInt(process.env.JITO_STATUS_POLL_RATE_LIMIT_MS ?? "250", 10)
@@ -228,11 +233,28 @@ export class BundleSubmitter {
     const rawResults: unknown[] = [];
     const unsubscribe = this.jitoClient.subscribeBundleResults(
       (update) => {
-        rawResults.push(update.raw);
+        const raw = update.raw ?? update;
+        rawResults.push(raw);
+
+        const state =
+          update.state ||
+          ((raw as { rejected?: unknown }).rejected
+            ? "rejected"
+            : (raw as { dropped?: unknown }).dropped
+              ? "dropped"
+              : "unknown");
+
+        this.logger.debug("[jito] Bundle result update", {
+          bundleId: update.bundleId,
+          state,
+          slot:     update.slot,
+          raw,
+        }).catch(() => {});
+
         if (update.state === "rejected" || update.state === "dropped") {
-          this.logger.warn("[submitter] Raw bundle result: " + update.state, {
+          this.logger.warn("[jito] Raw bundle result: " + update.state, {
             bundleId: update.bundleId?.slice(0, 12),
-            raw:      JSON.stringify(update.raw ?? {}).slice(0, 200),
+            raw:      JSON.stringify(raw ?? {}).slice(0, 500),
           }).catch(() => {});
         }
       },
@@ -417,9 +439,11 @@ export class BundleSubmitter {
     while (Date.now() < deadline) {
       let status: string | null = null;
       try {
-        status = await this.statusLimiter.runWithBackoff(async () => {
-          return this.jitoClient.getInflightBundleStatus(bundleId);
-        });
+        if (this.jitoClient.getInflightBundleStatus) {
+          status = await this.statusLimiter.runWithBackoff(async () => {
+            return this.jitoClient.getInflightBundleStatus!(bundleId);
+          });
+        }
       } catch {
         // 429 exhausted or network error -- keep polling
         await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);

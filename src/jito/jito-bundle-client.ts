@@ -53,6 +53,9 @@ export interface JitoBundleClient {
     onError: BundleErrorCallback
   ): () => void;
 
+  // Optional: poll inflight bundle status (JSON-RPC and hybrid gRPC clients)
+  getInflightBundleStatus?(bundleId: string): Promise<string | null>;
+
   // Releases all resources held by this client
   close(): void;
 }

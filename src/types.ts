@@ -246,6 +246,11 @@ export interface LifecycleEntry {
   // Raw bundle-result events (accepted/rejected/dropped) collected from
   // subscribeBundleResults during the submission window. Stored for audit.
   rawBundleResults?: unknown[];
+  // Structured raw engine payload for auditing (latest bundle-result event).
+  raw?: {
+    bundleResult?: unknown;
+    bundleResults?: unknown[];
+  };
   latencyMs: {
     submittedToProcessed:  number | null;
     processedToConfirmed:  number | null;
