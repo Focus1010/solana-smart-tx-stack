@@ -5,6 +5,7 @@ import {
   SystemProgram,
   ComputeBudgetProgram,
   BlockhashWithExpiryBlockHeight,
+  TransactionInstruction,
   TransactionMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
@@ -14,6 +15,18 @@ import { Logger } from "../utils/logger";
 import { config } from "../config";
 
 const { Bundle } = JitoBundle;
+
+const MEMO_PROGRAM_ID = new PublicKey(
+  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+);
+
+function createMemoInstruction(memo: string, signer: PublicKey): TransactionInstruction {
+  return new TransactionInstruction({
+    keys: [{ pubkey: signer, isSigner: true, isWritable: false }],
+    programId: MEMO_PROGRAM_ID,
+    data: Buffer.from(memo, "utf8"),
+  });
+}
 
 // Jito tip accounts (mainnet)
 // Source: https://docs.jito.wtf/lowlatencytxnsend/#tip-accounts
@@ -159,9 +172,10 @@ export class BundleBuilder {
   //   4. forceBlockhashRefresh skips the expiry check and always fetches fresh
 
   async build(
-    tipLamports:          number,
-    currentSlot:          number,
-    forceBlockhashRefresh = false
+    tipLamports:           number,
+    currentSlot:           number,
+    forceBlockhashRefresh  = false,
+    memoSeed?:             string
   ): Promise<BuiltBundle> {
     // Apply hard guardrail on tip before building
     const clampedTip = Math.max(
@@ -213,17 +227,23 @@ export class BundleBuilder {
     // Because the tip account is randomly chosen per build() call and the
     // payer's signature covers the full message, the resulting signature is
     // cryptographically unique to this specific bundle build.
+    const instructions = [
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 10_000 }),
+      SystemProgram.transfer({
+        fromPubkey: this.payer.publicKey,
+        toPubkey:   tipAccount,
+        lamports:   clampedTip,
+      }),
+    ];
+
+    if (memoSeed) {
+      instructions.push(createMemoInstruction(memoSeed, this.payer.publicKey));
+    }
+
     const message = new TransactionMessage({
       payerKey:        this.payer.publicKey,
       recentBlockhash: blockhashInfo.blockhash,
-      instructions: [
-        ComputeBudgetProgram.setComputeUnitLimit({ units: 10_000 }),
-        SystemProgram.transfer({
-          fromPubkey: this.payer.publicKey,
-          toPubkey:   tipAccount,
-          lamports:   clampedTip,
-        }),
-      ],
+      instructions,
     }).compileToV0Message();
 
     const vtx = new VersionedTransaction(message);
