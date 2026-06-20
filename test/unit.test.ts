@@ -29,6 +29,8 @@ async function test(name: string, fn: () => Promise<void> | void): Promise<void>
   }
 }
 
+async function main(): Promise<void> {
+
 // ── RateLimiter ───────────────────────────────────────────────────────────────
 
 console.log("\nRateLimiter");
@@ -316,3 +318,7 @@ console.log(`\nResults: ${passed} passed, ${failed} failed\n`);
 if (failed > 0) {
   process.exit(1);
 }
+
+}
+
+main();

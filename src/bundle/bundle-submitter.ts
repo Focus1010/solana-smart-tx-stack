@@ -432,6 +432,13 @@ export class BundleSubmitter {
     const msg = err.message.toLowerCase();
 
     if (msg.includes("blockhash"))                              return "EXPIRED_BLOCKHASH";
+    // Must be checked before the generic tip/fee match below: Jito returns this
+    // exact wording when the submitted transaction does not write-lock one of
+    // its current official tip accounts (e.g. a stale/incorrect tip account
+    // address). It is a structural rejection, not an auction-loss/fee-size
+    // issue -- raising the tip will not fix it, so it must not be classified
+    // as FEE_TOO_LOW (which the agent would "fix" by bumping the tip).
+    if (msg.includes("write lock") && msg.includes("tip account"))  return "UNKNOWN";
     if (msg.includes("tip") || msg.includes("fee"))            return "FEE_TOO_LOW";
     if (msg.includes("compute"))                               return "COMPUTE_EXCEEDED";
     if (msg.includes("timeout") || msg.includes("timed out")) return "TIMEOUT";

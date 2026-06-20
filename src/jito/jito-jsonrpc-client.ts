@@ -33,7 +33,7 @@ const STATIC_TIP_ACCOUNTS = [
   "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
   "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
   "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
-  "juLesoSmdTcRtzjrcVaBdQKzewoU7DR9AL8GCFmFKYc",
+  "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
 ];
 
 const MIN_CALL_INTERVAL_MS = parseInt(
