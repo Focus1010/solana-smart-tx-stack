@@ -1,27 +1,27 @@
 [
   {
-    "runId": "C36160937264",
-    "bundleId": "52a9d4a9ab9ca39a388ee30bd06b312596b2b7ff0532cb7a6551fe062cb4b591",
-    "signature": "62bmBMDJm32rdoE9YorjQp9f6tRqob6bx6RVnqopLjkF7HKH4TMhj3bycDsCAgzS2Pxw3EWhxsV43N3swn3qEg5M",
+    "runId": "FA426E21FE50",
+    "bundleId": "156fc674f5fb2e68b0015c2baf195ace490c30090489b606fa1908f47c538ef3",
+    "signature": "3ysw2LXox1toBs5ALnuD3zzGE1SaPVtXUWJuZMg9xqo6oiKpBbjivSqPs6k23Dbhu61BQPHwv1PXrCxbFSNVoj8u",
     "network": "devnet",
     "dryRun": false,
-    "tipLamports": 5543,
-    "tipAccount": "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
-    "submittedAt": 1781959396202,
-    "submittedAtIso": "2026-06-20T12:43:16.202Z",
+    "tipLamports": 20637,
+    "tipAccount": "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "submittedAt": 1781962171641,
+    "submittedAtIso": "2026-06-20T13:29:31.641Z",
     "stages": [
       {
         "stage": "submitted",
-        "slot": 470728997,
-        "timestamp": 1781959396202,
+        "slot": 470736342,
+        "timestamp": 1781962171641,
         "latencyFromPrevMs": null,
         "commitmentSource": "rpc_signature_status"
       },
       {
         "stage": "failed",
         "slot": null,
-        "timestamp": 1781959418002,
-        "latencyFromPrevMs": 21800,
+        "timestamp": 1781962192072,
+        "latencyFromPrevMs": 20431,
         "commitmentSource": "rpc_signature_status"
       }
     ],
@@ -30,17 +30,17 @@
     "failureClass": "TIMEOUT",
     "failureMessage": null,
     "faultInjected": "none",
-    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. The fallback selected 5543 lamports (p75) from live tip data, with congestion multiplier 1.000x and leader urgency multiplier 1.350x. This preserves autonomous operation while keeping the decision bounded by observed network conditions.",
+    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. The fallback selected 20637 lamports (p95) from live tip data, with congestion multiplier 1.300x and leader urgency multiplier 1.350x. This preserves autonomous operation while keeping the decision bounded by observed network conditions.",
     "agentConfidence": 0.68,
     "agentAction": "submit_now",
     "agentDecision": {
       "engine": "groq",
       "model": "llama-3.3-70b-versatile",
       "action": "submit_now",
-      "selectedTipLamports": 5543,
+      "selectedTipLamports": 20637,
       "landingProbabilityEstimate": 0.65,
-      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. The fallback selected 5543 lamports (p75) from live tip data, with congestion multiplier 1.000x and leader urgency multiplier 1.350x. This preserves autonomous operation while keeping the decision bounded by observed network conditions.",
-      "promptHash": "f80e3a99e59297adb6c54594b946cfc9469fef36db823d63583b48be1b4997ca",
+      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. The fallback selected 20637 lamports (p95) from live tip data, with congestion multiplier 1.300x and leader urgency multiplier 1.350x. This preserves autonomous operation while keeping the decision bounded by observed network conditions.",
+      "promptHash": "0346e5fe2876784e0f10701f44ebd7645088ed501c9590a79ec91dcb25e759a2",
       "llmLatencyMs": 0,
       "guardrailAdjusted": false
     },
@@ -49,36 +49,36 @@
       {
         "decisionType": "tip_intelligence",
         "action": "submit_now",
-        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. The fallback selected 5543 lamports (p75) from live tip data, with congestion multiplier 1.000x and leader urgency multiplier 1.350x. This preserves autonomous operation while keeping the decision bounded by observed network conditions.",
+        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used its deterministic safety fallback. The fallback selected 20637 lamports (p95) from live tip data, with congestion multiplier 1.300x and leader urgency multiplier 1.350x. This preserves autonomous operation while keeping the decision bounded by observed network conditions.",
         "confidenceScore": 0.68,
-        "tipLamports": 5543,
-        "selectedPercentile": 75,
-        "congestionMultiplier": 1,
+        "tipLamports": 20637,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 1.3,
         "leaderUrgencyMultiplier": 1.35,
         "landingProbabilityEstimate": 0.65,
         "engine": "groq",
         "model": "llama-3.3-70b-versatile",
-        "promptHash": "f80e3a99e59297adb6c54594b946cfc9469fef36db823d63583b48be1b4997ca",
+        "promptHash": "0346e5fe2876784e0f10701f44ebd7645088ed501c9590a79ec91dcb25e759a2",
         "llmLatencyMs": 0,
         "guardrailAdjusted": false,
         "retryCount": 0,
-        "createdAt": "2026-06-20T12:43:15.733Z"
+        "createdAt": "2026-06-20T13:29:31.262Z"
       }
     ],
     "leaderWindow": {
-      "observedAt": "2026-06-20T12:43:13.913Z",
-      "currentSlot": 470728997,
+      "observedAt": "2026-06-20T13:29:29.985Z",
+      "currentSlot": 470736342,
       "slotsUntilJitoLeader": null,
       "nextLeaderIdentity": null,
       "isJitoLeaderWindow": false
     },
     "networkSnapshot": {
-      "currentSlot": 470728997,
-      "averageSlotTimeMs": 400,
+      "currentSlot": 470736342,
+      "averageSlotTimeMs": 580,
       "recentFailureRate": 0,
       "leaderWindow": {
-        "observedAt": "2026-06-20T12:43:13.913Z",
-        "currentSlot": 470728997,
+        "observedAt": "2026-06-20T13:29:29.985Z",
+        "currentSlot": 470736342,
         "slotsUntilJitoLeader": null,
         "nextLeaderIdentity": null,
         "isJitoLeaderWindow": false
@@ -86,8 +86,8 @@
       "processedToConfirmedMsP50": null,
       "processedToConfirmedMsP90": null,
       "conditions": {
-        "capturedAt": "2026-06-20T12:43:14.974Z",
-        "blockProductionRateMs": 786.5,
+        "capturedAt": "2026-06-20T13:29:30.824Z",
+        "blockProductionRateMs": 577.6666666666666,
         "processedToConfirmedP50": null,
         "processedToConfirmedP90": null,
         "recentPrioritizationFees": {
@@ -105,8 +105,8 @@
       }
     },
     "networkConditionsAtSubmission": {
-      "capturedAt": "2026-06-20T12:43:14.974Z",
-      "blockProductionRateMs": 786.5,
+      "capturedAt": "2026-06-20T13:29:30.824Z",
+      "blockProductionRateMs": 577.6666666666666,
       "processedToConfirmedP50": null,
       "processedToConfirmedP90": null,
       "recentPrioritizationFees": {
@@ -123,8 +123,8 @@
       "validatorLoadProxy": 0
     },
     "networkConditionsAtConfirmation": {
-      "capturedAt": "2026-06-20T12:43:38.235Z",
-      "blockProductionRateMs": 1133.888888888889,
+      "capturedAt": "2026-06-20T13:29:52.328Z",
+      "blockProductionRateMs": 1120.111111111111,
       "processedToConfirmedP50": null,
       "processedToConfirmedP90": null,
       "recentPrioritizationFees": {
@@ -141,7 +141,7 @@
       "validatorLoadProxy": 1
     },
     "deltaFromSubmissionToConfirmation": {
-      "blockProductionRateDeltaMs": 347.3888888888889,
+      "blockProductionRateDeltaMs": 542.4444444444445,
       "prioritizationFeeDelta": {
         "p50": 0,
         "p75": 0
@@ -153,11 +153,11 @@
     "triggerEvent": null,
     "marinadeTriggerEvent": null,
     "retryCount": 0,
-    "blockhashUsed": "DHihzr6Aj7mM7uKowwPe6SLoex3S3X83gKiPXFk3joKt",
-    "slotAtSubmission": 470728997,
-    "explorerUrl": "https://explorer.solana.com/tx/62bmBMDJm32rdoE9YorjQp9f6tRqob6bx6RVnqopLjkF7HKH4TMhj3bycDsCAgzS2Pxw3EWhxsV43N3swn3qEg5M?cluster=devnet",
-    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/52a9d4a9ab9ca39a388ee30bd06b312596b2b7ff0532cb7a6551fe062cb4b591",
-    "bundleTxSignature": "62bmBMDJm32rdoE9YorjQp9f6tRqob6bx6RVnqopLjkF7HKH4TMhj3bycDsCAgzS2Pxw3EWhxsV43N3swn3qEg5M",
+    "blockhashUsed": "E2pWUpN5CCb9tWk6JLY9Ue8Eom2eFjwFpjT1vWkQYYAu",
+    "slotAtSubmission": 470736342,
+    "explorerUrl": "https://explorer.solana.com/tx/3ysw2LXox1toBs5ALnuD3zzGE1SaPVtXUWJuZMg9xqo6oiKpBbjivSqPs6k23Dbhu61BQPHwv1PXrCxbFSNVoj8u?cluster=devnet",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/156fc674f5fb2e68b0015c2baf195ace490c30090489b606fa1908f47c538ef3",
+    "bundleTxSignature": "3ysw2LXox1toBs5ALnuD3zzGE1SaPVtXUWJuZMg9xqo6oiKpBbjivSqPs6k23Dbhu61BQPHwv1PXrCxbFSNVoj8u",
     "rawBundleResults": [],
     "raw": {
       "bundleResults": []
@@ -170,28 +170,28 @@
     }
   },
   {
-    "runId": "DECC03DEC3CC",
+    "runId": "24730A11C7E2",
     "bundleId": null,
     "signature": null,
     "network": "devnet",
     "dryRun": false,
-    "tipLamports": 2648,
+    "tipLamports": 1804,
     "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
-    "submittedAt": 1781959447270,
-    "submittedAtIso": "2026-06-20T12:44:07.270Z",
+    "submittedAt": 1781962217044,
+    "submittedAtIso": "2026-06-20T13:30:17.044Z",
     "stages": [
       {
         "stage": "submitted",
-        "slot": 470729141,
-        "timestamp": 1781959447270,
+        "slot": 470736467,
+        "timestamp": 1781962217044,
         "latencyFromPrevMs": null,
         "commitmentSource": "rpc_signature_status"
       },
       {
         "stage": "failed",
         "slot": null,
-        "timestamp": 1781959447516,
-        "latencyFromPrevMs": 246,
+        "timestamp": 1781962217785,
+        "latencyFromPrevMs": 741,
         "commitmentSource": "rpc_signature_status"
       }
     ],
@@ -200,17 +200,17 @@
     "failureClass": "EXPIRED_BLOCKHASH",
     "failureMessage": "sendBundle HTTP 400: {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32602,\"message\":\"bundle has no transactions\",\"data\":null},\"id\":1}",
     "faultInjected": "expired_blockhash",
-    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as EXPIRED_BLOCKHASH with 97% confidence. The selected recovery path is retry_refresh_blockhash; the next tip would be 2648 lamports based on current percentiles and previous tip.",
+    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as EXPIRED_BLOCKHASH with 97% confidence. The selected recovery path is retry_refresh_blockhash; the next tip would be 1804 lamports based on current percentiles and previous tip.",
     "agentConfidence": 0.8,
     "agentAction": "retry_refresh_blockhash",
     "agentDecision": {
       "engine": "groq",
       "model": "llama-3.3-70b-versatile",
       "action": "retry_refresh_blockhash",
-      "selectedTipLamports": 2648,
+      "selectedTipLamports": 1804,
       "landingProbabilityEstimate": 0.8,
-      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as EXPIRED_BLOCKHASH with 97% confidence. The selected recovery path is retry_refresh_blockhash; the next tip would be 2648 lamports based on current percentiles and previous tip.",
-      "promptHash": "77c341fc0e4b47e04ca54a1a4b3a57c180389ec3fb263366dddaaba825874c72",
+      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as EXPIRED_BLOCKHASH with 97% confidence. The selected recovery path is retry_refresh_blockhash; the next tip would be 1804 lamports based on current percentiles and previous tip.",
+      "promptHash": "9578cca1c8ebd69b19399b3363e23f697b492670dc88ff92ad6f4529339499eb",
       "llmLatencyMs": 0,
       "guardrailAdjusted": false
     },
@@ -219,36 +219,36 @@
       {
         "decisionType": "autonomous_retry",
         "action": "retry_refresh_blockhash",
-        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as EXPIRED_BLOCKHASH with 97% confidence. The selected recovery path is retry_refresh_blockhash; the next tip would be 2648 lamports based on current percentiles and previous tip.",
+        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as EXPIRED_BLOCKHASH with 97% confidence. The selected recovery path is retry_refresh_blockhash; the next tip would be 1804 lamports based on current percentiles and previous tip.",
         "confidenceScore": 0.8,
-        "previousTipLamports": 2648,
-        "newTipLamports": 2648,
+        "previousTipLamports": 1804,
+        "newTipLamports": 1804,
         "engine": "groq",
         "model": "llama-3.3-70b-versatile",
-        "promptHash": "77c341fc0e4b47e04ca54a1a4b3a57c180389ec3fb263366dddaaba825874c72",
+        "promptHash": "9578cca1c8ebd69b19399b3363e23f697b492670dc88ff92ad6f4529339499eb",
         "llmLatencyMs": 0,
         "guardrailAdjusted": false,
         "failure": "EXPIRED_BLOCKHASH",
         "refreshBlockhash": true,
         "waitMs": 1000,
         "retryCount": 1,
-        "createdAt": "2026-06-20T12:44:09.386Z"
+        "createdAt": "2026-06-20T13:30:19.645Z"
       }
     ],
     "leaderWindow": {
-      "observedAt": "2026-06-20T12:44:07.131Z",
-      "currentSlot": 470729141,
+      "observedAt": "2026-06-20T13:30:17.027Z",
+      "currentSlot": 470736467,
       "slotsUntilJitoLeader": null,
       "nextLeaderIdentity": null,
       "isJitoLeaderWindow": false
     },
     "networkSnapshot": {
-      "currentSlot": 470729141,
+      "currentSlot": 470736467,
       "averageSlotTimeMs": 400,
       "recentFailureRate": 0,
       "leaderWindow": {
-        "observedAt": "2026-06-20T12:44:07.131Z",
-        "currentSlot": 470729141,
+        "observedAt": "2026-06-20T13:30:17.027Z",
+        "currentSlot": 470736467,
         "slotsUntilJitoLeader": null,
         "nextLeaderIdentity": null,
         "isJitoLeaderWindow": false
@@ -256,7 +256,7 @@
       "processedToConfirmedMsP50": null,
       "processedToConfirmedMsP90": null,
       "conditions": {
-        "capturedAt": "2026-06-20T12:44:07.136Z",
+        "capturedAt": "2026-06-20T13:30:17.029Z",
         "blockProductionRateMs": 400,
         "processedToConfirmedP50": null,
         "processedToConfirmedP90": null,
@@ -275,7 +275,7 @@
       }
     },
     "networkConditionsAtSubmission": {
-      "capturedAt": "2026-06-20T12:44:07.136Z",
+      "capturedAt": "2026-06-20T13:30:17.029Z",
       "blockProductionRateMs": 400,
       "processedToConfirmedP50": null,
       "processedToConfirmedP90": null,
@@ -298,7 +298,7 @@
     "marinadeTriggerEvent": null,
     "retryCount": 1,
     "blockhashUsed": "",
-    "slotAtSubmission": 470729141,
+    "slotAtSubmission": 470736467,
     "explorerUrl": null,
     "bundleExplorerUrl": null,
     "latencyMs": {
@@ -309,28 +309,28 @@
     }
   },
   {
-    "runId": "4E38C672EBF5",
+    "runId": "A3544E1DC230",
     "bundleId": null,
     "signature": null,
     "network": "devnet",
     "dryRun": false,
-    "tipLamports": 107,
+    "tipLamports": 100,
     "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
-    "submittedAt": 1781959451743,
-    "submittedAtIso": "2026-06-20T12:44:11.743Z",
+    "submittedAt": 1781962222404,
+    "submittedAtIso": "2026-06-20T13:30:22.404Z",
     "stages": [
       {
         "stage": "submitted",
-        "slot": 470729155,
-        "timestamp": 1781959451743,
+        "slot": 470736482,
+        "timestamp": 1781962222404,
         "latencyFromPrevMs": null,
         "commitmentSource": "rpc_signature_status"
       },
       {
         "stage": "failed",
         "slot": null,
-        "timestamp": 1781959452902,
-        "latencyFromPrevMs": 1159,
+        "timestamp": 1781962223177,
+        "latencyFromPrevMs": 773,
         "commitmentSource": "rpc_signature_status"
       }
     ],
@@ -339,17 +339,17 @@
     "failureClass": "FEE_TOO_LOW",
     "failureMessage": "sendBundle HTTP 400: {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32602,\"message\":\"bundle has no transactions\",\"data\":null},\"id\":1}",
     "faultInjected": "low_tip",
-    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as FEE_TOO_LOW with 91% confidence. The selected recovery path is retry_increase_tip; the next tip would be 8128 lamports based on current percentiles and previous tip.",
+    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as FEE_TOO_LOW with 91% confidence. The selected recovery path is retry_increase_tip; the next tip would be 10000 lamports based on current percentiles and previous tip.",
     "agentConfidence": 0.8,
     "agentAction": "retry_increase_tip",
     "agentDecision": {
       "engine": "groq",
       "model": "llama-3.3-70b-versatile",
       "action": "retry_increase_tip",
-      "selectedTipLamports": 107,
+      "selectedTipLamports": 100,
       "landingProbabilityEstimate": 0.8,
-      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as FEE_TOO_LOW with 91% confidence. The selected recovery path is retry_increase_tip; the next tip would be 8128 lamports based on current percentiles and previous tip.",
-      "promptHash": "317690280984f4f0f289c50442ae7402dbda5a35a113b85fbaaa3f814f543f58",
+      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as FEE_TOO_LOW with 91% confidence. The selected recovery path is retry_increase_tip; the next tip would be 10000 lamports based on current percentiles and previous tip.",
+      "promptHash": "f59405c596b6ea34ad03f51706fe6d236f7fae6a55409fc4e87b262347b81582",
       "llmLatencyMs": 0,
       "guardrailAdjusted": false
     },
@@ -358,36 +358,36 @@
       {
         "decisionType": "failure_reasoning",
         "action": "retry_increase_tip",
-        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as FEE_TOO_LOW with 91% confidence. The selected recovery path is retry_increase_tip; the next tip would be 8128 lamports based on current percentiles and previous tip.",
+        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as FEE_TOO_LOW with 91% confidence. The selected recovery path is retry_increase_tip; the next tip would be 10000 lamports based on current percentiles and previous tip.",
         "confidenceScore": 0.8,
-        "previousTipLamports": 107,
-        "newTipLamports": 8128,
+        "previousTipLamports": 100,
+        "newTipLamports": 10000,
         "engine": "groq",
         "model": "llama-3.3-70b-versatile",
-        "promptHash": "317690280984f4f0f289c50442ae7402dbda5a35a113b85fbaaa3f814f543f58",
+        "promptHash": "f59405c596b6ea34ad03f51706fe6d236f7fae6a55409fc4e87b262347b81582",
         "llmLatencyMs": 0,
         "guardrailAdjusted": false,
         "failure": "FEE_TOO_LOW",
         "refreshBlockhash": false,
         "waitMs": 1000,
         "retryCount": 1,
-        "createdAt": "2026-06-20T12:44:13.760Z"
+        "createdAt": "2026-06-20T13:30:24.064Z"
       }
     ],
     "leaderWindow": {
-      "observedAt": "2026-06-20T12:44:11.741Z",
-      "currentSlot": 470729155,
+      "observedAt": "2026-06-20T13:30:22.402Z",
+      "currentSlot": 470736482,
       "slotsUntilJitoLeader": null,
       "nextLeaderIdentity": null,
       "isJitoLeaderWindow": false
     },
     "networkSnapshot": {
-      "currentSlot": 470729155,
+      "currentSlot": 470736482,
       "averageSlotTimeMs": 400,
       "recentFailureRate": 0,
       "leaderWindow": {
-        "observedAt": "2026-06-20T12:44:11.741Z",
-        "currentSlot": 470729155,
+        "observedAt": "2026-06-20T13:30:22.402Z",
+        "currentSlot": 470736482,
         "slotsUntilJitoLeader": null,
         "nextLeaderIdentity": null,
         "isJitoLeaderWindow": false
@@ -395,7 +395,7 @@
       "processedToConfirmedMsP50": null,
       "processedToConfirmedMsP90": null,
       "conditions": {
-        "capturedAt": "2026-06-20T12:44:11.742Z",
+        "capturedAt": "2026-06-20T13:30:22.403Z",
         "blockProductionRateMs": 400,
         "processedToConfirmedP50": null,
         "processedToConfirmedP90": null,
@@ -414,7 +414,7 @@
       }
     },
     "networkConditionsAtSubmission": {
-      "capturedAt": "2026-06-20T12:44:11.742Z",
+      "capturedAt": "2026-06-20T13:30:22.403Z",
       "blockProductionRateMs": 400,
       "processedToConfirmedP50": null,
       "processedToConfirmedP90": null,
@@ -437,7 +437,7 @@
     "marinadeTriggerEvent": null,
     "retryCount": 1,
     "blockhashUsed": "",
-    "slotAtSubmission": 470729155,
+    "slotAtSubmission": 470736482,
     "explorerUrl": null,
     "bundleExplorerUrl": null,
     "latencyMs": {
@@ -448,28 +448,28 @@
     }
   },
   {
-    "runId": "8A6D6A3D26D9",
+    "runId": "9FFCFBB1311F",
     "bundleId": null,
     "signature": null,
     "network": "devnet",
     "dryRun": false,
-    "tipLamports": 3680,
+    "tipLamports": 10000,
     "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
-    "submittedAt": 1781959456615,
-    "submittedAtIso": "2026-06-20T12:44:16.615Z",
+    "submittedAt": 1781962227046,
+    "submittedAtIso": "2026-06-20T13:30:27.046Z",
     "stages": [
       {
         "stage": "submitted",
-        "slot": 470729168,
-        "timestamp": 1781959456615,
+        "slot": 470736495,
+        "timestamp": 1781962227046,
         "latencyFromPrevMs": null,
         "commitmentSource": "rpc_signature_status"
       },
       {
         "stage": "failed",
         "slot": null,
-        "timestamp": 1781959457758,
-        "latencyFromPrevMs": 1143,
+        "timestamp": 1781962228141,
+        "latencyFromPrevMs": 1095,
         "commitmentSource": "rpc_signature_status"
       }
     ],
@@ -478,17 +478,17 @@
     "failureClass": "COMPUTE_EXCEEDED",
     "failureMessage": "sendBundle HTTP 400: {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32602,\"message\":\"bundle has no transactions\",\"data\":null},\"id\":1}",
     "faultInjected": "compute_exceeded",
-    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as COMPUTE_EXCEEDED with 95% confidence. The selected recovery path is abort; the next tip would be 3680 lamports based on current percentiles and previous tip.",
+    "agentReasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as COMPUTE_EXCEEDED with 95% confidence. The selected recovery path is abort; the next tip would be 10000 lamports based on current percentiles and previous tip.",
     "agentConfidence": 0.8,
     "agentAction": "abort",
     "agentDecision": {
       "engine": "groq",
       "model": "llama-3.3-70b-versatile",
       "action": "abort",
-      "selectedTipLamports": 3680,
+      "selectedTipLamports": 10000,
       "landingProbabilityEstimate": 0.8,
-      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as COMPUTE_EXCEEDED with 95% confidence. The selected recovery path is abort; the next tip would be 3680 lamports based on current percentiles and previous tip.",
-      "promptHash": "cfb45ca8473470349639ae04f6bb37b80f3ae9ee860955751e007e859da09ecd",
+      "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as COMPUTE_EXCEEDED with 95% confidence. The selected recovery path is abort; the next tip would be 10000 lamports based on current percentiles and previous tip.",
+      "promptHash": "0455b89b4df10cb379702d1a3db8215b5afceecbfc5ae967e546f22354e89650",
       "llmLatencyMs": 0,
       "guardrailAdjusted": true
     },
@@ -497,36 +497,36 @@
       {
         "decisionType": "failure_reasoning",
         "action": "abort",
-        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as COMPUTE_EXCEEDED with 95% confidence. The selected recovery path is abort; the next tip would be 3680 lamports based on current percentiles and previous tip.",
+        "reasoning": "The configured LLM was unavailable or returned invalid JSON, so the stack used classifier-grounded retry fallback. The classifier labeled the failure as COMPUTE_EXCEEDED with 95% confidence. The selected recovery path is abort; the next tip would be 10000 lamports based on current percentiles and previous tip.",
         "confidenceScore": 0.8,
-        "previousTipLamports": 3680,
-        "newTipLamports": 3680,
+        "previousTipLamports": 10000,
+        "newTipLamports": 10000,
         "engine": "groq",
         "model": "llama-3.3-70b-versatile",
-        "promptHash": "cfb45ca8473470349639ae04f6bb37b80f3ae9ee860955751e007e859da09ecd",
+        "promptHash": "0455b89b4df10cb379702d1a3db8215b5afceecbfc5ae967e546f22354e89650",
         "llmLatencyMs": 0,
         "guardrailAdjusted": true,
         "failure": "COMPUTE_EXCEEDED",
         "refreshBlockhash": false,
         "waitMs": 0,
         "retryCount": 0,
-        "createdAt": "2026-06-20T12:44:18.078Z"
+        "createdAt": "2026-06-20T13:30:28.443Z"
       }
     ],
     "leaderWindow": {
-      "observedAt": "2026-06-20T12:44:16.613Z",
-      "currentSlot": 470729168,
+      "observedAt": "2026-06-20T13:30:27.043Z",
+      "currentSlot": 470736495,
       "slotsUntilJitoLeader": null,
       "nextLeaderIdentity": null,
       "isJitoLeaderWindow": false
     },
     "networkSnapshot": {
-      "currentSlot": 470729168,
+      "currentSlot": 470736495,
       "averageSlotTimeMs": 400,
       "recentFailureRate": 0,
       "leaderWindow": {
-        "observedAt": "2026-06-20T12:44:16.613Z",
-        "currentSlot": 470729168,
+        "observedAt": "2026-06-20T13:30:27.043Z",
+        "currentSlot": 470736495,
         "slotsUntilJitoLeader": null,
         "nextLeaderIdentity": null,
         "isJitoLeaderWindow": false
@@ -534,7 +534,7 @@
       "processedToConfirmedMsP50": null,
       "processedToConfirmedMsP90": null,
       "conditions": {
-        "capturedAt": "2026-06-20T12:44:16.614Z",
+        "capturedAt": "2026-06-20T13:30:27.045Z",
         "blockProductionRateMs": 400,
         "processedToConfirmedP50": null,
         "processedToConfirmedP90": null,
@@ -553,7 +553,7 @@
       }
     },
     "networkConditionsAtSubmission": {
-      "capturedAt": "2026-06-20T12:44:16.614Z",
+      "capturedAt": "2026-06-20T13:30:27.045Z",
       "blockProductionRateMs": 400,
       "processedToConfirmedP50": null,
       "processedToConfirmedP90": null,
@@ -576,7 +576,7 @@
     "marinadeTriggerEvent": null,
     "retryCount": 0,
     "blockhashUsed": "",
-    "slotAtSubmission": 470729168,
+    "slotAtSubmission": 470736495,
     "explorerUrl": null,
     "bundleExplorerUrl": null,
     "latencyMs": {

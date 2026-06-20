@@ -1,6 +1,6 @@
 # Bounty Requirement Verification Report
 
-Generated: 2026-06-20T12:44:28.274Z
+Generated: 2026-06-20T13:30:40.313Z
 Score: **22/24**
 
 | Status | Requirement | Detail | Implementation |
@@ -11,7 +11,7 @@ Score: **22/24**
 | PASS | Multiple failure type classifications | expired_blockhash, fee_too_low, compute_exceeded all demonstrated | `src/scripts/fault-inject.ts + src/bundle/failure-classifier.ts` |
 | PASS | Dynamic tip values (no hardcoded tips anywhere) | 4 unique tip values across all runs | `src/stream/tip-oracle.ts + src/agent/agent.ts` |
 | PASS | Live tip data from real source | Jito tip floor API primary (bundles.jito.wtf), getRecentPrioritizationFees fallback | `src/stream/tip-oracle.ts` |
-| PASS | AI agent reasoning visible and non-trivial in logs | 4/4 entries have reasoning, avg 327 chars per entry | `src/agent/agent.ts + logs/lifecycle.json (agentReasoning field)` |
+| PASS | AI agent reasoning visible and non-trivial in logs | 4/4 entries have reasoning, avg 328 chars per entry | `src/agent/agent.ts + logs/lifecycle.json (agentReasoning field)` |
 | PASS | AI agent makes multiple distinct decision types | 4 distinct agentAction values observed across runs | `src/agent/agent.ts` |
 | PASS | Structured AI decision trace stored in lifecycle log | 4/4 entries include agentDecisionTrace; families: tip_intelligence, autonomous_retry, failure_reasoning | `src/types.ts + src/stack.ts` |
 | PASS | Autonomous blockhash-expiry recovery trace | 1 EXPIRED_BLOCKHASH records include refresh-blockhash retry evidence | `src/scripts/fault-inject.ts + logs/lifecycle.json` |
@@ -40,7 +40,7 @@ Score: **22/24**
 | Confirmed / Finalized | 0 |
 | Fault injection runs | 3 (3 types) |
 | Unique tip values | 4 |
-| Avg agent reasoning | 327 characters |
+| Avg agent reasoning | 328 characters |
 | Agent action types seen | 4 |
 | Structured AI traces | 4/4 |
 | AI decision families | tip_intelligence, autonomous_retry, failure_reasoning |
@@ -56,10 +56,10 @@ Score: **22/24**
 
 ## Sample Explorer URLs
 
-- [C36160937264] (failed) https://explorer.solana.com/tx/62bmBMDJm32rdoE9YorjQp9f6tRqob6bx6RVnqopLjkF7HKH4TMhj3bycDsCAgzS2Pxw3EWhxsV43N3swn3qEg5M?cluster=devnet
+- [FA426E21FE50] (failed) https://explorer.solana.com/tx/3ysw2LXox1toBs5ALnuD3zzGE1SaPVtXUWJuZMg9xqo6oiKpBbjivSqPs6k23Dbhu61BQPHwv1PXrCxbFSNVoj8u?cluster=devnet
 
 Explorer URLs above are verifiable on Solana Explorer.
 
 ## Blockhash Recovery Examples
 
-- DECC03DEC3CC: retry_refresh_blockhash, retryCount=1, finalStage=failed
+- 24730A11C7E2: retry_refresh_blockhash, retryCount=1, finalStage=failed
