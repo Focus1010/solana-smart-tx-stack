@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus1010 TX Stack — Lifecycle Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --accent: #6ee7b7;
+      --accent2: #818cf8;
+      --warn: #fbbf24;
+      --err: #f87171;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%);
+    }
+    header h1 { margin: 0; font-size: 1.35rem; color: var(--accent); }
+    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.85rem; }
+    main { padding: 1.5rem 2rem 3rem; max-width: 1200px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .card .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .card .value { font-size: 1.65rem; font-weight: 700; margin-top: 0.35rem; }
+    .card.confidence { border-color: var(--accent2); }
+    .card.confidence .value { color: var(--accent2); }
+    section { margin-top: 2rem; }
+    section h2 { font-size: 1rem; color: var(--accent2); margin-bottom: 0.75rem; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; max-width: 480px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover { background: rgba(110, 231, 183, 0.05); cursor: pointer; }
+    tr.selected { background: rgba(129, 140, 248, 0.12); }
+    .reasoning-panel {
+      margin-top: 1rem;
+      background: #111827;
+      border: 1px solid var(--accent2);
+      border-radius: 8px;
+      padding: 1rem;
+      white-space: pre-wrap;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      display: none;
+    }
+    .reasoning-panel.visible { display: block; }
+    .reasoning-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.75rem; }
+    a { color: var(--accent); }
+    #status { color: var(--warn); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <header id="overview">
+    <h1>Focus1010 Smart TX Stack</h1>
+    <p>Lifecycle analytics · <span id="status">Loading…</span></p>
+  </header>
+  <main>
+    <div class="grid" id="summary-cards"></div>
+
+    <section>
+      <h2>Tip distribution</h2>
+      <div class="chart-wrap"><canvas id="tipChart" height="200"></canvas></div>
+    </section>
+
+    <section id="reasoning-section">
+      <h2>Agent reasoning</h2>
+      <p style="color:var(--muted);font-size:0.85rem">Click a row below to expand decision trace.</p>
+      <div class="reasoning-panel" id="reasoning-panel">
+        <div class="reasoning-meta" id="reasoning-meta"></div>
+        <div id="reasoning-text"></div>
+      </div>
+    </section>
+
+    <section id="finalized-table">
+      <h2>Lifecycle records</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Run ID</th>
+            <th>Stage</th>
+            <th>Tip</th>
+            <th>Failure</th>
+            <th>Trigger</th>
+            <th>Explorer</th>
+          </tr>
+        </thead>
+        <tbody id="entries-body"></tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    let tipChart = null;
+    let entries = [];
+
+    function renderCards(summary) {
+      const cards = [
+        { label: "Total runs", value: summary.totalRuns },
+        { label: "Confirmed", value: summary.confirmed },
+        { label: "Failed", value: summary.failed },
+        { label: "Avg tip (lamports)", value: summary.avgTipLamports.toLocaleString() },
+        { label: "p50 latency (ms)", value: summary.latencyP50Ms || "—" },
+        { label: "p90 latency (ms)", value: summary.latencyP90Ms || "—" },
+      ];
+      const conf = document.createElement("div");
+      conf.className = "card confidence";
+      conf.innerHTML = `<div class="label">Agent confidence p50</div><div class="value">${summary.agentConfidenceP50 ? summary.agentConfidenceP50.toFixed(2) : "—"}</div>`;
+
+      const html = cards.map(c => `
+        <div class="card"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>
+      `).join("");
+      document.getElementById("summary-cards").innerHTML = html;
+      document.getElementById("summary-cards").appendChild(conf);
+    }
+
+    function renderChart(summary) {
+      const ctx = document.getElementById("tipChart").getContext("2d");
+      const labels = (summary.topTips || []).map(t => t.tipLamports + " lam");
+      const data = (summary.topTips || []).map(t => t.count);
+      if (tipChart) tipChart.destroy();
+      tipChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels.length ? labels : ["no data"],
+          datasets: [{
+            label: "Tip frequency",
+            data: data.length ? data : [0],
+            backgroundColor: "rgba(110, 231, 183, 0.55)",
+            borderColor: "#6ee7b7",
+            borderWidth: 1,
+          }],
+        },
+        options: {
+          plugins: { legend: { labels: { color: "#94a3b8" } } },
+          scales: {
+            x: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
+            y: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
+          },
+        },
+      });
+    }
+
+    function showReasoning(entry, idx) {
+      document.querySelectorAll("#entries-body tr").forEach((r, i) => {
+        r.classList.toggle("selected", i === idx);
+      });
+      const panel = document.getElementById("reasoning-panel");
+      const ad = entry.agentDecision || {};
+      document.getElementById("reasoning-meta").textContent =
+        `runId=${entry.runId} · model=${ad.model || "heuristic"} · promptHash=${(ad.promptHash || "").slice(0, 16)}… · llmLatencyMs=${ad.llmLatencyMs ?? 0}`;
+      document.getElementById("reasoning-text").textContent = entry.agentReasoning || "(no reasoning)";
+      panel.classList.add("visible");
+      if (idx === 0) panel.dataset.screenshot = "agent-reasoning";
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById("entries-body");
+      tbody.innerHTML = "";
+      list.forEach((e, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${e.runId}</td>
+          <td>${e.finalStage}</td>
+          <td>${e.tipLamports}</td>
+          <td>${e.failure || "—"}</td>
+          <td>${e.triggerEvent?.type || "scheduled"}</td>
+          <td>${e.explorerUrl ? `<a href="${e.explorerUrl}" target="_blank">tx</a>` : "—"}</td>
+        `;
+        tr.addEventListener("click", () => showReasoning(e, idx));
+        tbody.appendChild(tr);
+      });
+      if (list.length > 0) showReasoning(list[0], 0);
+    }
+
+    async function load() {
+      try {
+        const [sumRes, entRes] = await Promise.all([
+          fetch("/api/summary"),
+          fetch("/api/entries"),
+        ]);
+        const sumData = await sumRes.json();
+        const entData = await entRes.json();
+        const summary = sumData.summary || sumData.live || sumData;
+        entries = entData.entries || [];
+        renderCards(summary);
+        renderChart(summary);
+        renderTable(entries);
+        document.getElementById("status").textContent =
+          `${summary.totalRuns} records · ${(summary.networks || []).join(", ")} · updated ${new Date().toLocaleTimeString()}`;
+        window.__DASHBOARD_READY = true;
+      } catch (err) {
+        document.getElementById("status").textContent = "Error: " + err.message;
+        window.__DASHBOARD_READY = true;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

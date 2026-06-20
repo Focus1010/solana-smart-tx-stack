@@ -33,6 +33,7 @@ import {
   AgentDecisionEvidence,
 } from "./types";
 import { MarinadeLiquidStakingListener } from "./stream/marinade-event-stream";
+import { ProtocolTrigger, ProtocolEvent } from "./stream/protocol-trigger";
 
 //  Stack 
 
@@ -51,6 +52,9 @@ export class Stack {
   private slotSource:     SlotPoller | SlotStream;
   private jitoClient:     JitoBundleClient;
   private slotStreamHealthy = true;
+  private protocolTrigger: ProtocolTrigger | null = null;
+  private triggerSubmitting = false;
+  private triggerQueue: ProtocolEvent[] = [];
 
   private recentOutcomes: boolean[] = [];
 
@@ -82,6 +86,10 @@ export class Stack {
 
     // Wire the leader detector into the submitter so it can gate on leader windows
     this.submitter.setLeaderDetector(this.leaderDetector);
+
+    if (config.trigger.protocol !== "none") {
+      this.protocolTrigger = new ProtocolTrigger(this.connection, logger);
+    }
   }
 
   //  Initialise 
@@ -119,10 +127,21 @@ export class Stack {
     });
 
     await this.slotSource.start();
+
+    if (this.protocolTrigger) {
+      await this.protocolTrigger.start();
+      this.protocolTrigger.on("protocolEvent", (ev: ProtocolEvent) => {
+        void this.handleProtocolTriggerEvent(ev);
+      });
+    }
+
     await sleep(1_500);
   }
 
-  stop(): void { this.slotSource.stop(); }
+  stop(): void {
+    this.protocolTrigger?.stop();
+    this.slotSource.stop();
+  }
 
   //  Run N bundle submissions 
 
@@ -229,6 +248,94 @@ export class Stack {
     }
 
     return entries;
+  }
+
+  //  Reactive run: SPL token / Raydium protocol trigger 
+
+  async runWithProtocolTriggering(
+    maxEvents: number = 3,
+    timeoutMs: number = 5 * 60_000
+  ): Promise<LifecycleEntry[]> {
+    if (!this.protocolTrigger) {
+      await this.logger.warn(
+        "[trigger] Protocol trigger not configured. Set TRIGGER_PROTOCOL and TRIGGER_MINT."
+      );
+      return [];
+    }
+
+    await this.logger.divider("Protocol-triggered bundle submissions");
+    const entries: LifecycleEntry[] = [];
+    let triggered = 0;
+
+    const handler = async (ev: ProtocolEvent) => {
+      if (triggered >= maxEvents) return;
+      triggered++;
+      const entry = await this.handleProtocolTriggerEvent(ev);
+      if (entry) entries.push(entry);
+    };
+
+    this.protocolTrigger.on("protocolEvent", handler);
+
+    const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+    await timeoutPromise;
+
+    this.protocolTrigger.off("protocolEvent", handler);
+
+    if (entries.length === 0) {
+      await this.logger.warn(
+        "[trigger] No qualifying protocol events within timeout (normal on low-traffic devnet)."
+      );
+    } else {
+      await this.logger.ok(`[trigger] ${entries.length} event-triggered bundle(s) submitted`);
+    }
+
+    return entries;
+  }
+
+  private async handleProtocolTriggerEvent(ev: ProtocolEvent): Promise<LifecycleEntry | null> {
+    await this.logger.info("[trigger] Protocol event received", {
+      type: ev.type,
+      sig:  ev.txSignature.slice(0, 12) + "...",
+      slot: ev.slot,
+    });
+
+    this.networkObs.recordSlotTimestamp(ev.slotTimestamp ?? Date.now());
+
+    if (this.triggerSubmitting) {
+      this.triggerQueue.push(ev);
+      return null;
+    }
+
+    this.triggerSubmitting = true;
+    try {
+      const currentSlot  = await this.getReliableCurrentSlot();
+      const leaderWindow = await this.leaderDetector.detect(currentSlot);
+      const gate         = await this.evaluateSubmissionGate(leaderWindow);
+
+      if (gate === "blocked") {
+        await this.logger.warn("[trigger] Submission skipped — leader-window gating policy");
+        return null;
+      }
+
+      const triggerEvent: TriggerEvent = {
+        type: "protocol_trigger",
+        metadata: {
+          protocolType:  ev.type,
+          txSignature:   ev.txSignature,
+          programId:     ev.programId,
+          slot:          ev.slot,
+          explorerUrl:   ev.explorerUrl,
+          parsedDetails: ev.parsedDetails,
+        },
+        detectedAt: new Date().toISOString(),
+      };
+
+      return await this.runOne(triggerEvent, null);
+    } finally {
+      this.triggerSubmitting = false;
+      const next = this.triggerQueue.shift();
+      if (next) void this.handleProtocolTriggerEvent(next);
+    }
   }
 
   //  Single bundle run (agent-driven retry loop) 
