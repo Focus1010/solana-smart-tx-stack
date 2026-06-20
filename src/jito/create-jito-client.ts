@@ -13,14 +13,14 @@ export function createJitoClient(logger: Logger): JitoBundleClient {
 
   if (useGrpc) {
     try {
-      const endpoint = config.jito.blockEngineUrl;
+      // Normalize endpoint for gRPC client: remove any http(s) or grpc scheme and trailing slash
+      let endpoint = config.jito.blockEngineUrl ?? "";
+      endpoint = endpoint.replace(/^https?:\/\//, "").replace(/^grpc:\/\//, "").replace(/\/$/, "");
+      // If no explicit port provided, append :443 for TLS
+      if (!/:\d+$/.test(endpoint)) endpoint = endpoint + ":443";
       logger.info("[jito] Using gRPC searcher transport", { endpoint }).catch(() => {});
       return new JitoGrpcClientImpl(endpoint, logger, config.jito.rateLimitMs);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      logger.warn("[jito] gRPC client init failed; falling back to JSON-RPC", {
-        message: msg,
-      }).catch(() => {});
     }
   }
 
