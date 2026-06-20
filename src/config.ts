@@ -89,6 +89,21 @@ export const config = {
     // Hard guardrail ceiling — no tip above this, even after agent decision
     maxLamports: parseInt(optionalEnv("MAX_TIP_LAMPORTS", "1000000"), 10),
   },
+  trigger: {
+    // usdc = SPL token transfer for TRIGGER_MINT; raydium = swap detection; none = disabled
+    protocol: optionalEnv("TRIGGER_PROTOCOL", "usdc") as "usdc" | "raydium" | "none",
+    // Mint address to watch (required for usdc protocol). Example mainnet USDC:
+    // EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    mint: optionalEnv("TRIGGER_MINT", ""),
+    // Minimum raw token amount (smallest units / lamports-style integer, not UI decimals)
+    minAmount: parseInt(optionalEnv("TRIGGER_MIN_AMOUNT", "1000"), 10),
+    programIds: optionalEnv("TRIGGER_RAYDIUM_PROGRAM_IDS", "").split(",").filter(Boolean).length
+      ? optionalEnv("TRIGGER_RAYDIUM_PROGRAM_IDS", "").split(",").map((s) => s.trim()).filter(Boolean)
+      : [
+          "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+          "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
+        ],
+  },
 } as const;
 
 export type Network = typeof config.solana.network;

@@ -150,7 +150,7 @@ export interface MarinadeTriggerEvent {
 }
 
 export interface TriggerEvent {
-  type:       "marinade_staking" | "manual" | "scheduled";
+  type:       "marinade_staking" | "manual" | "scheduled" | "protocol_trigger";
   metadata:   Record<string, unknown>;
   detectedAt: string;
 }
