@@ -26,7 +26,8 @@
     "challenge:run": "ts-node src/index.ts",
     "challenge:reset-evidence": "node -e \"const fs=require('fs'); fs.writeFileSync('logs/lifecycle.json','[]'); console.log('lifecycle.json reset');\"",
     "challenge:export-evidence": "npm run generate:evidence",
-    "challenge:verify-evidence": "npm run verify:evidence"
+    "challenge:verify-evidence": "npm run verify:evidence",
+    "check:leader": "ts-node src/scripts/check-leader.ts"
   },
   "keywords": [
     "solana",
