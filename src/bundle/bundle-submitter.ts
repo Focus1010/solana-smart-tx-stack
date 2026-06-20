@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import {
   Connection,
   Keypair,
@@ -6,7 +7,7 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import bs58                         from "bs58";
-import { BuiltBundle }              from "./bundle-builder";
+import { BuiltBundle, BundleBuilder } from "./bundle-builder";
 import { FailureReason }            from "../types";
 import { Logger }                   from "../utils/logger";
 import { shortKey, sleep }          from "../utils/helpers";
@@ -28,6 +29,8 @@ export interface SubmitResult {
   // Raw bundle-result events collected during the submission window,
   // persisted into lifecycle records for auditing purposes.
   rawBundleResults?: unknown[];
+  // Bundle transaction signature (may differ from evidence tx signature).
+  bundleTxSignature?: string | null;
 }
 
 // BundleSubmitter
@@ -53,6 +56,7 @@ export class BundleSubmitter {
   private readonly payer:          Keypair;
   private readonly logger:         Logger;
   private readonly jitoClient:     JitoBundleClient;
+  private readonly builder:        BundleBuilder;
   private readonly limiter:        RateLimiter;
   private readonly statusLimiter:  RateLimiter;
   private leaderDetector:          LeaderWindowDetector | null = null;
@@ -90,12 +94,14 @@ export class BundleSubmitter {
     connection: Connection,
     payer: Keypair,
     logger: Logger,
-    jitoClient: JitoBundleClient
+    jitoClient: JitoBundleClient,
+    builder: BundleBuilder
   ) {
     this.connection    = connection;
     this.payer         = payer;
     this.logger        = logger;
     this.jitoClient    = jitoClient;
+    this.builder       = builder;
     this.limiter       = new RateLimiter(
       parseInt(process.env.JITO_RATE_LIMIT_MS ?? "1500", 10)
     );
@@ -140,6 +146,11 @@ export class BundleSubmitter {
     submittedAt:  number,
     sig:          string
   ): Promise<SubmitResult> {
+    await this.logger.info("[submitter] Signatures", {
+      realSig:      sig,
+      bundleTxSig:  built.bundleTxSignature ?? null,
+    });
+
     // Attempt the bundle path (will be rejected on devnet -- expected)
     let bundleId: string | null = null;
     try {
@@ -167,6 +178,7 @@ export class BundleSubmitter {
         slotAtSubmission: currentSlot,
         submittedAt,
         rawBundleResults: [],
+        bundleTxSignature: built.bundleTxSignature ?? sig,
       };
     } catch (err) {
       const msg     = err instanceof Error ? err.message : String(err);
@@ -181,6 +193,7 @@ export class BundleSubmitter {
         slotAtSubmission: currentSlot,
         submittedAt,
         rawBundleResults: [],
+        bundleTxSignature: built.bundleTxSignature ?? sig,
       };
     }
   }
@@ -195,6 +208,41 @@ export class BundleSubmitter {
   ): Promise<SubmitResult> {
     // ── Leader-window gating ──────────────────────────────────────────────
     let effectiveTip = built.tipLamports;
+    let activeBuilt  = built;
+    let bundleSig    = sig;
+
+    await this.logger.info("[submitter] Signatures", {
+      realSig:      bundleSig,
+      bundleTxSig:  activeBuilt.bundleTxSignature ?? null,
+    });
+
+    if (
+      activeBuilt.bundleTxSignature &&
+      bundleSig === activeBuilt.bundleTxSignature
+    ) {
+      const memoSeed =
+        typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : String(Date.now());
+
+      await this.logger.warn(
+        "[submitter] Signature collision: rebuilding bundle with memo to ensure uniqueness",
+        { memoSeed }
+      );
+
+      activeBuilt = await this.builder.build(
+        effectiveTip,
+        currentSlot,
+        true,
+        memoSeed
+      );
+      bundleSig = this.extractSignature(activeBuilt.transaction);
+
+      await this.logger.info("[submitter] Rebuilt bundle signatures", {
+        realSig:      bundleSig,
+        bundleTxSig:  activeBuilt.bundleTxSignature ?? null,
+      });
+    }
 
     if (!config.jito.emergencyOverride) {
       const allowed = await this.isLeaderWindowOpen(currentSlot);
@@ -207,12 +255,13 @@ export class BundleSubmitter {
         return {
           success:          false,
           bundleId:         null,
-          signature:        sig,
+          signature:        bundleSig,
           failure:          "BUNDLE_DROPPED",
           failureMessage:   "Submission gated: no Jito leader window and emergency override is off",
           slotAtSubmission: currentSlot,
           submittedAt,
           rawBundleResults: [],
+          bundleTxSignature: activeBuilt.bundleTxSignature ?? bundleSig,
         };
       }
     } else {
@@ -268,27 +317,38 @@ export class BundleSubmitter {
     // ── Submit ────────────────────────────────────────────────────────────
     try {
       const bundleId = await this.limiter.runWithBackoff(async () => {
-        return this.jitoClient.sendBundle([built.transaction]);
+        return this.jitoClient.sendBundle([activeBuilt.transaction]);
       });
 
       await this.logger.ok("[submitter] Bundle accepted by block engine", {
         bundleId: bundleId.slice(0, 16) + "...",
-        sig:      shortKey(sig),
+        sig:      shortKey(bundleSig),
         tip:      effectiveTip,
       });
+
+      // Allow gRPC bundle-result events to arrive before polling status.
+      await sleep(500);
 
       const landed = await this.pollBundleStatus(bundleId);
       unsubscribe();
 
+      if (bundleId && rawResults.length === 0) {
+        await this.logger.warn(
+          "[submitter] No raw bundle-result events received for bundleId after wait; rawResults empty",
+          { bundleId: bundleId.slice(0, 16) + "..." }
+        );
+      }
+
       return {
         success:          landed,
         bundleId,
-        signature:        sig,
+        signature:        bundleSig,
         failure:          landed ? null : "BUNDLE_DROPPED",
         failureMessage:   landed ? null : "Bundle lost auction or dropped by block engine",
         slotAtSubmission: currentSlot,
         submittedAt,
         rawBundleResults: rawResults,
+        bundleTxSignature: activeBuilt.bundleTxSignature ?? bundleSig,
       };
     } catch (err) {
       unsubscribe();
@@ -300,15 +360,23 @@ export class BundleSubmitter {
         message: msg.slice(0, 200),
       });
 
+      if (rawResults.length === 0) {
+        await this.logger.warn(
+          "[submitter] No raw bundle-result events received; rawResults empty",
+          { bundleId: null }
+        );
+      }
+
       return {
         success:          false,
         bundleId:         null,
-        signature:        sig,
+        signature:        bundleSig,
         failure,
         failureMessage:   msg,
         slotAtSubmission: currentSlot,
         submittedAt,
         rawBundleResults: rawResults,
+        bundleTxSignature: activeBuilt.bundleTxSignature ?? bundleSig,
       };
     }
   }

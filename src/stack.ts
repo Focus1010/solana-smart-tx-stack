@@ -77,7 +77,7 @@ export class Stack {
     this.jitoClient      = jitoClient;
 
     this.builder         = new BundleBuilder(this.connection, payer, logger);
-    this.submitter       = new BundleSubmitter(this.connection, payer, logger, jitoClient);
+    this.submitter       = new BundleSubmitter(this.connection, payer, logger, jitoClient, this.builder);
     this.tracker         = new LifecycleTracker(this.connection, this.slotSource, logger);
     this.tipOracle       = new TipOracle(this.connection, logger);
     this.networkObs      = new NetworkStateObserver(this.connection, logger);
@@ -608,7 +608,7 @@ export class Stack {
           bundleResults: submitResult.rawBundleResults ?? [],
           bundleResult:  (submitResult.rawBundleResults ?? []).slice(-1)[0],
         },
-        bundleTxSignature: built?.bundleTxSignature ?? null,
+        bundleTxSignature: submitResult.bundleTxSignature ?? built?.bundleTxSignature ?? null,
       });
       // If on-chain tx failed after landing, ask agent about retry
       if (trackResult.finalStage === "failed" && submitResult.success) {
