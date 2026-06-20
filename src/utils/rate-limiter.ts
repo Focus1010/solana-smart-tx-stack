@@ -95,7 +95,12 @@ export class RateLimiter {
       return Promise.resolve();
     }
     return new Promise<void>((resolve) => {
-      this.queue.push(resolve);
+      // When the queued resolver is invoked, mark busy=true before resolving
+      // so the caller proceeds with the lock held.
+      this.queue.push(() => {
+        this.busy = true;
+        resolve();
+      });
     });
   }
 
