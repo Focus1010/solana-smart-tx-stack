@@ -500,7 +500,13 @@ async function main(): Promise<void> {
   await logger.info(`Payer: ${shortKey(payer.publicKey.toBase58(), 12)}`);
 
   if (config.solana.network === "devnet") {
-    await requestAirdropIfNeeded(connection, payer, 0.1);
+    try {
+      await requestAirdropIfNeeded(connection, payer, 0.1);
+    } catch (err) {
+      await logger.warn("[inject] Devnet airdrop failed; continuing with existing balance", {
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
   const agent          = await Agent.create(logger);
