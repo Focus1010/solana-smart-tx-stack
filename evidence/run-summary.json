@@ -1,0 +1,195 @@
+{
+  "generatedAt": "2026-06-20T11:40:11.813Z",
+  "totals": {
+    "runs": 53,
+    "normalRuns": 50,
+    "faultRuns": 3,
+    "confirmed": 42,
+    "failed": 11,
+    "landingRate": "79%"
+  },
+  "networks": [
+    "devnet",
+    "mainnet-beta"
+  ],
+  "failureBreakdown": {
+    "COMPUTE_EXCEEDED": 1,
+    "TIMEOUT": 10
+  },
+  "faultTypesInjected": {
+    "expired_blockhash": 1,
+    "low_tip": 1,
+    "compute_exceeded": 1
+  },
+  "agentActionsSeen": [
+    "submit_now",
+    "retry_refresh_blockhash",
+    "retry_increase_tip",
+    "abort"
+  ],
+  "agentDecisionEvidence": {
+    "entriesWithTrace": 53,
+    "entriesWithAgentDecision": 18,
+    "entriesWithPromptHash": 18,
+    "totalDecisionTraces": 53,
+    "decisionTypesSeen": [
+      "tip_intelligence",
+      "autonomous_retry",
+      "failure_reasoning"
+    ],
+    "tipDecisionTraces": 50,
+    "retryDecisionTraces": 3,
+    "blockhashRecoveryTraces": 1
+  },
+  "commitmentSourceCoverage": {
+    "yellowstoneSlotStream": 34,
+    "rpcSignatureStatus": 36,
+    "rpcPollingFallback": 2
+  },
+  "failureClassCoverage": {
+    "entriesWithFailureClass": 0,
+    "entriesWithFailureMessage": 0
+  },
+  "bundleExplorerUrls": [
+    {
+      "runId": "2FA954AF989E",
+      "bundleId": "824ef97fc9d104bdd15bca03a57c7652274bffd6e567a065104d49fb4d2a19ab",
+      "url": "https://explorer.jito.wtf/bundle/824ef97fc9d104bdd15bca03a57c7652274bffd6e567a065104d49fb4d2a19ab"
+    },
+    {
+      "runId": "0009FE681200",
+      "bundleId": "4c948d3f8057aa5c3e2d3ce516ced2249d6c638ae562eb2176941139e1bd3d41",
+      "url": "https://explorer.jito.wtf/bundle/4c948d3f8057aa5c3e2d3ce516ced2249d6c638ae562eb2176941139e1bd3d41"
+    },
+    {
+      "runId": "507D6719186F",
+      "bundleId": "c6a98f2d23799d6fa682c435a77414047550f48e14c83a9bd57e6761302ac158",
+      "url": "https://explorer.jito.wtf/bundle/c6a98f2d23799d6fa682c435a77414047550f48e14c83a9bd57e6761302ac158"
+    },
+    {
+      "runId": "D0745EFF4208",
+      "bundleId": "5e5be2182eadc4c198f685f388538508de9e7610a440e4192462939fc5e987ea",
+      "url": "https://explorer.jito.wtf/bundle/5e5be2182eadc4c198f685f388538508de9e7610a440e4192462939fc5e987ea"
+    },
+    {
+      "runId": "2B3A40745C70",
+      "bundleId": "0230bda9f4061784c27f2cf71011c00f7ec6127d3d2cef65155da23a5b882a67",
+      "url": "https://explorer.jito.wtf/bundle/0230bda9f4061784c27f2cf71011c00f7ec6127d3d2cef65155da23a5b882a67"
+    },
+    {
+      "runId": "C4E5863B8627",
+      "bundleId": "42b459cd9e93173e9a49d0656287675b83e333a8d1b9ea702cb554afa0a1be8b",
+      "url": "https://explorer.jito.wtf/bundle/42b459cd9e93173e9a49d0656287675b83e333a8d1b9ea702cb554afa0a1be8b"
+    },
+    {
+      "runId": "F9969CF8E866",
+      "bundleId": "1155d6584645bc2d7152bb70dc9c522e4cb45cffbc5679249ce79886a206140f",
+      "url": "https://explorer.jito.wtf/bundle/1155d6584645bc2d7152bb70dc9c522e4cb45cffbc5679249ce79886a206140f"
+    },
+    {
+      "runId": "29C86548378B",
+      "bundleId": "f8ad40b2a4ace9ba813fa3e7911666657fa78213062ea928636555adc8288a49",
+      "url": "https://explorer.jito.wtf/bundle/f8ad40b2a4ace9ba813fa3e7911666657fa78213062ea928636555adc8288a49"
+    },
+    {
+      "runId": "92BC9517066D",
+      "bundleId": "e80cd73d0d3a83acd6159de05fcc3ff661115e06e35bca8db49a36244031ea1a",
+      "url": "https://explorer.jito.wtf/bundle/e80cd73d0d3a83acd6159de05fcc3ff661115e06e35bca8db49a36244031ea1a"
+    },
+    {
+      "runId": "C4E2D7FFC21E",
+      "bundleId": "0ab3f90969fba3a8aa65c65258275e529616f82b8310ed1d5c7bbdf2e5e99852",
+      "url": "https://explorer.jito.wtf/bundle/0ab3f90969fba3a8aa65c65258275e529616f82b8310ed1d5c7bbdf2e5e99852"
+    },
+    {
+      "runId": "24B1775FB65B",
+      "bundleId": "28c23bd45ce73c23bf76d8fbf1a7b754a801b568aa4837575c6cf8b8576682ea",
+      "url": "https://explorer.jito.wtf/bundle/28c23bd45ce73c23bf76d8fbf1a7b754a801b568aa4837575c6cf8b8576682ea"
+    }
+  ],
+  "tipStats": {
+    "uniqueTipValues": 51,
+    "minLamports": 171,
+    "maxLamports": 17912,
+    "avgLamports": 3870,
+    "p25Lamports": 1810,
+    "p50Lamports": 2528,
+    "p75Lamports": 4465
+  },
+  "latencyStats": {
+    "processedToConfirmed": {
+      "samples": 40,
+      "avgMs": 20701,
+      "p50Ms": 2451,
+      "p90Ms": 45061,
+      "minMs": 4,
+      "maxMs": 45093
+    },
+    "confirmedToFinalized": {
+      "samples": 40,
+      "avgMs": 45389,
+      "p50Ms": 12212,
+      "p90Ms": 90109,
+      "minMs": 2912,
+      "maxMs": 90121
+    },
+    "submittedToFinalized": {
+      "samples": 40,
+      "avgMs": 68032
+    }
+  },
+  "dataQuality": {
+    "entriesWithExplorerUrl": 52,
+    "entriesWithRealSlot": 53,
+    "entriesWithReasoning": 53,
+    "avgReasoningLengthChars": 525,
+    "minReasoningLengthChars": 350,
+    "entriesWithNetworkSnapshot": 53,
+    "entriesWithLeaderWindow": 53
+  },
+  "sampleExplorerUrls": [
+    {
+      "runId": "D9477F52BD11",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/TNAy8Teqs9nW4KMTigdDJWaYjmKAVE2TWxaEzg8v3ujPVNhYv7tAVYs5prkS9AFmPvn3pYUPvmadYfnHNyx1ptp?cluster=devnet"
+    },
+    {
+      "runId": "079518AA0291",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/3m6TZhTLJ4L823tRXetKgzJCgNbsTPvEJU9zJfZ6Cggs2G3fnoq7mFpxWpQZFLEE8JrmH7n3SQwBjs2yW5cGAR9Y?cluster=devnet"
+    },
+    {
+      "runId": "CF3EEABF1068",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/5gaFMfqJmjTykAzZYpRU3kbZk5Wfwu4g26d1i4ZT9vUXoC837GrK4ZwvRbVLhX4tN5kug6AegvcjzZu8smZVWDzX?cluster=devnet"
+    },
+    {
+      "runId": "EB9CECC3DC53",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/2oueHZvF4uVSKLPQZXmAavbeyfCrZ57mUZt7P3aZvmesntP9ttiMRwsKk92PAffqF92h2nA7UhZEa6GFyXmXArpv?cluster=devnet"
+    },
+    {
+      "runId": "CA6B12345DDA",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/43HrZebRuSJief7vAJmmyXBCc2zzdptKzvqTDCXdfRoZWnHYdjFULX4V4QbxZP3NxMXgP2cfxEW141fFdYT2H3q?cluster=devnet"
+    }
+  ],
+  "networkConditionsDelta": {
+    "samples": 50,
+    "avgBlockRateDeltaMs": 16,
+    "avgFeeP50DeltaLamports": 0,
+    "avgFeeP75DeltaLamports": 0
+  },
+  "marinadeTriggeredRuns": [],
+  "blockhashRecoveryExamples": [
+    {
+      "runId": "77020EB4DB09",
+      "finalStage": "confirmed",
+      "signature": "bGFdv1RigDEw74hikrZAT1GeAxk85ssvvKrcU7Av7Ss9kduKMpEBJsCF59Xhrs7bdXXgudXrp3o9vTindXHpo5Q",
+      "explorerUrl": "https://explorer.solana.com/tx/bGFdv1RigDEw74hikrZAT1GeAxk85ssvvKrcU7Av7Ss9kduKMpEBJsCF59Xhrs7bdXXgudXrp3o9vTindXHpo5Q?cluster=devnet",
+      "retryCount": 1,
+      "action": "retry_refresh_blockhash",
+      "reasoning": "The transaction failed due to an EXPIRED_BLOCKHASH, which occurs when the blockhash exceeds its 150-slot validity window. To fix this, we need to refresh the blockhash with a new one at confirmed commitment. The new tip of 2203 lamports remains the same as the previous tip, which is at the 50th percentile, indicating that network conditions are unchanged and a new blockhash is the only required change. This retry attempt should succeed with the refreshed blockhash."
+    }
+  ]
+}
