@@ -19,9 +19,9 @@
 
 import "dotenv/config";
 import { Connection } from "@solana/web3.js";
-import { isYellowstoneAvailable } from "../src/geyser/yellowstone-client";
-import { loadWalletFromEnv }       from "../src/utils/wallet";
-import { config }                  from "../src/config";
+import { isYellowstoneAvailable } from "../geyser/yellowstone-client";
+import { loadWalletFromEnv }       from "../utils/wallet";
+import { config }                  from "../config";
 
 const GREEN  = "\x1b[32m";
 const YELLOW = "\x1b[33m";
