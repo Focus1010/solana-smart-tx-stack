@@ -78,7 +78,7 @@ export class BlockhashCache {
   async isExpiredNow(): Promise<boolean> {
     if (!this.cached) return true;
     try {
-      const currentHeight = await this.connection.getBlockHeight("confirmed");
+      const currentHeight = await this.connection.getBlockHeight();
       return currentHeight >= this.cached.lastValidBlockHeight - SAFETY_MARGIN_BLOCKS;
     } catch {
       // If the check itself fails, treat as expired to be safe
@@ -193,7 +193,7 @@ export class BundleBuilder {
     // Log blockhash validity window at build time for audit trail
     let currentBlockHeight: number | null = null;
     try {
-      currentBlockHeight = await this.connection.getBlockHeight("confirmed");
+      currentBlockHeight = await this.connection.getBlockHeight();
     } catch {
       // Non-fatal; just skip the height log
     }
