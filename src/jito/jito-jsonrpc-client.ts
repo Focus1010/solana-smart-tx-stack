@@ -78,7 +78,7 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
       Buffer.from(tx.serialize()).toString("base64")
     );
 
-    return this.limiter.run(async () => {
+    return this.limiter.runWithBackoff(async () => {
       const body = {
         jsonrpc: "2.0",
         id:      1,
@@ -146,7 +146,7 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
       return this.synthesizeLeaderFallback();
     }
 
-    return this.limiter.run(async () => {
+    return this.limiter.runWithBackoff(async () => {
       try {
         const body = {
           jsonrpc: "2.0",
@@ -215,7 +215,7 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
 
   // Returns inflight bundle status via polling (used by bundle submitter)
   async getInflightBundleStatus(bundleId: string): Promise<string | null> {
-    return this.limiter.run(async () => {
+    return this.limiter.runWithBackoff(async () => {
       try {
         const body = {
           jsonrpc: "2.0",
@@ -229,6 +229,10 @@ export class JitoJsonRpcClientImpl implements JitoBundleClient {
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify(body),
         });
+
+        if (res.status === 429) {
+          throw new Error("getInflightBundleStatuses rate limited (429)");
+        }
 
         if (!res.ok) return null;
 

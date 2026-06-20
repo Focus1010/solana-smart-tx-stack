@@ -13,7 +13,8 @@ import { SlotPoller, SlotStream }    from "./stream/slot-stream";
 import { TipOracle }                 from "./stream/tip-oracle";
 import { NetworkStateObserver }      from "./stream/network-state-observer";
 import { LeaderWindowDetector }      from "./jito/leader-window-detector";
-import { JitoJsonRpcClientImpl }     from "./jito/jito-jsonrpc-client";
+import { JitoBundleClient }          from "./jito/jito-bundle-client";
+import { createJitoClient }          from "./jito/create-jito-client";
 import { AdvancedFailureClassifier } from "./bundle/failure-classifier";
 import { Logger }                    from "./utils/logger";
 import { newRunId, sleep, shortKey, estimateSlotTimeMs } from "./utils/helpers";
@@ -48,6 +49,8 @@ export class Stack {
   private leaderDetector: LeaderWindowDetector;
   private classifier:     AdvancedFailureClassifier;
   private slotSource:     SlotPoller | SlotStream;
+  private jitoClient:     JitoBundleClient;
+  private slotStreamHealthy = true;
 
   private recentOutcomes: boolean[] = [];
 
@@ -64,11 +67,13 @@ export class Stack {
     this.slotSource      = config.yellowstone.endpoint
       ? new SlotStream(logger)
       : new SlotPoller(this.connection, logger);
+    this.slotStreamHealthy = config.yellowstone.endpoint.length > 0;
 
-    const jitoClient     = new JitoJsonRpcClientImpl(config.jito.rpcUrl);
+    const jitoClient     = createJitoClient(logger);
+    this.jitoClient      = jitoClient;
 
     this.builder         = new BundleBuilder(this.connection, payer, logger);
-    this.submitter       = new BundleSubmitter(this.connection, payer, logger);
+    this.submitter       = new BundleSubmitter(this.connection, payer, logger, jitoClient);
     this.tracker         = new LifecycleTracker(this.connection, this.slotSource, logger);
     this.tipOracle       = new TipOracle(this.connection, logger);
     this.networkObs      = new NetworkStateObserver(this.connection, logger);
@@ -91,6 +96,7 @@ export class Stack {
     //   (a) immediate emit from start() when native binding is unavailable
     //   (b) deferred emit after 3 failed reconnect attempts
     this.slotSource.on("fallback", async () => {
+      this.slotStreamHealthy = false;
       await this.logger.warn("[stack] Yellowstone unavailable -- switching to RPC poller");
       if (this.slotSource instanceof SlotPoller) return; // already on poller
       const poller = new SlotPoller(this.connection, this.logger);
@@ -252,6 +258,31 @@ export class Stack {
       const conditions   = await this.networkObs.captureConditions(this.recentFailureRate());
       const conditionsAtSubmission = conditions;
 
+      // ── Submission gating (mainnet only) ──────────────────────────────────
+      const isEmergencySubmit = await this.evaluateSubmissionGate(leaderWindow);
+      if (isEmergencySubmit === "blocked") {
+        const entry = this.buildEntry({
+          runId, bundleId: null, signature: null, built: null,
+          submittedAt: Date.now(), stages: [], finalStage: "failed",
+          failure: "BUNDLE_DROPPED",
+          agentReasoning:
+            "Submission skipped: Yellowstone stream unavailable and no Jito leader window confirmed.",
+          agentConfidence: 0.9, agentAction: "hold_and_wait",
+          leaderWindow, networkSnapshot: {
+            currentSlot, averageSlotTimeMs: estimateSlotTimeMs(this.slotSource.getRecentSlotTimes()),
+            recentFailureRate: this.recentFailureRate(), leaderWindow,
+            processedToConfirmedMsP50: conditions.processedToConfirmedP50,
+            processedToConfirmedMsP90: conditions.processedToConfirmedP90,
+            conditions,
+          },
+          conditionsAtSubmission, triggerEvent: triggerEvent ?? null, retryCount,
+          marinadeTriggerEvent: marinadeTriggerEvent ?? null,
+          agentDecisionTrace,
+        });
+        this.logger.appendLifecycle(entry);
+        return entry;
+      }
+
       const networkSnapshot: NetworkSnapshot = {
         currentSlot,
         averageSlotTimeMs:         avgSlotMs,
@@ -275,7 +306,23 @@ export class Stack {
       };
 
       const tipDecision  = await this.agent.decideTip(tipInput);
-      lastTip            = tipDecision.tipLamports;
+      let selectedTip    = tipDecision.tipLamports;
+
+      if (isEmergencySubmit === "emergency") {
+        const floor = Math.max(
+          config.submission.emergencyTipFloorLamports,
+          config.jito.emergencyMinTipLamports
+        );
+        if (selectedTip < floor) {
+          selectedTip = floor;
+          tipDecision.reasoning =
+            `EMERGENCY SUBMIT: bumped tip to floor ${floor} lamports due to stream unavailability. ` +
+            tipDecision.reasoning;
+          tipDecision.guardrailAdjusted = true;
+        }
+      }
+
+      lastTip            = selectedTip;
       lastReasoning      = tipDecision.reasoning;
       lastConfidence     = tipDecision.confidenceScore;
       lastAction         = tipDecision.action;
@@ -284,7 +331,7 @@ export class Stack {
         action:                      tipDecision.action,
         reasoning:                   tipDecision.reasoning,
         confidenceScore:             tipDecision.confidenceScore,
-        tipLamports:                 tipDecision.tipLamports,
+        tipLamports:                 selectedTip,
         selectedPercentile:          tipDecision.selectedPercentile,
         congestionMultiplier:        tipDecision.congestionMultiplier,
         leaderUrgencyMultiplier:     tipDecision.leaderUrgencyMultiplier,
@@ -301,7 +348,7 @@ export class Stack {
       //  3. Build bundle 
 
       const built = await this.builder.build(
-        tipDecision.tipLamports,
+        selectedTip,
         currentSlot,
         lastFailure === "EXPIRED_BLOCKHASH"
       );
@@ -450,6 +497,10 @@ export class Stack {
         latencyMs:        trackResult.latencyMs,
         agentDecisionTrace,
         rawBundleResults: submitResult.rawBundleResults ?? [],
+        raw: {
+          bundleResults: submitResult.rawBundleResults ?? [],
+          bundleResult:  (submitResult.rawBundleResults ?? []).slice(-1)[0],
+        },
         bundleTxSignature: built?.bundleTxSignature ?? null,
       });
       // If on-chain tx failed after landing, ask agent about retry
@@ -613,6 +664,49 @@ export class Stack {
     return streamed;
   }
 
+  /**
+   * Leader-window submission gating policy.
+   * Returns "ok" to proceed, "emergency" when override is active, or "blocked".
+   */
+  private async evaluateSubmissionGate(
+    leaderInfo: LeaderWindow
+  ): Promise<"ok" | "emergency" | "blocked"> {
+    if (config.solana.network !== "mainnet-beta") return "ok";
+
+    if (this.slotStreamHealthy && leaderInfo.isJitoLeaderWindow) {
+      return "ok";
+    }
+
+    if (!this.slotStreamHealthy && leaderInfo.isJitoLeaderWindow) {
+      await this.logger.info(
+        "[stack] Stream unavailable but leader window confirmed. Proceeding."
+      );
+      return "ok";
+    }
+
+    if (!this.slotStreamHealthy && !leaderInfo.isJitoLeaderWindow) {
+      if (config.submission.requireLeaderWindowWhenStreamDown) {
+        if (config.submission.emergencyOverrideAllowed) {
+          await this.logger.warn(
+            "[stack] EMERGENCY: Submitting without leader window. Bumping tip to floor."
+          );
+          return "emergency";
+        }
+        await this.logger.warn(
+          "[stack] Stream unavailable and no leader window confirmed. Refusing submit."
+        );
+        return "blocked";
+      }
+    }
+
+    if (!config.submission.emergencyOverrideAllowed && !leaderInfo.isJitoLeaderWindow) {
+      await this.logger.warn("[stack] Emergency override disabled. Refusing submit.");
+      return "blocked";
+    }
+
+    return "ok";
+  }
+
   //  Build lifecycle entry 
 
   private buildEntry(p: {
@@ -637,6 +731,7 @@ export class Stack {
     latencyMs?:                   LifecycleEntry["latencyMs"];
     agentDecisionTrace?:          AgentDecisionEvidence[];
     rawBundleResults?:             unknown[];
+    raw?:                          LifecycleEntry["raw"];
     bundleTxSignature?:            string | null;
   }): LifecycleEntry {
     const network = config.solana.network === "mainnet-beta" ? "mainnet-beta" : "devnet";
@@ -719,6 +814,7 @@ export class Stack {
         ? `https://explorer.jito.wtf/bundle/${p.bundleId}`
         : null,
       rawBundleResults: p.rawBundleResults ?? [],
+      raw: p.raw,
       latencyMs: p.latencyMs ?? {
         submittedToProcessed:  null,
         processedToConfirmed:  null,

@@ -43,6 +43,20 @@ export const config = {
     emergencyOverride: optionalEnv("JITO_EMERGENCY_OVERRIDE", "false") === "true",
     // Minimum tip in lamports for emergency (no-leader-window) submissions.
     emergencyMinTipLamports: parseInt(optionalEnv("JITO_EMERGENCY_MIN_TIP_LAMPORTS", "10000"), 10),
+    // Minimum ms between Jito API calls (default 1100 to stay under rate limits).
+    rateLimitMs: parseInt(optionalEnv("JITO_RATE_LIMIT_MS", "1100"), 10),
+  },
+  submission: {
+    // Require confirmed leader window when Yellowstone stream is unavailable.
+    requireLeaderWindowWhenStreamDown:
+      optionalEnv("SUBMISSION_REQUIRE_LEADER_WHEN_STREAM_DOWN", "true") === "true",
+    // Allow submit without leader window when emergency override is enabled.
+    emergencyOverrideAllowed: optionalEnv("JITO_EMERGENCY_OVERRIDE", "false") === "true",
+    // Tip floor when forced to submit blind (stream down, no leader window).
+    emergencyTipFloorLamports: parseInt(
+      optionalEnv("SUBMISSION_EMERGENCY_TIP_FLOOR_LAMPORTS", "500000"),
+      10
+    ),
   },
   yellowstone: {
     endpoint: optionalEnv(
