@@ -1,0 +1,20 @@
+2026-06-20T15:39:57.458Z [INFO ] Running 3 fault types: expired_blockhash, fee_too_low, compute_exceeded
+2026-06-20T15:39:57.532Z [INFO ] Payer: F3zJDCAaxvuFRxsW
+2026-06-20T15:39:57.908Z [INFO ] [agent] Using Groq provider {"model":"llama-3.3-70b-versatile"}
+2026-06-20T15:39:58.068Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":2624,"p75":7629,"p99":100000}
+2026-06-20T15:39:58.195Z [DEBUG] [leader] Window detected {"slotsUntil":null,"isWindow":false,"identity":"unknown"}
+2026-06-20T15:39:59.659Z [  OK ] [inject] Bundle threw as expected {"message":"sendBundle HTTP 400: {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32602,\"message\":\"bundle has no transactions\",\"data\":null},\"id\":1}"}
+2026-06-20T15:40:00.183Z [  AI ] [agent] Retry decision {"shouldRetry":true,"action":"retry_refresh_blockhash","newTip":2624,"refreshBlockhash":true,"waitMs":800,"confidence":"0.97","reasoning":"The transaction failed due to an EXPIRED_BLOCKHASH, which occurs when the blockhash exceeds its 150-slot validity window. To fix this, we need to refresh the blockhash with a new one at confirmed commitment. The new tip of 2624 lamports remains the same as the previous tip, which is at the 50th percentile of live tips, indicating that network conditions are unchanged. This retry attempt should succeed with a fresh blockhash."}
+2026-06-20T15:40:01.685Z [  OK ] [inject] Retry confirmed on devnet {"sig":"qA6N4d3KfLvh"}
+2026-06-20T15:40:03.823Z [DEBUG] [leader] Window detected {"slotsUntil":null,"isWindow":false,"identity":"unknown"}
+2026-06-20T15:40:03.823Z [INFO ] [inject] Submitting with intentionally low tip: 100 lamports
+2026-06-20T15:40:05.281Z [  OK ] [inject] Bundle threw (tip too low, expected) {"message":"sendBundle HTTP 400: {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32602,\"message\":\"bundle has no transactions\",\"data\":null},\"id\":1}"}
+2026-06-20T15:40:05.818Z [  AI ] [agent] Retry decision {"shouldRetry":true,"action":"retry_increase_tip","newTip":7629,"refreshBlockhash":false,"waitMs":800,"confidence":"0.91","reasoning":"The bundle submission failed due to a FEE_TOO_LOW error, with a tip of 100 lamports losing the Jito block auction. Increasing the tip to at least the p75 percentile significantly increases the landing probability. The new tip of 7629 lamports represents the current p75 percentile, which should be competitive in the Jito block auction. This change fixes the FEE_TOO_LOW error by providing a more competitive tip, giving the bundle a higher chance of success."}
+2026-06-20T15:40:06.590Z [  OK ] [inject] Recovery tx confirmed {"sig":"4awFYA26zCSe"}
+2026-06-20T15:40:08.761Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":2624,"p75":7629,"p99":100000}
+2026-06-20T15:40:08.852Z [DEBUG] [leader] Window detected {"slotsUntil":null,"isWindow":false,"identity":"unknown"}
+2026-06-20T15:40:08.852Z [INFO ] [inject] Submitting bundle with compute budget set to 1 unit
+2026-06-20T15:40:11.004Z [  AI ] [agent] Retry decision {"shouldRetry":false,"action":"abort","newTip":1000,"refreshBlockhash":false,"waitMs":800,"confidence":"0.95","reasoning":"The transaction failed due to COMPUTE_EXCEEDED, which indicates that the transaction exceeded its compute unit budget. This failure type cannot be resolved by increasing the tip, as the issue lies with the instruction logic itself consuming too many compute units. A code change to the transaction is required to fix this issue. The current tip of 7629 lamports is already at the 75th percentile, and increasing it further would not resolve the compute unit limit issue. Aborting the transaction is the recommended course of action."}
+2026-06-20T15:40:11.004Z [INFO ] [inject] Agent correctly decided not to retry (compute exceeded) {"shouldRetry":false}
+2026-06-20T15:40:11.011Z [INFO ] 3 fault entries written to ./logs/lifecycle.json
+2026-06-20T15:40:11.011Z [INFO ] Faults covered: EXPIRED_BLOCKHASH, FEE_TOO_LOW, COMPUTE_EXCEEDED
