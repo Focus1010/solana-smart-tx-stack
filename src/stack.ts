@@ -813,6 +813,7 @@ export class Stack {
       bundleExplorerUrl: p.bundleId
         ? `https://explorer.jito.wtf/bundle/${p.bundleId}`
         : null,
+      bundleTxSignature: p.bundleTxSignature ?? null,
       rawBundleResults: p.rawBundleResults ?? [],
       raw: p.raw,
       latencyMs: p.latencyMs ?? {

@@ -243,6 +243,8 @@ export interface LifecycleEntry {
   slotAtSubmission: number | null;
   explorerUrl:     string | null;
   bundleExplorerUrl?: string | null;
+  // Signature of the bundle tip transaction (distinct from the real evidence tx).
+  bundleTxSignature?: string | null;
   // Raw bundle-result events (accepted/rejected/dropped) collected from
   // subscribeBundleResults during the submission window. Stored for audit.
   rawBundleResults?: unknown[];
