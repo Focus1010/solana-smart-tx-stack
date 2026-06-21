@@ -590,7 +590,7 @@ evidence/
 
 Full architecture with data flow diagrams, infrastructure decisions, and observed latency numbers from the running system:
 
-**https://dynamic-epoch-c90.notion.site/Smart-Transaction-Stack-Architecture-Document-7096777828574fe790d521c345184284**
+https://web3focus.notion.site/Smart-Transaction-Stack-Architecture-Document-7096777828574fe790d521c345184284
 
 ---
 
