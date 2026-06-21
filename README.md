@@ -14,6 +14,14 @@ This README is built to answer every requirement in the bounty listing directly,
 
 ---
 
+## Architecture document
+
+Full architecture with data flow diagrams, infrastructure decisions, and observed latency numbers from the running system:
+
+https://web3focus.notion.site/Smart-Transaction-Stack-Architecture-Document-7096777828574fe790d521c345184284
+
+---
+
 ## Table of contents
 
 - [Bounty implementation map](#bounty-implementation-map)
@@ -140,71 +148,71 @@ Jito does not run a block engine on Solana devnet. Devnet runs in this stack sti
 ## Architecture
 
 ```
-+--------------------------------------------------------------+
-|  LAYER 1  Network Observer                                   |
++----------------------------------------------------------------+
+|  LAYER 1  Network Observer                                     |
 |                                                                |
-|  SlotStream (Yellowstone gRPC)         SlotPoller (RPC)       |
-|    https:// endpoint, ping keepalive     getSlot polling      |
-|    fromSlot replay on reconnect          fallback when stream |
-|    dead slot detection                   is unavailable       |
+|  SlotStream (Yellowstone gRPC)         SlotPoller (RPC)        |
+|    https:// endpoint, ping keepalive     getSlot polling       |
+|    fromSlot replay on reconnect          fallback when stream  |
+|    dead slot detection                   is unavailable        |
 |                                                                |
-|  TipOracle                             NetworkStateObserver   |
-|    Jito tip floor API (primary)          block production rate|
+|  TipOracle                             NetworkStateObserver    |
+|    Jito tip floor API (primary)          block production rate |
 |    getRecentPrioritizationFees (fallback)slot skip rate        |
-|    p25/p50/p75/p95/p99, 10s cache        p50/p90 confirm time |
+|    p25/p50/p75/p95/p99, 10s cache        p50/p90 confirm time  |
 |                                                                |
-|  LeaderWindowDetector                                         |
-|    getNextScheduledLeader() via Jito block engine             |
-|    slotsUntilJitoLeader, isJitoLeaderWindow                   |
-+--------------------------------------------------------------+
+|  LeaderWindowDetector                                          |
+|    getNextScheduledLeader() via Jito block engine              |
+|    slotsUntilJitoLeader, isJitoLeaderWindow                    |
++----------------------------------------------------------------+
                               |
                               v   NetworkSnapshot
-+--------------------------------------------------------------+
-|  LAYER 2  AI Agent (provider-agnostic, Groq primary)          |
++----------------------------------------------------------------+
+|  LAYER 2  AI Agent (provider-agnostic, Groq primary)           |
 |                                                                |
-|  decideTip()      tipLamports, reasoning, congestion and      |
-|                    leader urgency multipliers, landing prob   |
+|  decideTip()      tipLamports, reasoning, congestion and       |
+|                    leader urgency multipliers, landing prob    |
 |  decideRetry()     shouldRetry, action, new tip,               |
-|                    refreshBlockhash, wait time                |
+|                    refreshBlockhash, wait time                 |
 |                                                                |
 |  Hard guardrails enforced after every model call:              |
 |  MIN_TIP_LAMPORTS / MAX_TIP_LAMPORTS clamp, compute-exceeded   |
-|  and simulation-failed never retry regardless of model output |
-+--------------------------------------------------------------+
+|  and simulation-failed never retry regardless of model output  |
++----------------------------------------------------------------+
                               |
                               v   TipDecision
-+--------------------------------------------------------------+
-|  LAYER 3  Bundle Builder                                      |
++----------------------------------------------------------------+
+|  LAYER 3  Bundle Builder                                       |
 |                                                                |
 |  BlockhashCache       always confirmed commitment,             |
 |                       proactive refresh, real expiry check     |
 |  BundleBuilder        jito-ts Bundle, tip instruction to a     |
 |                       randomly selected official tip account   |
-+--------------------------------------------------------------+
++----------------------------------------------------------------+
                               |
                               v   BuiltBundle
-+--------------------------------------------------------------+
++----------------------------------------------------------------+
 |  LAYER 4  Submission and Tracking                              |
 |                                                                |
 |  Real tx via sendAndConfirmTransaction()                       |
 |  BundleSubmitter      leader-window gated on mainnet,          |
-|                       raw bundle results persisted              |
+|                       raw bundle results persisted             |
 |  FailureClassifier    15 typed failure reasons                 |
 |  CommitmentTracker    stream-event resolution                  |
 |  LifecycleTracker     RPC fallback per stage when stream times |
 |                       out                                      |
-+--------------------------------------------------------------+
++----------------------------------------------------------------+
                               |
                               v   LifecycleEntry
-+--------------------------------------------------------------+
-|  LAYER 5  Evidence and Visualization                            |
++----------------------------------------------------------------+
+|  LAYER 5  Evidence and Visualization                           |
 |                                                                |
 |  logs/lifecycle.json              append-only run records      |
 |  evidence/run-summary.json        aggregated statistics        |
 |  evidence/verification-report.md  bounty compliance audit      |
 |  evidence/mainnet-observations.md real mainnet percentile data |
 |  web/dashboard/                   visual lifecycle dashboard   |
-+--------------------------------------------------------------+
++----------------------------------------------------------------+
 ```
 
 ---
@@ -583,14 +591,6 @@ evidence/
   mainnet-observations.md           real mainnet percentile data
   blockhash-recovery.md             fault-injection recovery evidence
 ```
-
----
-
-## Architecture document
-
-Full architecture with data flow diagrams, infrastructure decisions, and observed latency numbers from the running system:
-
-https://web3focus.notion.site/Smart-Transaction-Stack-Architecture-Document-7096777828574fe790d521c345184284
 
 ---
 
