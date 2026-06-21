@@ -22,7 +22,7 @@ Dashboard visualizations from the mainnet evidence run.
    ```bash
    npm run build
    npm run challenge:reset-evidence
-   npm run challenge:run -- --count 40 --failures 5 --network mainnet-beta
+   npm run challenge:run
    npm run challenge:export-evidence
    ```
 
