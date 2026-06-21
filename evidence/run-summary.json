@@ -1,0 +1,382 @@
+{
+  "generatedAt": "2026-06-21T07:27:42.552Z",
+  "totals": {
+    "runs": 53,
+    "normalRuns": 50,
+    "faultRuns": 3,
+    "confirmed": 49,
+    "failed": 4,
+    "landingRate": "92%"
+  },
+  "networks": [
+    "devnet",
+    "mainnet-beta"
+  ],
+  "failureBreakdown": {
+    "COMPUTE_EXCEEDED": 1,
+    "BUNDLE_DROPPED": 2,
+    "TIMEOUT": 1
+  },
+  "faultTypesInjected": {
+    "expired_blockhash": 1,
+    "low_tip": 1,
+    "compute_exceeded": 1
+  },
+  "agentActionsSeen": [
+    "submit_now",
+    "retry_refresh_blockhash",
+    "retry_increase_tip",
+    "abort",
+    "hold_and_wait"
+  ],
+  "agentDecisionEvidence": {
+    "entriesWithTrace": 51,
+    "entriesWithAgentDecision": 51,
+    "entriesWithPromptHash": 51,
+    "totalDecisionTraces": 51,
+    "decisionTypesSeen": [
+      "tip_intelligence",
+      "autonomous_retry",
+      "failure_reasoning"
+    ],
+    "tipDecisionTraces": 48,
+    "retryDecisionTraces": 3,
+    "blockhashRecoveryTraces": 1
+  },
+  "commitmentSourceCoverage": {
+    "yellowstoneSlotStream": 94,
+    "rpcSignatureStatus": 104,
+    "rpcPollingFallback": 0
+  },
+  "failureClassCoverage": {
+    "entriesWithFailureClass": 6,
+    "entriesWithFailureMessage": 3
+  },
+  "bundleExplorerUrls": [
+    {
+      "runId": "AA722645C38F",
+      "bundleId": "d61031a61c66fb373fb249f28c3c1fa873628d3edcea5a4c026787f20f86ee21",
+      "url": "https://explorer.jito.wtf/bundle/d61031a61c66fb373fb249f28c3c1fa873628d3edcea5a4c026787f20f86ee21"
+    },
+    {
+      "runId": "3F3539A352CD",
+      "bundleId": "e1367b6af14e565c6a031e90a5bd71f12008ccf37658b00d5d89973a667e10c7",
+      "url": "https://explorer.jito.wtf/bundle/e1367b6af14e565c6a031e90a5bd71f12008ccf37658b00d5d89973a667e10c7"
+    },
+    {
+      "runId": "EC32F87E503F",
+      "bundleId": "e1114411c4f4cbb577497adc803c4ad87dd26ff2beb86c2077a84a6b00fbbbf8",
+      "url": "https://explorer.jito.wtf/bundle/e1114411c4f4cbb577497adc803c4ad87dd26ff2beb86c2077a84a6b00fbbbf8"
+    },
+    {
+      "runId": "127D26672BA0",
+      "bundleId": "e1c953e1583078604dac02fb04aea5bdfea1b37af8b11500b850c9a8cd22db80",
+      "url": "https://explorer.jito.wtf/bundle/e1c953e1583078604dac02fb04aea5bdfea1b37af8b11500b850c9a8cd22db80"
+    },
+    {
+      "runId": "8C84DE16E8AA",
+      "bundleId": "5343b3a726c26c510a4e9c5adb2e9660aba82b3e48492ab5f1d6a6c8a0e485b8",
+      "url": "https://explorer.jito.wtf/bundle/5343b3a726c26c510a4e9c5adb2e9660aba82b3e48492ab5f1d6a6c8a0e485b8"
+    },
+    {
+      "runId": "8266739E7806",
+      "bundleId": "28319b281f1be883ab10fadb44e35c08de229e516bbad7bcc7cfe2ea21766f77",
+      "url": "https://explorer.jito.wtf/bundle/28319b281f1be883ab10fadb44e35c08de229e516bbad7bcc7cfe2ea21766f77"
+    },
+    {
+      "runId": "E8144A4CD624",
+      "bundleId": "5ef8408a848e9e52a4a3578b575c00457b9ee10d2b4587bf8ece50c282743a51",
+      "url": "https://explorer.jito.wtf/bundle/5ef8408a848e9e52a4a3578b575c00457b9ee10d2b4587bf8ece50c282743a51"
+    },
+    {
+      "runId": "90DBE5FAF04A",
+      "bundleId": "10fa642264eacf95180a3911474efdfba7667620a44f81cbc682cd34739befa4",
+      "url": "https://explorer.jito.wtf/bundle/10fa642264eacf95180a3911474efdfba7667620a44f81cbc682cd34739befa4"
+    },
+    {
+      "runId": "B2B6C6A48D96",
+      "bundleId": "568e742a0b7e30bb5b8569580aa5c0abaaced1cc5c8aaa42163a9865bb09b974",
+      "url": "https://explorer.jito.wtf/bundle/568e742a0b7e30bb5b8569580aa5c0abaaced1cc5c8aaa42163a9865bb09b974"
+    },
+    {
+      "runId": "304AA62B0ADD",
+      "bundleId": "f8a5650c40cab9e73a0ff64036aa1f9f79b831a072ede8ed7adbd6688694e56b",
+      "url": "https://explorer.jito.wtf/bundle/f8a5650c40cab9e73a0ff64036aa1f9f79b831a072ede8ed7adbd6688694e56b"
+    },
+    {
+      "runId": "8D12A77EAA88",
+      "bundleId": "38d5df5f8bc2c15c29b2588cb7f45a70cbaf99a37e7efaa678225fc8b162e0fc",
+      "url": "https://explorer.jito.wtf/bundle/38d5df5f8bc2c15c29b2588cb7f45a70cbaf99a37e7efaa678225fc8b162e0fc"
+    },
+    {
+      "runId": "582CE0AB385F",
+      "bundleId": "85013dfc3ce2a39011c24efbb57a4ec41c99a4b3a7499531eb4ad07ee6134e0d",
+      "url": "https://explorer.jito.wtf/bundle/85013dfc3ce2a39011c24efbb57a4ec41c99a4b3a7499531eb4ad07ee6134e0d"
+    },
+    {
+      "runId": "C05B21194761",
+      "bundleId": "a19d435f678873a01e69e696741d0638cc07f088e5619eaac4bdece876a4a764",
+      "url": "https://explorer.jito.wtf/bundle/a19d435f678873a01e69e696741d0638cc07f088e5619eaac4bdece876a4a764"
+    },
+    {
+      "runId": "C4BA2DEBF2C5",
+      "bundleId": "0f41796fef7ca9d06de78afa509f92e3d3752e1df3b0c3c2ff84935e73a6230d",
+      "url": "https://explorer.jito.wtf/bundle/0f41796fef7ca9d06de78afa509f92e3d3752e1df3b0c3c2ff84935e73a6230d"
+    },
+    {
+      "runId": "5D417A1FDFE8",
+      "bundleId": "8ab9d8e036ff06b5392f7a2033c4c0657c690a4016b4f0585aca0b9927753f36",
+      "url": "https://explorer.jito.wtf/bundle/8ab9d8e036ff06b5392f7a2033c4c0657c690a4016b4f0585aca0b9927753f36"
+    },
+    {
+      "runId": "BFF2BE5B088E",
+      "bundleId": "122493bc925a09a409af0b692c0b931f4a2339bee922a5b3671408b1ae28e694",
+      "url": "https://explorer.jito.wtf/bundle/122493bc925a09a409af0b692c0b931f4a2339bee922a5b3671408b1ae28e694"
+    },
+    {
+      "runId": "672D1145181B",
+      "bundleId": "f6801d3c2ac8c3f8f0ed31d1dd6a7edf2c206b24a41c38296aefaad260ee8f11",
+      "url": "https://explorer.jito.wtf/bundle/f6801d3c2ac8c3f8f0ed31d1dd6a7edf2c206b24a41c38296aefaad260ee8f11"
+    },
+    {
+      "runId": "8FAA462E9A78",
+      "bundleId": "5bdafd9fc1b5f13f22b3f3eed70d739831856108770f6e5440a37cb548e88845",
+      "url": "https://explorer.jito.wtf/bundle/5bdafd9fc1b5f13f22b3f3eed70d739831856108770f6e5440a37cb548e88845"
+    },
+    {
+      "runId": "C3980889F8C4",
+      "bundleId": "144799b3f46cbd38b4933c9ae3bcead830f72ad492a275a71278eb7fa14886d1",
+      "url": "https://explorer.jito.wtf/bundle/144799b3f46cbd38b4933c9ae3bcead830f72ad492a275a71278eb7fa14886d1"
+    },
+    {
+      "runId": "1855B90E0B27",
+      "bundleId": "7d60f955a298e6b43f1b86170e250229a8a03e3da3a7fc6588ad217a6a3d9d25",
+      "url": "https://explorer.jito.wtf/bundle/7d60f955a298e6b43f1b86170e250229a8a03e3da3a7fc6588ad217a6a3d9d25"
+    },
+    {
+      "runId": "AFDF37375546",
+      "bundleId": "49b7291d50544be700cb855b5d703dc79986f5b4246d8c35d4349688a675eeb1",
+      "url": "https://explorer.jito.wtf/bundle/49b7291d50544be700cb855b5d703dc79986f5b4246d8c35d4349688a675eeb1"
+    },
+    {
+      "runId": "E03B4C65DC7E",
+      "bundleId": "864a4c0235e28b75d50c8b95d8d53a059d386fb73bb8314545a73b291987a19d",
+      "url": "https://explorer.jito.wtf/bundle/864a4c0235e28b75d50c8b95d8d53a059d386fb73bb8314545a73b291987a19d"
+    },
+    {
+      "runId": "8BD6339C68DD",
+      "bundleId": "d3ff2f6de5fb498113caa1212ed46618f84b0761d6cd2c48ab21dfa007852956",
+      "url": "https://explorer.jito.wtf/bundle/d3ff2f6de5fb498113caa1212ed46618f84b0761d6cd2c48ab21dfa007852956"
+    },
+    {
+      "runId": "79DCD7912C87",
+      "bundleId": "18d07e6d3ed460cccd1e53825cd3df3e2a695d8f905101d7e924bcc19bb2cebc",
+      "url": "https://explorer.jito.wtf/bundle/18d07e6d3ed460cccd1e53825cd3df3e2a695d8f905101d7e924bcc19bb2cebc"
+    },
+    {
+      "runId": "65CC63085BD8",
+      "bundleId": "b0192ebcec52c1f56d1dca8589a61bbc7b543c403bd0308910df4ca89faf1760",
+      "url": "https://explorer.jito.wtf/bundle/b0192ebcec52c1f56d1dca8589a61bbc7b543c403bd0308910df4ca89faf1760"
+    },
+    {
+      "runId": "EEDF73F23974",
+      "bundleId": "c319966520a37028d9c1882b8c1ff9f1c9282621d50a6177656791922a2b0542",
+      "url": "https://explorer.jito.wtf/bundle/c319966520a37028d9c1882b8c1ff9f1c9282621d50a6177656791922a2b0542"
+    },
+    {
+      "runId": "02EFC16F282D",
+      "bundleId": "3dbff0614d37c3b802eac26e171093557dce63e0ccb2bc32213b3036f15a690d",
+      "url": "https://explorer.jito.wtf/bundle/3dbff0614d37c3b802eac26e171093557dce63e0ccb2bc32213b3036f15a690d"
+    },
+    {
+      "runId": "4A3AB1D96FE6",
+      "bundleId": "2800dc9be71f7218f059c924382c092dba6dcf377aff617550d3ba1796ea06ab",
+      "url": "https://explorer.jito.wtf/bundle/2800dc9be71f7218f059c924382c092dba6dcf377aff617550d3ba1796ea06ab"
+    },
+    {
+      "runId": "13DBEE0F63F3",
+      "bundleId": "c8065eb2818742265e539400dd0452bbb37ed42bf322b3e85f0386b68689b02d",
+      "url": "https://explorer.jito.wtf/bundle/c8065eb2818742265e539400dd0452bbb37ed42bf322b3e85f0386b68689b02d"
+    },
+    {
+      "runId": "D43351D0A5C2",
+      "bundleId": "e2fc5218b0ef3645d5aeed75bda6592842ec2911bc7db2884847138e96a609e3",
+      "url": "https://explorer.jito.wtf/bundle/e2fc5218b0ef3645d5aeed75bda6592842ec2911bc7db2884847138e96a609e3"
+    },
+    {
+      "runId": "C51B7C6CBB7C",
+      "bundleId": "35b460f0f1080f552baec585aff9c98755ca70fad3f7d29f7bb9cb032348febf",
+      "url": "https://explorer.jito.wtf/bundle/35b460f0f1080f552baec585aff9c98755ca70fad3f7d29f7bb9cb032348febf"
+    },
+    {
+      "runId": "5CD16E93DFAB",
+      "bundleId": "f3b4f0bc67a120b06a478e128d1fad71263c17fff8d75bfc98278690ba55348c",
+      "url": "https://explorer.jito.wtf/bundle/f3b4f0bc67a120b06a478e128d1fad71263c17fff8d75bfc98278690ba55348c"
+    },
+    {
+      "runId": "F84ACB142874",
+      "bundleId": "4007c0290b0088d05d3e592f852bfb9908907658325ff5e4756369175d152244",
+      "url": "https://explorer.jito.wtf/bundle/4007c0290b0088d05d3e592f852bfb9908907658325ff5e4756369175d152244"
+    },
+    {
+      "runId": "215A910A39F7",
+      "bundleId": "4ed9a763342b72c2c855e115d48f86051d9daafd5d47fc3a692b909619bcafd6",
+      "url": "https://explorer.jito.wtf/bundle/4ed9a763342b72c2c855e115d48f86051d9daafd5d47fc3a692b909619bcafd6"
+    },
+    {
+      "runId": "69654851F488",
+      "bundleId": "a0a4e0cc64bceada3a65ceecc02effc15121db818f854af55f5fec04064c4c2a",
+      "url": "https://explorer.jito.wtf/bundle/a0a4e0cc64bceada3a65ceecc02effc15121db818f854af55f5fec04064c4c2a"
+    },
+    {
+      "runId": "4F1C7E714A8C",
+      "bundleId": "f424f648d7dab9e2e7a3f350f3ddd26cdba69f6600e66104325ca25e56045ac1",
+      "url": "https://explorer.jito.wtf/bundle/f424f648d7dab9e2e7a3f350f3ddd26cdba69f6600e66104325ca25e56045ac1"
+    },
+    {
+      "runId": "A1EFAB5D3C9C",
+      "bundleId": "237659c6236709c785b1743b8ad9cd8944f8ec49f23231397bcdd3a265a3a371",
+      "url": "https://explorer.jito.wtf/bundle/237659c6236709c785b1743b8ad9cd8944f8ec49f23231397bcdd3a265a3a371"
+    },
+    {
+      "runId": "10721E1DEB3F",
+      "bundleId": "61949347dc4904bdf0b24efe99a07db8bb3bf136ba3c70c39232e9ae2084113b",
+      "url": "https://explorer.jito.wtf/bundle/61949347dc4904bdf0b24efe99a07db8bb3bf136ba3c70c39232e9ae2084113b"
+    },
+    {
+      "runId": "789DAF2B2CF0",
+      "bundleId": "0cfb82a397ec50d9dc2da0087816e692d92e6932e79a89fdd5cac54965e2519b",
+      "url": "https://explorer.jito.wtf/bundle/0cfb82a397ec50d9dc2da0087816e692d92e6932e79a89fdd5cac54965e2519b"
+    },
+    {
+      "runId": "D108AD7830ED",
+      "bundleId": "b27b43092065f01a202d410fa1c63cc2955c5faf54c8101f7ebef04abc522acc",
+      "url": "https://explorer.jito.wtf/bundle/b27b43092065f01a202d410fa1c63cc2955c5faf54c8101f7ebef04abc522acc"
+    },
+    {
+      "runId": "63EC3483114E",
+      "bundleId": "0c81f46045b8055ab2700c1aab4de6d74a0f4fed9cd75672a7114e835c4c62b8",
+      "url": "https://explorer.jito.wtf/bundle/0c81f46045b8055ab2700c1aab4de6d74a0f4fed9cd75672a7114e835c4c62b8"
+    },
+    {
+      "runId": "A777D3695885",
+      "bundleId": "957c1cc6c366af1a73a34116509218ee1b6a8c24f3a63126317f88f9229be802",
+      "url": "https://explorer.jito.wtf/bundle/957c1cc6c366af1a73a34116509218ee1b6a8c24f3a63126317f88f9229be802"
+    },
+    {
+      "runId": "3C9AA6899E7C",
+      "bundleId": "3490b8ea1b2f43bd25545fe9e8a159ca9a64f95dc7545a20cf5ad115c930124e",
+      "url": "https://explorer.jito.wtf/bundle/3490b8ea1b2f43bd25545fe9e8a159ca9a64f95dc7545a20cf5ad115c930124e"
+    },
+    {
+      "runId": "992A6F27E08F",
+      "bundleId": "03dfe24f83cffb6624cbd27e295d6d2bf7e3db89b901bef9088d93e479dc2e53",
+      "url": "https://explorer.jito.wtf/bundle/03dfe24f83cffb6624cbd27e295d6d2bf7e3db89b901bef9088d93e479dc2e53"
+    },
+    {
+      "runId": "3452C21CACF5",
+      "bundleId": "4bfe173eac119ef552d6fdb482923e00639777b59a6b4f11700eee3a601e0d92",
+      "url": "https://explorer.jito.wtf/bundle/4bfe173eac119ef552d6fdb482923e00639777b59a6b4f11700eee3a601e0d92"
+    },
+    {
+      "runId": "FC576ACB3449",
+      "bundleId": "3df6dbddde6c0d253d14af4677c59ebf2647315a2ec3d8842efdb03d0abc06d3",
+      "url": "https://explorer.jito.wtf/bundle/3df6dbddde6c0d253d14af4677c59ebf2647315a2ec3d8842efdb03d0abc06d3"
+    },
+    {
+      "runId": "DA58DCFE7DE7",
+      "bundleId": "062f29c2c11f8ac829c002fedeaa1d91300f2839d2e3346a1b1e7537f75790e1",
+      "url": "https://explorer.jito.wtf/bundle/062f29c2c11f8ac829c002fedeaa1d91300f2839d2e3346a1b1e7537f75790e1"
+    },
+    {
+      "runId": "F25110AE5B62",
+      "bundleId": "69e88523c89d1df0d030307c5c4c0c3568481f9211bcc5cdb251aeb36f16fc00",
+      "url": "https://explorer.jito.wtf/bundle/69e88523c89d1df0d030307c5c4c0c3568481f9211bcc5cdb251aeb36f16fc00"
+    }
+  ],
+  "tipStats": {
+    "uniqueTipValues": 52,
+    "minLamports": 0,
+    "maxLamports": 119750,
+    "avgLamports": 6118,
+    "p25Lamports": 2200,
+    "p50Lamports": 3037,
+    "p75Lamports": 4604
+  },
+  "latencyStats": {
+    "processedToConfirmed": {
+      "samples": 47,
+      "avgMs": 1297,
+      "p50Ms": 101,
+      "p90Ms": 3741,
+      "minMs": 79,
+      "maxMs": 8986
+    },
+    "confirmedToFinalized": {
+      "samples": 47,
+      "avgMs": 4612,
+      "p50Ms": 2,
+      "p90Ms": 12228,
+      "minMs": 0,
+      "maxMs": 13862
+    },
+    "submittedToFinalized": {
+      "samples": 47,
+      "avgMs": 16310
+    }
+  },
+  "dataQuality": {
+    "entriesWithExplorerUrl": 50,
+    "entriesWithRealSlot": 53,
+    "entriesWithReasoning": 53,
+    "avgReasoningLengthChars": 589,
+    "minReasoningLengthChars": 87,
+    "entriesWithNetworkSnapshot": 53,
+    "entriesWithLeaderWindow": 53
+  },
+  "sampleExplorerUrls": [
+    {
+      "runId": "AA722645C38F",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/43DsZzpJ1AH4PmRiWWVvEjsurpUDZEmnzCCxUDbC5RC6UWEoNW4Wm1H3pmoKAnWeEaRgux6KAH5cL9RQpXsTbK6h?cluster=devnet"
+    },
+    {
+      "runId": "3F3539A352CD",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/R8KMhwfjJuAff6NvSXia7mKX9VxjezkMbhvqZk2fhVVRYS8ZqQ4hQxsQMiPuyjVUwi1dzkzVgszogiTpnFzrZpb?cluster=devnet"
+    },
+    {
+      "runId": "EC32F87E503F",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/25jSGsB59R2Myz3H2HLuc4dxNgih7E3hveFmGBs8QbsXuZqAakFn3b2pVUhtmdUday9qANp7nCKo8rdjtTa4QiSx?cluster=devnet"
+    },
+    {
+      "runId": "127D26672BA0",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/3ASn4un1NGSpdzWkc1NjeP4kXaumJuTUG4ETjhdxWUYzjkaT8ZBKqYvLiAU51vC4CBx6LEzKk8VMucEQu84Ny8s1?cluster=devnet"
+    },
+    {
+      "runId": "8C84DE16E8AA",
+      "finalStage": "finalized",
+      "url": "https://explorer.solana.com/tx/5CUKAzw86Vo74QfNZBEaV9yRG16QA68qgeH1tfTNkGBepNzEdhy2dujgAJrwJCDdqJB7UmRxLwZ8AxRZ2gw51ej9?cluster=devnet"
+    }
+  ],
+  "networkConditionsDelta": {
+    "samples": 48,
+    "avgBlockRateDeltaMs": 23,
+    "avgFeeP50DeltaLamports": 0,
+    "avgFeeP75DeltaLamports": 0
+  },
+  "marinadeTriggeredRuns": [],
+  "blockhashRecoveryExamples": [
+    {
+      "runId": "D33E5FEFD8E9",
+      "finalStage": "confirmed",
+      "signature": "qA6N4d3KExwDC1rv8cMKCNYu2xTWWv79URRqw2Boo89S9QLpvkBPs1ioswokuSYpMAanyKCxDP8NVKLpzR9fLvh",
+      "explorerUrl": "https://explorer.solana.com/tx/qA6N4d3KExwDC1rv8cMKCNYu2xTWWv79URRqw2Boo89S9QLpvkBPs1ioswokuSYpMAanyKCxDP8NVKLpzR9fLvh?cluster=devnet",
+      "retryCount": 1,
+      "action": "retry_refresh_blockhash",
+      "reasoning": "The transaction failed due to an EXPIRED_BLOCKHASH, which occurs when the blockhash exceeds its 150-slot validity window. To fix this, we need to refresh the blockhash with a new one at confirmed commitment. The new tip of 2624 lamports remains the same as the previous tip, which is at the 50th percentile of live tips, indicating that network conditions are unchanged. This retry attempt should succeed with a fresh blockhash."
+    }
+  ]
+}

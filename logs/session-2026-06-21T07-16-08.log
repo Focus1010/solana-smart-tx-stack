@@ -1,0 +1,102 @@
+2026-06-21T07:16:08.965Z [INFO ] Loading wallet
+2026-06-21T07:16:08.965Z [INFO ] [main] CLI: count=5 failures=0 network=mainnet-beta
+2026-06-21T07:16:09.029Z [INFO ] Wallet loaded: 3k4h3E531kasoBKLZRLUbUPP1MxkbAKbonsLXfTtqhTr
+2026-06-21T07:16:09.040Z [INFO ] [jito] Using gRPC searcher transport {"endpoint":"frankfurt.mainnet.block-engine.jito.wtf:443"}
+2026-06-21T07:16:09.041Z [INFO ] [stack] Network: mainnet-beta
+2026-06-21T07:16:09.041Z [INFO ] [stack] Payer:   3k4h3E531kasqhTr
+2026-06-21T07:16:09.042Z [INFO ] [agent] Using Groq provider {"model":"llama-3.3-70b-versatile"}
+2026-06-21T07:16:09.043Z [INFO ] [poller] Starting RPC slot polling (Yellowstone fallback)
+2026-06-21T07:16:09.043Z [WARN ] [trigger] TRIGGER_PROTOCOL=usdc but TRIGGER_MINT is empty — trigger disabled
+2026-06-21T07:16:10.621Z [DEBUG] [leader] Window detected {"slotsUntil":3,"isWindow":true,"identity":"5essVpBY"}
+2026-06-21T07:16:10.750Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":1328,"p75":10000,"p99":598979}
+2026-06-21T07:16:10.791Z [INFO ] [stack] Stream unavailable but leader window confirmed. Proceeding.
+2026-06-21T07:16:11.744Z [  AI ] [agent] Tip decision {"tip":1541,"action":"submit_now","confidence":"0.90","landing":"0.95","percentile":"p75","congestion":"1.055","leader":"1.100","reasoning":"Given the normal network conditions with a slot time of 433ms and a failure rate of 0%, the p50 baseline of 1328 lamports is adjusted by a congestion multiplier of 1.055x and a leader pricing multiplier of 1.100x, resulting in an estimated tip of 1541 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the current network conditions. The selected tip is also influenced by being inside the Jito leader window, which suggests a slightly higher tip may be necessary. With this tip, the expected landing probability is high due to the current network stability and the chosen percentile."}
+2026-06-21T07:16:11.745Z [WARN ] [builder] Blockhash expired; forcing refresh before build
+2026-06-21T07:16:11.819Z [DEBUG] [builder] Blockhash validity window {"blockhash":"6M6o9Su2KMrd...","lastValidBlockHeight":405971040,"currentBlockHeight":405970890,"blocksRemaining":150}
+2026-06-21T07:16:11.835Z [DEBUG] [builder] Bundle tx built {"bundleTxSig":"62KYWarY3BpA...","tipAccount":"Cw8CFyM9FkoM...","tipLamports":1541}
+2026-06-21T07:16:11.836Z [INFO ] [stack] Bundle built {"blockhash":"6M6o9Su2KMrd...","tip":1541,"slot":427893972,"network":"mainnet-beta"}
+2026-06-21T07:16:11.837Z [INFO ] [submitter] Submitting bundle {"tip":1541,"sig":"62KYWarYgpJ2","slot":427893972}
+2026-06-21T07:16:11.838Z [DEBUG] [submitter] Bundle tx signature {"bundleTxSig":"62KYWarY3BpApeDkpNNfPmnDsRqyN6WjhQtFfybjnQEz6PnCRMo4efTpj3fFqn5hjW3YSjujAvoojJohhPLKgpJ2"}
+2026-06-21T07:16:11.838Z [DEBUG] [submitter] Leader window is open {"slotsUntil":3,"identity":"5essVpBY"}
+2026-06-21T07:16:12.057Z [  OK ] [submitter] Bundle accepted by block engine {"bundleId":"03dfe24f83cffb66...","sig":"62KYWarYgpJ2","tip":1541}
+2026-06-21T07:16:13.517Z [  OK ] [stack] Real tx confirmed {"sig":"zySqkxqehMH6"}
+2026-06-21T07:16:27.550Z [WARN ] [submitter] Bundle status poll timed out {"bundleId":"03dfe24f83cf..."}
+2026-06-21T07:16:27.552Z [INFO ] [tracker] Tracking lifecycle {"sig":"zySqkxqehMH6"}
+2026-06-21T07:16:27.661Z [INFO ] [tracker] Processed {"slot":427893979,"latency":"15825ms","source":"rpc_signature_status"}
+2026-06-21T07:16:27.759Z [  OK ] [tracker] Confirmed {"slot":427894011,"processedToConfirmedMs":98,"source":"yellowstone_slot_stream"}
+2026-06-21T07:16:27.759Z [  OK ] [tracker] Finalized {"slot":427893981,"confirmedToFinalizedMs":0,"submittedToFinalizedMs":15923,"source":"yellowstone_slot_stream"}
+2026-06-21T07:16:30.799Z [DEBUG] [leader] Window detected {"slotsUntil":0,"isWindow":true,"identity":"8uJiHDJ1"}
+2026-06-21T07:16:30.955Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":1565,"p75":10000,"p99":233058}
+2026-06-21T07:16:30.990Z [INFO ] [stack] Stream unavailable but leader window confirmed. Proceeding.
+2026-06-21T07:16:31.776Z [  AI ] [agent] Tip decision {"tip":2154,"action":"submit_now","confidence":"0.90","landing":"0.95","percentile":"p75","congestion":"1.101","leader":"1.250","reasoning":"Given the normal network conditions with a slot time of 435ms and a failure rate of 0%, the p50 baseline of 1565 lamports is adjusted by a congestion multiplier of 1.101x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 2154 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the current network conditions. The selected tip is expected to provide a high landing probability due to the current low failure rate and normal network load. The leader urgency multiplier is applied since we are currently inside the Jito leader window."}
+2026-06-21T07:16:31.829Z [DEBUG] [builder] Blockhash validity window {"blockhash":"6M6o9Su2KMrd...","lastValidBlockHeight":405971040,"currentBlockHeight":405970941,"blocksRemaining":99}
+2026-06-21T07:16:31.833Z [DEBUG] [builder] Bundle tx built {"bundleTxSig":"3cdS2YSn4ZTQ...","tipAccount":"96gYZGLnJYVF...","tipLamports":2154}
+2026-06-21T07:16:31.834Z [INFO ] [stack] Bundle built {"blockhash":"6M6o9Su2KMrd...","tip":2154,"slot":427894022,"network":"mainnet-beta"}
+2026-06-21T07:16:31.835Z [INFO ] [submitter] Submitting bundle {"tip":2154,"sig":"3cdS2YSnR4fD","slot":427894022}
+2026-06-21T07:16:31.835Z [DEBUG] [submitter] Bundle tx signature {"bundleTxSig":"3cdS2YSn4ZTQ2ZmjEvgs7o4frz3UPaimFjD9KzNec8AizkucTspU8VJcdV8wX2CM1h9NHBK6oC7PPHductmxR4fD"}
+2026-06-21T07:16:31.835Z [DEBUG] [submitter] Leader window is open {"slotsUntil":0,"identity":"8uJiHDJ1"}
+2026-06-21T07:16:32.299Z [  OK ] [submitter] Bundle accepted by block engine {"bundleId":"4bfe173eac119ef5...","sig":"3cdS2YSnR4fD","tip":2154}
+2026-06-21T07:16:32.340Z [  OK ] [stack] Real tx confirmed {"sig":"4ZXgAC32n7rX"}
+2026-06-21T07:16:47.793Z [WARN ] [submitter] Bundle status poll timed out {"bundleId":"4bfe173eac11..."}
+2026-06-21T07:16:47.794Z [INFO ] [tracker] Tracking lifecycle {"sig":"4ZXgAC32n7rX"}
+2026-06-21T07:16:47.895Z [INFO ] [tracker] Processed {"slot":427894027,"latency":"16061ms","source":"rpc_signature_status"}
+2026-06-21T07:16:47.995Z [  OK ] [tracker] Confirmed {"slot":427894062,"processedToConfirmedMs":100,"source":"yellowstone_slot_stream"}
+2026-06-21T07:16:47.995Z [  OK ] [tracker] Finalized {"slot":427894031,"confirmedToFinalizedMs":0,"submittedToFinalizedMs":16161,"source":"yellowstone_slot_stream"}
+2026-06-21T07:16:51.038Z [DEBUG] [leader] Window detected {"slotsUntil":0,"isWindow":true,"identity":"2m1A2WM1"}
+2026-06-21T07:16:51.183Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":1860,"p75":6006,"p99":593251}
+2026-06-21T07:16:51.218Z [INFO ] [stack] Stream unavailable but leader window confirmed. Proceeding.
+2026-06-21T07:16:51.976Z [  AI ] [agent] Tip decision {"tip":2730,"action":"submit_now","confidence":"0.90","landing":"0.85","percentile":"p75","congestion":"1.174","leader":"1.250","reasoning":"The chosen tip of 2730 lamports corresponds to approximately the p75 percentile, considering the congestion multiplier of 1.174x and the leader pricing multiplier of 1.250x. Given the current slot time of 480ms and a failure rate of 0%, the network conditions are normal, but the presence inside the Jito leader window justifies the application of the leader pricing multiplier. This tip amount is expected to provide a high landing probability while accounting for the current network conditions and the urgency of being inside the leader window. The selected percentile of p75 offers a balance between cost and the likelihood of a successful submission."}
+2026-06-21T07:16:52.054Z [DEBUG] [builder] Blockhash validity window {"blockhash":"7vnhB6QDF7FC...","lastValidBlockHeight":405971142,"currentBlockHeight":405970992,"blocksRemaining":150}
+2026-06-21T07:16:52.057Z [DEBUG] [builder] Bundle tx built {"bundleTxSig":"3gyWWdcD66HZ...","tipAccount":"ADuUkR4vqLUM...","tipLamports":2730}
+2026-06-21T07:16:52.058Z [INFO ] [stack] Bundle built {"blockhash":"7vnhB6QDF7FC...","tip":2730,"slot":427894074,"network":"mainnet-beta"}
+2026-06-21T07:16:52.058Z [INFO ] [submitter] Submitting bundle {"tip":2730,"sig":"3gyWWdcDiRLN","slot":427894074}
+2026-06-21T07:16:52.058Z [DEBUG] [submitter] Bundle tx signature {"bundleTxSig":"3gyWWdcD66HZESbichVZVFzUWagLRasC3yhGjnbpoMUonyjHJtdQAoyYMtUMGCsXdephdjyGGzBkqXWFbVA5iRLN"}
+2026-06-21T07:16:52.059Z [DEBUG] [submitter] Leader window is open {"slotsUntil":0,"identity":"2m1A2WM1"}
+2026-06-21T07:16:52.538Z [  OK ] [submitter] Bundle accepted by block engine {"bundleId":"3df6dbddde6c0d25...","sig":"3gyWWdcDiRLN","tip":2730}
+2026-06-21T07:16:52.740Z [  OK ] [stack] Real tx confirmed {"sig":"124w5vuwzwQA"}
+2026-06-21T07:17:08.034Z [WARN ] [submitter] Bundle status poll timed out {"bundleId":"3df6dbddde6c..."}
+2026-06-21T07:17:08.034Z [INFO ] [tracker] Tracking lifecycle {"sig":"124w5vuwzwQA"}
+2026-06-21T07:17:08.128Z [INFO ] [tracker] Processed {"slot":427894079,"latency":"16070ms","source":"rpc_signature_status"}
+2026-06-21T07:17:08.228Z [  OK ] [tracker] Confirmed {"slot":427894114,"processedToConfirmedMs":100,"source":"yellowstone_slot_stream"}
+2026-06-21T07:17:08.228Z [  OK ] [tracker] Finalized {"slot":427894083,"confirmedToFinalizedMs":0,"submittedToFinalizedMs":16170,"source":"yellowstone_slot_stream"}
+2026-06-21T07:17:11.279Z [DEBUG] [leader] Window detected {"slotsUntil":0,"isWindow":true,"identity":"DRpbCBMx"}
+2026-06-21T07:17:11.436Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":1860,"p75":6006,"p99":593251}
+2026-06-21T07:17:11.480Z [INFO ] [stack] Stream unavailable but leader window confirmed. Proceeding.
+2026-06-21T07:17:12.190Z [  AI ] [agent] Tip decision {"tip":2739,"action":"submit_now","confidence":"0.80","landing":"0.90","percentile":"p75","congestion":"1.178","leader":"1.250","reasoning":"Given the current network conditions with a slot time of 480ms and a failure rate of 0%, the p50 baseline is adjusted by a congestion multiplier of 1.178x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 2739 lamports, which corresponds to approximately the p75 percentile. This amount was chosen to balance the need for a high landing probability with the current normal network load. The selected tip is expected to provide a high landing probability while also considering the leader window and current network conditions."}
+2026-06-21T07:17:12.263Z [DEBUG] [builder] Blockhash validity window {"blockhash":"7vnhB6QDF7FC...","lastValidBlockHeight":405971142,"currentBlockHeight":405971041,"blocksRemaining":101}
+2026-06-21T07:17:12.265Z [DEBUG] [builder] Bundle tx built {"bundleTxSig":"2QKB2qiJjjsQ...","tipAccount":"Cw8CFyM9FkoM...","tipLamports":2739}
+2026-06-21T07:17:12.265Z [INFO ] [stack] Bundle built {"blockhash":"7vnhB6QDF7FC...","tip":2739,"slot":427894122,"network":"mainnet-beta"}
+2026-06-21T07:17:12.266Z [INFO ] [submitter] Submitting bundle {"tip":2739,"sig":"2QKB2qiJKw3W","slot":427894122}
+2026-06-21T07:17:12.267Z [DEBUG] [submitter] Bundle tx signature {"bundleTxSig":"2QKB2qiJjjsQj799ccYcepMsQef5Rs5GnbXmqBw2HVEjfd1y1posvUc82shxzhwn1BSSY1L1cWPzKZ2YkfVSKw3W"}
+2026-06-21T07:17:12.267Z [DEBUG] [submitter] Leader window is open {"slotsUntil":0,"identity":"DRpbCBMx"}
+2026-06-21T07:17:12.780Z [  OK ] [submitter] Bundle accepted by block engine {"bundleId":"062f29c2c11f8ac8...","sig":"2QKB2qiJKw3W","tip":2739}
+2026-06-21T07:17:13.163Z [  OK ] [stack] Real tx confirmed {"sig":"41vwhEnUr9cS"}
+2026-06-21T07:17:28.272Z [WARN ] [submitter] Bundle status poll timed out {"bundleId":"062f29c2c11f..."}
+2026-06-21T07:17:28.273Z [INFO ] [tracker] Tracking lifecycle {"sig":"41vwhEnUr9cS"}
+2026-06-21T07:17:28.373Z [INFO ] [tracker] Processed {"slot":427894128,"latency":"16107ms","source":"rpc_signature_status"}
+2026-06-21T07:17:28.467Z [  OK ] [tracker] Confirmed {"slot":427894164,"processedToConfirmedMs":94,"source":"yellowstone_slot_stream"}
+2026-06-21T07:17:28.468Z [  OK ] [tracker] Finalized {"slot":427894133,"confirmedToFinalizedMs":1,"submittedToFinalizedMs":16202,"source":"yellowstone_slot_stream"}
+2026-06-21T07:17:31.537Z [DEBUG] [leader] Window detected {"slotsUntil":0,"isWindow":true,"identity":"4uH4G6Yi"}
+2026-06-21T07:17:31.687Z [INFO ] [tip-oracle] Live Jito tip floor data {"p50":1247,"p75":4892,"p99":63100}
+2026-06-21T07:17:31.719Z [INFO ] [stack] Stream unavailable but leader window confirmed. Proceeding.
+2026-06-21T07:17:32.432Z [  AI ] [agent] Tip decision {"tip":1852,"action":"submit_now","confidence":"0.80","landing":"0.90","percentile":"p75","congestion":"1.188","leader":"1.250","reasoning":"Given the current network conditions with a slot time of 454ms and a failure rate of 0%, the p50 baseline of 1247 lamports is adjusted by a congestion multiplier of 1.188x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 1852 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the current normal network load. The selected tip is expected to provide a high landing probability given the current conditions. The leader urgency multiplier is applied due to being inside the Jito leader window."}
+2026-06-21T07:17:32.494Z [DEBUG] [builder] Blockhash validity window {"blockhash":"7vnhB6QDF7FC...","lastValidBlockHeight":405971142,"currentBlockHeight":405971092,"blocksRemaining":50}
+2026-06-21T07:17:32.497Z [DEBUG] [builder] Bundle tx built {"bundleTxSig":"5ZxV5MXzeyts...","tipAccount":"ADaUMid9yfUy...","tipLamports":1852}
+2026-06-21T07:17:32.498Z [INFO ] [stack] Bundle built {"blockhash":"7vnhB6QDF7FC...","tip":1852,"slot":427894174,"network":"mainnet-beta"}
+2026-06-21T07:17:32.498Z [INFO ] [submitter] Submitting bundle {"tip":1852,"sig":"5ZxV5MXzPkKb","slot":427894174}
+2026-06-21T07:17:32.501Z [DEBUG] [submitter] Bundle tx signature {"bundleTxSig":"5ZxV5MXzeytskXM1rAxXDJEr7zyGuhTvfTfi8fRbx4BGURqtuf7CMvvmYzEwYr6BZPQpzErZiYqq9zYL6Q4LPkKb"}
+2026-06-21T07:17:32.501Z [DEBUG] [submitter] Leader window is open {"slotsUntil":0,"identity":"4uH4G6Yi"}
+2026-06-21T07:17:33.039Z [  OK ] [submitter] Bundle accepted by block engine {"bundleId":"69e88523c89d1df0...","sig":"5ZxV5MXzPkKb","tip":1852}
+2026-06-21T07:17:34.296Z [  OK ] [stack] Real tx confirmed {"sig":"3jJWcqDgmKKs"}
+2026-06-21T07:17:48.532Z [WARN ] [submitter] Bundle status poll timed out {"bundleId":"69e88523c89d..."}
+2026-06-21T07:17:48.533Z [INFO ] [tracker] Tracking lifecycle {"sig":"3jJWcqDgmKKs"}
+2026-06-21T07:17:48.625Z [INFO ] [tracker] Processed {"slot":427894182,"latency":"16127ms","source":"rpc_signature_status"}
+2026-06-21T07:17:48.724Z [  OK ] [tracker] Confirmed {"slot":427894215,"processedToConfirmedMs":99,"source":"yellowstone_slot_stream"}
+2026-06-21T07:17:48.725Z [  OK ] [tracker] Finalized {"slot":427894184,"confirmedToFinalizedMs":0,"submittedToFinalizedMs":16226,"source":"yellowstone_slot_stream"}
+2026-06-21T07:17:48.767Z [INFO ] Total runs:          53
+2026-06-21T07:17:48.768Z [  OK ]   Confirmed:         49
+2026-06-21T07:17:48.768Z [ERROR]   Failed:            4
+2026-06-21T07:17:48.768Z [INFO ]   Avg tip:           6118 lamports
+2026-06-21T07:17:48.768Z [INFO ]   Unique tip values: 52
+2026-06-21T07:17:48.768Z [INFO ]   Verifiable sigs:   50
+2026-06-21T07:17:48.768Z [INFO ]   Network:           mainnet-beta
