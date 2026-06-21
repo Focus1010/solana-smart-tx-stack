@@ -3,9 +3,9 @@
 Dashboard visualizations from the mainnet evidence run.
 
 ## Overview
-- Total records: 40+
-- Confirmed: 30+
-- Failed: 5+
+- Total records: 52
+- Confirmed: 48
+- Failed: 4
 - p50 / p90 latencies and unique tip distribution
 
 ## AI Reasoning
