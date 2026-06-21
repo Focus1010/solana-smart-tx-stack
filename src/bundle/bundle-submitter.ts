@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import {
   Connection,
   Keypair,
@@ -84,11 +83,16 @@ export class BundleSubmitter {
   // 1100ms-minimum limiter used for sendBundle would silently throttle fast
   // polling back down to ~1100ms regardless of FAST_POLL_INTERVAL_MS, which
   // would reintroduce the exact timing problem this fix addresses.
-  private readonly POLL_TIMEOUT_MS        = 30_000;
-  private readonly INITIAL_POLL_DELAY_MS  = 600;
-  private readonly FAST_POLL_INTERVAL_MS  = 500;
-  private readonly FAST_POLL_WINDOW_MS    = 4_000;
+  private readonly POLL_TIMEOUT_MS        = 15_000;  // 15s max — a Jito bundle lives ~5s
+  private readonly INITIAL_POLL_DELAY_MS  = 800;     // give block engine time to register
+  private readonly FAST_POLL_INTERVAL_MS  = 600;     // ~1.5x slot cadence
+  private readonly FAST_POLL_WINDOW_MS    = 6_000;   // covers the bundle live window + margin
   private readonly SLOW_POLL_INTERVAL_MS  = 2_000;
+  // If status returns null (bundle not found) this many times in a row the
+  // bundle is either on a different load-balanced server (global endpoint
+  // issue) or was never registered. Treat as dropped rather than burning
+  // the full POLL_TIMEOUT_MS. Value: 6 * 600ms ≈ 3.6s well within live window.
+  private readonly MAX_CONSECUTIVE_NULL   = 6;
 
   constructor(
     connection: Connection,
@@ -211,38 +215,12 @@ export class BundleSubmitter {
     let activeBuilt  = built;
     let bundleSig    = sig;
 
-    await this.logger.info("[submitter] Signatures", {
-      realSig:      bundleSig,
-      bundleTxSig:  activeBuilt.bundleTxSignature ?? null,
+    // Log the bundle tx signature for audit (the evidence/real tx sig is tracked
+    // separately by stack.ts via sendRealTx — it is always distinct because it
+    // uses a fresh blockhash and different instructions).
+    await this.logger.debug("[submitter] Bundle tx signature", {
+      bundleTxSig: activeBuilt.bundleTxSignature ?? bundleSig,
     });
-
-    if (
-      activeBuilt.bundleTxSignature &&
-      bundleSig === activeBuilt.bundleTxSignature
-    ) {
-      const memoSeed =
-        typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : String(Date.now());
-
-      await this.logger.warn(
-        "[submitter] Signature collision: rebuilding bundle with memo to ensure uniqueness",
-        { memoSeed }
-      );
-
-      activeBuilt = await this.builder.build(
-        effectiveTip,
-        currentSlot,
-        true,
-        memoSeed
-      );
-      bundleSig = this.extractSignature(activeBuilt.transaction);
-
-      await this.logger.info("[submitter] Rebuilt bundle signatures", {
-        realSig:      bundleSig,
-        bundleTxSig:  activeBuilt.bundleTxSignature ?? null,
-      });
-    }
 
     if (!config.jito.emergencyOverride) {
       const allowed = await this.isLeaderWindowOpen(currentSlot);
@@ -278,43 +256,24 @@ export class BundleSubmitter {
       );
     }
 
-    // ── Subscribe for raw bundle-result events ────────────────────────────
-    const rawResults: unknown[] = [];
-    const unsubscribe = this.jitoClient.subscribeBundleResults(
-      (update) => {
-        const raw = update.raw ?? update;
-        rawResults.push(raw);
-
-        const state =
-          update.state ||
-          ((raw as { rejected?: unknown }).rejected
-            ? "rejected"
-            : (raw as { dropped?: unknown }).dropped
-              ? "dropped"
-              : "unknown");
-
-        this.logger.debug("[jito] Bundle result update", {
-          bundleId: update.bundleId,
-          state,
-          slot:     update.slot,
-          raw,
-        }).catch(() => {});
-
-        if (update.state === "rejected" || update.state === "dropped") {
-          this.logger.warn("[jito] Raw bundle result: " + update.state, {
-            bundleId: update.bundleId?.slice(0, 12),
-            raw:      JSON.stringify(raw ?? {}).slice(0, 500),
-          }).catch(() => {});
-        }
-      },
-      (err) => {
-        this.logger.warn("[submitter] Bundle-result stream error", {
-          message: err.message.slice(0, 120),
-        }).catch(() => {});
-      }
-    );
-
     // ── Submit ────────────────────────────────────────────────────────────
+    // Subscribe for raw bundle-result events AFTER we have a bundleId so we
+    // only open the stream when we know the bundle was accepted. Opening before
+    // sendBundle causes two problems:
+    //   (a) On JSON-RPC transport (JITO_USE_GRPC=false) subscribeBundleResults
+    //       is a documented no-op — calling unsubscribe() on it produces a
+    //       "Stream error: 1 CANCELLED: Cancelled on client" log line because
+    //       jito-ts's no-op stub still emits a gRPC cancellation event.
+    //   (b) On gRPC transport without auth credentials the stream errors
+    //       immediately with UNAUTHENTICATED/CANCELLED before any bundle
+    //       result arrives.
+    const rawResults: unknown[] = [];
+
+    // Hoist unsubscribe so it is in scope for both the try and catch blocks.
+    // Initialised as a no-op so calling it is always safe even if sendBundle
+    // throws before subscribeBundleResults is ever called.
+    let unsubscribe: () => void = () => {};
+
     try {
       const bundleId = await this.limiter.runWithBackoff(async () => {
         return this.jitoClient.sendBundle([activeBuilt.transaction]);
@@ -326,18 +285,40 @@ export class BundleSubmitter {
         tip:      effectiveTip,
       });
 
-      // Allow gRPC bundle-result events to arrive before polling status.
-      await sleep(500);
+      // Subscribe AFTER we have a confirmed bundleId — shortest possible
+      // window, only real results, no spurious CANCELLED errors.
+      unsubscribe = this.jitoClient.subscribeBundleResults(
+        (update) => {
+          const raw = update.raw ?? update;
+          rawResults.push(raw);
+
+          this.logger.debug("[jito] Bundle result update", {
+            bundleId: update.bundleId?.slice(0, 12),
+            state:    update.state,
+            slot:     update.slot,
+          }).catch(() => {});
+
+          if (update.state === "rejected" || update.state === "dropped") {
+            this.logger.warn("[jito] Bundle result: " + update.state, {
+              bundleId: update.bundleId?.slice(0, 12),
+              raw:      JSON.stringify(raw ?? {}).slice(0, 300),
+            }).catch(() => {});
+          }
+        },
+        (err) => {
+          // Stream errors are non-fatal on JSON-RPC transport (no-op stub);
+          // on gRPC they indicate auth or connectivity issues.
+          const msg = err.message ?? String(err);
+          if (!msg.includes("CANCELLED")) {
+            this.logger.warn("[submitter] Bundle-result stream error", {
+              message: msg.slice(0, 120),
+            }).catch(() => {});
+          }
+        }
+      );
 
       const landed = await this.pollBundleStatus(bundleId);
       unsubscribe();
-
-      if (bundleId && rawResults.length === 0) {
-        await this.logger.warn(
-          "[submitter] No raw bundle-result events received for bundleId after wait; rawResults empty",
-          { bundleId: bundleId.slice(0, 16) + "..." }
-        );
-      }
 
       return {
         success:          landed,
@@ -359,13 +340,6 @@ export class BundleSubmitter {
         failure,
         message: msg.slice(0, 200),
       });
-
-      if (rawResults.length === 0) {
-        await this.logger.warn(
-          "[submitter] No raw bundle-result events received; rawResults empty",
-          { bundleId: null }
-        );
-      }
 
       return {
         success:          false,
@@ -497,31 +471,113 @@ export class BundleSubmitter {
   // report the bundle as dropped.
 
   private async pollBundleStatus(bundleId: string): Promise<boolean> {
-    const deadline = Date.now() + this.POLL_TIMEOUT_MS;
+    const deadline  = Date.now() + this.POLL_TIMEOUT_MS;
     const fastUntil = Date.now() + this.FAST_POLL_WINDOW_MS;
+    let consecutiveInvalid = 0;
+    let consecutiveErrors  = 0;
+    let consecutiveNull    = 0;
 
+    // Brief initial delay: the block engine needs a beat to register the
+    // bundle before getInflightBundleStatuses can return anything other than
+    // an empty value array (which we would mis-read as "not found yet").
     await sleep(this.INITIAL_POLL_DELAY_MS);
 
-    let consecutiveInvalid = 0;
-
     while (Date.now() < deadline) {
+      const intervalMs = Date.now() < fastUntil
+        ? this.FAST_POLL_INTERVAL_MS
+        : this.SLOW_POLL_INTERVAL_MS;
+
+      // Check that the client actually implements status polling
+      if (!this.jitoClient.getInflightBundleStatus) {
+        await this.logger.warn(
+          "[submitter] getInflightBundleStatus not available on this Jito transport; " +
+          "cannot poll status. Waiting for POLL_TIMEOUT_MS then giving up."
+        );
+        await sleep(intervalMs);
+        continue;
+      }
+
       let status: string | null = null;
       try {
-        if (this.jitoClient.getInflightBundleStatus) {
-          status = await this.statusLimiter.runWithBackoff(async () => {
-            return this.jitoClient.getInflightBundleStatus!(bundleId);
+        // statusLimiter has its own 250ms minimum interval so fast-polling
+        // doesn't accidentally flood the endpoint; runWithBackoff handles 429s.
+        status = await this.statusLimiter.runWithBackoff(async () => {
+          return this.jitoClient.getInflightBundleStatus!(bundleId);
+        });
+        consecutiveErrors = 0; // reset on any successful HTTP response
+        consecutiveNull   = 0; // successful fetch (even if no status yet)
+      } catch (err) {
+        consecutiveErrors++;
+        const msg = err instanceof Error ? err.message : String(err);
+
+        // Log the first error and every 5th thereafter to avoid log spam
+        if (consecutiveErrors === 1 || consecutiveErrors % 5 === 0) {
+          await this.logger.warn("[submitter] Status poll error", {
+            bundleId:    bundleId.slice(0, 12) + "...",
+            error:       msg.slice(0, 200),
+            consecutive: consecutiveErrors,
           });
         }
-      } catch {
-        // 429 exhausted or network error -- keep polling
-        await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);
+
+        // After 10 consecutive network/parse errors the endpoint is likely
+        // unhealthy; stop polling and report as a timeout rather than looping
+        // until deadline.
+        if (consecutiveErrors >= 10) {
+          await this.logger.warn(
+            "[submitter] Too many consecutive status poll errors; aborting poll",
+            { bundleId: bundleId.slice(0, 12) + "...", errors: consecutiveErrors }
+          );
+          return false;
+        }
+
+        await sleep(intervalMs);
         continue;
       }
 
+      // null means the block engine returned {value:[]} — the bundle is not
+      // in its status table. Two causes:
+      //   (a) Normal: the block engine hasn't registered the bundle yet.
+      //       Happens in the first 1-2 polls right after submission.
+      //   (b) Sticky: you are using the GLOBAL load-balanced endpoint
+      //       (mainnet.block-engine.jito.wtf). sendBundle hits server A,
+      //       getInflightBundleStatuses hits server B which has no record.
+      //       This returns null on every single poll until timeout.
+      //       FIX: set JITO_RPC_URL to a regional endpoint e.g.:
+      //         https://frankfurt.mainnet.block-engine.jito.wtf/api/v1
+      //         https://ny.mainnet.block-engine.jito.wtf/api/v1
+      //         https://amsterdam.mainnet.block-engine.jito.wtf/api/v1
+      //         https://tokyo.mainnet.block-engine.jito.wtf/api/v1
+      //
+      // We count consecutive nulls and give up after MAX_CONSECUTIVE_NULL
+      // so we don't burn the full POLL_TIMEOUT_MS in case (b).
       if (!status) {
-        await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);
+        consecutiveNull++;
+
+        if (consecutiveNull === 3) {
+          await this.logger.warn(
+            "[submitter] Bundle not found in status table after 3 polls. " +
+            "If using mainnet.block-engine.jito.wtf (global), switch to a " +
+            "regional endpoint (frankfurt/ny/amsterdam/tokyo) to avoid " +
+            "load-balancer routing sendBundle and status polls to different servers.",
+            { bundleId: bundleId.slice(0, 16) + "..." }
+          );
+        }
+
+        if (consecutiveNull >= this.MAX_CONSECUTIVE_NULL) {
+          await this.logger.warn(
+            "[submitter] Bundle never appeared in status table — treating as dropped. " +
+            "Most likely cause: global load-balanced endpoint routes sendBundle and " +
+            "getInflightBundleStatuses to different servers. Set JITO_RPC_URL to a regional endpoint.",
+            { bundleId: bundleId.slice(0, 16) + "...", nullPolls: consecutiveNull }
+          );
+          return false;
+        }
+
+        await sleep(intervalMs);
         continue;
       }
+
+      consecutiveNull = 0; // reset on any real status response
 
       await this.logger.debug("[submitter] Bundle inflight status", {
         bundleId: bundleId.slice(0, 12) + "...",
@@ -545,23 +601,25 @@ export class BundleSubmitter {
       if (status === "Invalid") {
         consecutiveInvalid++;
 
-        // First Invalid read this early could be a bookkeeping race --
-        // confirm with one more fast check before concluding it is dropped.
+        // A single "Invalid" immediately after submission can be a
+        // bookkeeping race (the bundle is being processed but the status
+        // table hasn't caught up). Require 2 consecutive Invalid reads before
+        // concluding the bundle is genuinely dropped.
         if (consecutiveInvalid < 2 && Date.now() < fastUntil) {
           await sleep(this.FAST_POLL_INTERVAL_MS);
           continue;
         }
 
         await this.logger.warn("[submitter] Bundle dropped (lost auction or expired)", {
-          bundleId: bundleId.slice(0, 12) + "...",
+          bundleId:            bundleId.slice(0, 12) + "...",
           confirmedAfterReads: consecutiveInvalid,
         });
         return false;
       }
 
-      // "Pending" -- keep polling, reset the Invalid counter
+      // "Pending" — keep polling, reset the Invalid counter
       consecutiveInvalid = 0;
-      await sleep(Date.now() < fastUntil ? this.FAST_POLL_INTERVAL_MS : this.SLOW_POLL_INTERVAL_MS);
+      await sleep(intervalMs);
     }
 
     await this.logger.warn("[submitter] Bundle status poll timed out", {

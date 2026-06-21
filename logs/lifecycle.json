@@ -6003,5 +6003,3774 @@
       "confirmedToFinalized": null,
       "submittedToFinalized": null
     }
+  },
+  {
+    "runId": "07411B0EAA0F",
+    "bundleId": "76a71855d55d924edd9374e5008f4f849102ddd9e0396390da349d4c23f59aa7",
+    "signature": "4A7WD756qkzwbUxfCF7HHGRyCgZBAtWqpywf5NteB4FtbhDdxxRZC14f5CV3HNHqkhN9ihHPYMNsFS8rp2UwcHne",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 2535,
+    "tipAccount": "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+    "submittedAt": 1781976736333,
+    "submittedAtIso": "2026-06-20T17:32:16.333Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427769527,
+        "timestamp": 1781976736333,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781976768790,
+        "latencyFromPrevMs": 32457,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the normal network conditions with a slot time of 444ms and a failure rate of 0%, the p50 baseline is a reasonable starting point. However, considering the current slot is within the Jito leader window, a leader pricing multiplier of 1.250x is applied, resulting in an estimated tip of 2535 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the cost of the transaction. The congestion multiplier of 1.073x also supports this choice, indicating a relatively calm network. With this tip, the expected landing probability is high.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 2535,
+      "landingProbabilityEstimate": 0.9,
+      "reasoning": "Given the normal network conditions with a slot time of 444ms and a failure rate of 0%, the p50 baseline is a reasonable starting point. However, considering the current slot is within the Jito leader window, a leader pricing multiplier of 1.250x is applied, resulting in an estimated tip of 2535 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the cost of the transaction. The congestion multiplier of 1.073x also supports this choice, indicating a relatively calm network. With this tip, the expected landing probability is high.",
+      "promptHash": "4713654a87bebe05e856ae01757e7c4564b88d1008b57d122737f6b4aec51d81",
+      "llmLatencyMs": 705,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the normal network conditions with a slot time of 444ms and a failure rate of 0%, the p50 baseline is a reasonable starting point. However, considering the current slot is within the Jito leader window, a leader pricing multiplier of 1.250x is applied, resulting in an estimated tip of 2535 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the cost of the transaction. The congestion multiplier of 1.073x also supports this choice, indicating a relatively calm network. With this tip, the expected landing probability is high.",
+        "confidenceScore": 0.8,
+        "tipLamports": 2535,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 1.073,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.9,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "4713654a87bebe05e856ae01757e7c4564b88d1008b57d122737f6b4aec51d81",
+        "llmLatencyMs": 705,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:32:16.266Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:32:15.355Z",
+      "currentSlot": 427769528,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427769527,
+      "averageSlotTimeMs": 443.5,
+      "recentFailureRate": 0,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:32:15.355Z",
+        "currentSlot": 427769528,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:32:15.558Z",
+        "blockProductionRateMs": 443.5,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0,
+        "recentFailureRate": 0,
+        "bundleLandingRate": 1,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:32:15.558Z",
+      "blockProductionRateMs": 443.5,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T17:32:48.837Z",
+      "blockProductionRateMs": 498.22222222222223,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.24555555555555558,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.24555555555555558
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 54.72222222222223,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.24555555555555558,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "6L2WTz7NFzKJG7U1phAYvLBUkzse7YTEWkdAAni7MT8S",
+    "slotAtSubmission": 427769527,
+    "explorerUrl": "https://explorer.solana.com/tx/4A7WD756qkzwbUxfCF7HHGRyCgZBAtWqpywf5NteB4FtbhDdxxRZC14f5CV3HNHqkhN9ihHPYMNsFS8rp2UwcHne?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/76a71855d55d924edd9374e5008f4f849102ddd9e0396390da349d4c23f59aa7",
+    "bundleTxSignature": "5TDpZ7eG5NR6nzGrFHRVdG25ZrC8Y6SdC7BSyKT85gTddv7Xe6iWBGL2FD5rmjHd7bw7kn1ztCvErCVFrci8UvzX",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "6481CD5A7A7D",
+    "bundleId": "2e32a931d86866503e974797680549d37c5dbede38355f80c1df2e21ddffddcd",
+    "signature": "22fAjRPFzTzzeCxncx9e7zTNX6XP3Qu8trPbK6rJQiBzNrWPJ1RbkiDjALDXCT76iKWFzfpDsi8WV43XnQd1jtGj",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 9850,
+    "tipAccount": "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+    "submittedAt": 1781976772832,
+    "submittedAtIso": "2026-06-20T17:32:52.832Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427769618,
+        "timestamp": 1781976772832,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781976805386,
+        "latencyFromPrevMs": 32554,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the current network conditions with a slot time of 469ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a highly congested network. The estimated tip of 9850 lamports is chosen, which is approximately at the p95 percentile, to ensure a high landing probability. This amount is selected due to the high failure rate and congestion, requiring a higher tip to increase the chances of a successful submission. The leader urgency multiplier of 1.250x also supports this decision, as we are currently inside the Jito leader window.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 9850,
+      "landingProbabilityEstimate": 0.4,
+      "reasoning": "Given the current network conditions with a slot time of 469ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a highly congested network. The estimated tip of 9850 lamports is chosen, which is approximately at the p95 percentile, to ensure a high landing probability. This amount is selected due to the high failure rate and congestion, requiring a higher tip to increase the chances of a successful submission. The leader urgency multiplier of 1.250x also supports this decision, as we are currently inside the Jito leader window.",
+      "promptHash": "93b7e27b2a51d1fa543024df6b79a26119c946ce76329935a46c44be45174747",
+      "llmLatencyMs": 704,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the current network conditions with a slot time of 469ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a highly congested network. The estimated tip of 9850 lamports is chosen, which is approximately at the p95 percentile, to ensure a high landing probability. This amount is selected due to the high failure rate and congestion, requiring a higher tip to increase the chances of a successful submission. The leader urgency multiplier of 1.250x also supports this decision, as we are currently inside the Jito leader window.",
+        "confidenceScore": 0.8,
+        "tipLamports": 9850,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.4,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "93b7e27b2a51d1fa543024df6b79a26119c946ce76329935a46c44be45174747",
+        "llmLatencyMs": 704,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:32:52.777Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:32:51.883Z",
+      "currentSlot": 427769619,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "q9XWcZ7T1wP4bW9SB4XgNNwjnFEJ982nE8aVbbNuwot",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427769618,
+      "averageSlotTimeMs": 468.57894736842104,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:32:51.883Z",
+        "currentSlot": 427769619,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "q9XWcZ7T1wP4bW9SB4XgNNwjnFEJ982nE8aVbbNuwot",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:32:52.072Z",
+        "blockProductionRateMs": 490.1111111111111,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.22527777777777772,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.22527777777777772
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:32:52.072Z",
+      "blockProductionRateMs": 490.1111111111111,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.22527777777777772,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.22527777777777772
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T17:33:25.439Z",
+      "blockProductionRateMs": 438.44444444444446,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.09611111111111115,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.09611111111111115
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -51.66666666666663,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.12916666666666657,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "9dpxNGpEA5jtGCUL39vftZoyFyGd6byQM4HzEoohLxWG",
+    "slotAtSubmission": 427769618,
+    "explorerUrl": "https://explorer.solana.com/tx/22fAjRPFzTzzeCxncx9e7zTNX6XP3Qu8trPbK6rJQiBzNrWPJ1RbkiDjALDXCT76iKWFzfpDsi8WV43XnQd1jtGj?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/2e32a931d86866503e974797680549d37c5dbede38355f80c1df2e21ddffddcd",
+    "bundleTxSignature": "esPjPDujWiFkdFnDpQyJpAqLNSF7d8aacF2WucthDBEz8c3hTBiERwSzvdAEvo9nusYw4m6FrXV5ZGfjFCou6T9",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "385043C51E4D",
+    "bundleId": "e4deee2569951a1ff8750cf51cc0c4e3a7be55fa1d18f2c3b24fd81a33487c2e",
+    "signature": "32k7aEUzRhX4Nee2Mx2tNrqvS7jYK8WTtpz2F1jpiyRVpMFboWt2q1VYXsEf54vDiyW7EUus3EzxM7UynaGzs2iZ",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 13375,
+    "tipAccount": "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+    "submittedAt": 1781976809411,
+    "submittedAtIso": "2026-06-20T17:33:29.411Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427769710,
+        "timestamp": 1781976809411,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781976841972,
+        "latencyFromPrevMs": 32561,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the highly congested network conditions with a slot time of 435ms and a failure rate of 100%, the p95 percentile of 49974 lamports was chosen as the baseline. However, considering the current network load and the fact that we are inside the Jito leader window, a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x were applied, resulting in an estimated tip of 13375 lamports. This amount is expected to provide a higher landing probability despite the challenging network conditions. The selected percentile is p95, and the estimated tip is below the maximum allowed value of 500000 lamports.",
+    "agentConfidence": 0.7,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 13375,
+      "landingProbabilityEstimate": 0.4,
+      "reasoning": "Given the highly congested network conditions with a slot time of 435ms and a failure rate of 100%, the p95 percentile of 49974 lamports was chosen as the baseline. However, considering the current network load and the fact that we are inside the Jito leader window, a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x were applied, resulting in an estimated tip of 13375 lamports. This amount is expected to provide a higher landing probability despite the challenging network conditions. The selected percentile is p95, and the estimated tip is below the maximum allowed value of 500000 lamports.",
+      "promptHash": "cbe4deeb20335a4143799991c5bfddd3c02269da8baf512ee0e59983f433cc15",
+      "llmLatencyMs": 687,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the highly congested network conditions with a slot time of 435ms and a failure rate of 100%, the p95 percentile of 49974 lamports was chosen as the baseline. However, considering the current network load and the fact that we are inside the Jito leader window, a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x were applied, resulting in an estimated tip of 13375 lamports. This amount is expected to provide a higher landing probability despite the challenging network conditions. The selected percentile is p95, and the estimated tip is below the maximum allowed value of 500000 lamports.",
+        "confidenceScore": 0.7,
+        "tipLamports": 13375,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.4,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "cbe4deeb20335a4143799991c5bfddd3c02269da8baf512ee0e59983f433cc15",
+        "llmLatencyMs": 687,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:33:29.352Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:33:28.468Z",
+      "currentSlot": 427769712,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "EvnRmnMrd69kFdbLMxWkTn1icZ7DCceRhvmb2SJXqDo4",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427769710,
+      "averageSlotTimeMs": 435.3157894736842,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:33:28.468Z",
+        "currentSlot": 427769712,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "EvnRmnMrd69kFdbLMxWkTn1icZ7DCceRhvmb2SJXqDo4",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:33:28.664Z",
+        "blockProductionRateMs": 431.3333333333333,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.07833333333333328,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.07833333333333328
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:33:28.664Z",
+      "blockProductionRateMs": 431.3333333333333,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.07833333333333328,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.07833333333333328
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T17:34:02.010Z",
+      "blockProductionRateMs": 490.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.22694444444444442,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.22694444444444442
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 59.44444444444446,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.14861111111111114,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "9Gxq18LiBuLX9QAP9o6638s6SEXggfCWCXmfWEiVzebj",
+    "slotAtSubmission": 427769710,
+    "explorerUrl": "https://explorer.solana.com/tx/32k7aEUzRhX4Nee2Mx2tNrqvS7jYK8WTtpz2F1jpiyRVpMFboWt2q1VYXsEf54vDiyW7EUus3EzxM7UynaGzs2iZ?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/e4deee2569951a1ff8750cf51cc0c4e3a7be55fa1d18f2c3b24fd81a33487c2e",
+    "bundleTxSignature": "5VMcRT1bvUCUNPkNyDk92YMhKLTrtpe8E8ayTiqRavTJrag93ibiQPVufMShxc28WyamCPLafDnn2KHGKqyBcP9A",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "760F42D35323",
+    "bundleId": "3615e0d65edb804add65c8e5ff0e978a018299c01fa29b8ecfde12428e275581",
+    "signature": "5opA3NUAtk7MQ2siBtW3KQogWXVR7e9Y8KBshvqKMnQNBrS53Z2bx3neJttPr3SsD1U1KPgad87th61igHnoXACG",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 12516,
+    "tipAccount": "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+    "submittedAt": 1781976846036,
+    "submittedAtIso": "2026-06-20T17:34:06.036Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427769802,
+        "timestamp": 1781976846036,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781976878528,
+        "latencyFromPrevMs": 32492,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the congested network conditions with a slot time of 486ms and a failure rate of 100%, the p75 percentile of 16316 lamports was considered, but due to the current Jito leader window and the high failure rate, the estimated tip of 12516 lamports (approx p75) was chosen. This amount is derived from a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x. The high failure rate and congested network suggest a low landing probability, but submitting now with this tip amount is the best course of action. The selected tip amount is above the minimum threshold of 1000 lamports and below the maximum threshold of 500000 lamports.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 12516,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the congested network conditions with a slot time of 486ms and a failure rate of 100%, the p75 percentile of 16316 lamports was considered, but due to the current Jito leader window and the high failure rate, the estimated tip of 12516 lamports (approx p75) was chosen. This amount is derived from a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x. The high failure rate and congested network suggest a low landing probability, but submitting now with this tip amount is the best course of action. The selected tip amount is above the minimum threshold of 1000 lamports and below the maximum threshold of 500000 lamports.",
+      "promptHash": "c78548d8f220842bee9b3e403d820dc0d8f8235c6a7c46f44571e60b084d4236",
+      "llmLatencyMs": 763,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the congested network conditions with a slot time of 486ms and a failure rate of 100%, the p75 percentile of 16316 lamports was considered, but due to the current Jito leader window and the high failure rate, the estimated tip of 12516 lamports (approx p75) was chosen. This amount is derived from a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x. The high failure rate and congested network suggest a low landing probability, but submitting now with this tip amount is the best course of action. The selected tip amount is above the minimum threshold of 1000 lamports and below the maximum threshold of 500000 lamports.",
+        "confidenceScore": 0.6,
+        "tipLamports": 12516,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "c78548d8f220842bee9b3e403d820dc0d8f8235c6a7c46f44571e60b084d4236",
+        "llmLatencyMs": 763,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:34:05.957Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:34:05.022Z",
+      "currentSlot": 427769804,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "XAqHfPFsqTfAJHBRHAcEECkMSykXjkUj2Rta16Qshrk",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427769802,
+      "averageSlotTimeMs": 485.7894736842105,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:34:05.022Z",
+        "currentSlot": 427769804,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "XAqHfPFsqTfAJHBRHAcEECkMSykXjkUj2Rta16Qshrk",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:34:05.192Z",
+        "blockProductionRateMs": 538.8888888888889,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.34722222222222227,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.34722222222222227
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:34:05.192Z",
+      "blockProductionRateMs": 538.8888888888889,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.34722222222222227,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.34722222222222227
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T17:34:38.564Z",
+      "blockProductionRateMs": 429,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.0725,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.0725
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -109.88888888888891,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.27472222222222226,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "5SYu5R4yyEMp3oyHAPxUjyX4YbXogDcnEVCUU3wd3EqX",
+    "slotAtSubmission": 427769802,
+    "explorerUrl": "https://explorer.solana.com/tx/5opA3NUAtk7MQ2siBtW3KQogWXVR7e9Y8KBshvqKMnQNBrS53Z2bx3neJttPr3SsD1U1KPgad87th61igHnoXACG?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/3615e0d65edb804add65c8e5ff0e978a018299c01fa29b8ecfde12428e275581",
+    "bundleTxSignature": "3yBHad4dKRhHYzGinLURtCat2GcZVaWnML8nQ5HE5r2sYWvnrC7kDmkJRSrfTQZBDqBFFtgmAyrbx6QzyCtMyWL8",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "10C7920CAC62",
+    "bundleId": "c6efbeb7c976b46e011875e6f578b475c6ae3a125b8c8755524dbca764e73b03",
+    "signature": "2XR9dFs7z8tC7ip7tuYJvYhGH6R6aMiygFcQRjtVPNGiSqucYvpEZTuiccsmKPc6dw1YpSY68rhKqL9mszgxriCC",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 9522,
+    "tipAccount": "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+    "submittedAt": 1781976882555,
+    "submittedAtIso": "2026-06-20T17:34:42.555Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427769895,
+        "timestamp": 1781976882555,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781976915082,
+        "latencyFromPrevMs": 32527,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the current network conditions with a slot time of 435ms and a failure rate of 100%, the p95 percentile of 53401 lamports is too high, so we use the estimated tip of 9522 lamports, which is derived from the congestion multiplier of 2.500x and the leader pricing multiplier of 1.250x. This amount is chosen to balance the need for a high tip to ensure bundle landing with the risk of overpaying. The selected percentile is effectively p95, but adjusted for the current network conditions. The expected landing probability is low due to the high failure rate, but submitting now with a high tip is the best option.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 9522,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the current network conditions with a slot time of 435ms and a failure rate of 100%, the p95 percentile of 53401 lamports is too high, so we use the estimated tip of 9522 lamports, which is derived from the congestion multiplier of 2.500x and the leader pricing multiplier of 1.250x. This amount is chosen to balance the need for a high tip to ensure bundle landing with the risk of overpaying. The selected percentile is effectively p95, but adjusted for the current network conditions. The expected landing probability is low due to the high failure rate, but submitting now with a high tip is the best option.",
+      "promptHash": "cfa24c575ddb58678f8a4674b716a76d7e6839306fcf694f61702242ae23cb24",
+      "llmLatencyMs": 736,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the current network conditions with a slot time of 435ms and a failure rate of 100%, the p95 percentile of 53401 lamports is too high, so we use the estimated tip of 9522 lamports, which is derived from the congestion multiplier of 2.500x and the leader pricing multiplier of 1.250x. This amount is chosen to balance the need for a high tip to ensure bundle landing with the risk of overpaying. The selected percentile is effectively p95, but adjusted for the current network conditions. The expected landing probability is low due to the high failure rate, but submitting now with a high tip is the best option.",
+        "confidenceScore": 0.6,
+        "tipLamports": 9522,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "cfa24c575ddb58678f8a4674b716a76d7e6839306fcf694f61702242ae23cb24",
+        "llmLatencyMs": 736,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:34:42.496Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:34:41.577Z",
+      "currentSlot": 427769896,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "5ejbTALcBsKQ7Cj1iSuu2mY5jqbYHqh9gF5ERXLiYj1z",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427769895,
+      "averageSlotTimeMs": 434.7894736842105,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:34:41.577Z",
+        "currentSlot": 427769896,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "5ejbTALcBsKQ7Cj1iSuu2mY5jqbYHqh9gF5ERXLiYj1z",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:34:41.759Z",
+        "blockProductionRateMs": 438.22222222222223,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.09555555555555557,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.09555555555555557
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:34:41.759Z",
+      "blockProductionRateMs": 438.22222222222223,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.09555555555555557,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.09555555555555557
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T17:35:15.120Z",
+      "blockProductionRateMs": 484.1111111111111,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.2102777777777777,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.2102777777777777
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 45.88888888888886,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.11472222222222213,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "7viP6uaa14wio2K8HA99MEVfMtHzZhSaLHQWPswVTJVj",
+    "slotAtSubmission": 427769895,
+    "explorerUrl": "https://explorer.solana.com/tx/2XR9dFs7z8tC7ip7tuYJvYhGH6R6aMiygFcQRjtVPNGiSqucYvpEZTuiccsmKPc6dw1YpSY68rhKqL9mszgxriCC?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/c6efbeb7c976b46e011875e6f578b475c6ae3a125b8c8755524dbca764e73b03",
+    "bundleTxSignature": "4sSofCDkanQpup5FLMmvLMxtKYRmbJXwM9ReThbo3TjD4nevxuEX9raDhMqvewah7CpoxjVJvHvDTMZ8x5pWmgP1",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "30047A946503",
+    "bundleId": "611370e978c76a26decc89d863a00fc71599b3973ef695f499f6400761c0dc35",
+    "signature": "4iaWu4gFB6uoHswcqwVJsHwPFDd8z9tU8vN9h9qW2xekb4FzdUns26BKCX4HDujTnyP6b3fC2AKdc2koZMXni3bL",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 3352,
+    "tipAccount": "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "submittedAt": 1781977497621,
+    "submittedAtIso": "2026-06-20T17:44:57.621Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427771453,
+        "timestamp": 1781977497621,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781977560044,
+        "latencyFromPrevMs": 62423,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the normal network conditions with a slot time of 432ms and a failure rate of 0%, the p50 baseline of 2546 lamports is adjusted by a congestion multiplier of 1.053x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 3352 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the current network conditions. The selected tip is expected to provide a high landing probability due to the current low failure rate and normal network load. The leader urgency multiplier is applied since we are currently inside the Jito leader window.",
+    "agentConfidence": 0.9,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 3352,
+      "landingProbabilityEstimate": 0.95,
+      "reasoning": "Given the normal network conditions with a slot time of 432ms and a failure rate of 0%, the p50 baseline of 2546 lamports is adjusted by a congestion multiplier of 1.053x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 3352 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the current network conditions. The selected tip is expected to provide a high landing probability due to the current low failure rate and normal network load. The leader urgency multiplier is applied since we are currently inside the Jito leader window.",
+      "promptHash": "c3249b9633bbd45840649ab069dcd06f8a7420f068b17531ac1d8d8b1adf48e5",
+      "llmLatencyMs": 788,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the normal network conditions with a slot time of 432ms and a failure rate of 0%, the p50 baseline of 2546 lamports is adjusted by a congestion multiplier of 1.053x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 3352 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to balance the need for a high landing probability with the current network conditions. The selected tip is expected to provide a high landing probability due to the current low failure rate and normal network load. The leader urgency multiplier is applied since we are currently inside the Jito leader window.",
+        "confidenceScore": 0.9,
+        "tipLamports": 3352,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 1.053,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.95,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "c3249b9633bbd45840649ab069dcd06f8a7420f068b17531ac1d8d8b1adf48e5",
+        "llmLatencyMs": 788,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:44:57.577Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:44:56.603Z",
+      "currentSlot": 427771454,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "EvnRmnMrd69kFdbLMxWkTn1icZ7DCceRhvmb2SJXqDo4",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427771453,
+      "averageSlotTimeMs": 432,
+      "recentFailureRate": 0,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:44:56.603Z",
+        "currentSlot": 427771454,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "EvnRmnMrd69kFdbLMxWkTn1icZ7DCceRhvmb2SJXqDo4",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:44:56.787Z",
+        "blockProductionRateMs": 432,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0,
+        "recentFailureRate": 0,
+        "bundleLandingRate": 1,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:44:56.787Z",
+      "blockProductionRateMs": 432,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T17:46:00.082Z",
+      "blockProductionRateMs": 429.44444444444446,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.07361111111111114,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.07361111111111114
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -2.555555555555543,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.07361111111111114,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "7D3QqC9BPpF2HDtMBTybiPMRkjc4fZfSZjd4ifrxtdRv",
+    "slotAtSubmission": 427771453,
+    "explorerUrl": "https://explorer.solana.com/tx/4iaWu4gFB6uoHswcqwVJsHwPFDd8z9tU8vN9h9qW2xekb4FzdUns26BKCX4HDujTnyP6b3fC2AKdc2koZMXni3bL?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/611370e978c76a26decc89d863a00fc71599b3973ef695f499f6400761c0dc35",
+    "bundleTxSignature": "4NvrSH6ykn5QHtUtpjeUCaw7yXHVsFutSVGhKMvv8GhHgNbHerd9dYDRUmGNwFVFqcKt8JNtZBDPkEzUMNrKQQmv",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "C1B1EEBA3DC8",
+    "bundleId": "99e048e3f061151cdce9c6de596a9c1c8df81e025e867b3dd88e45ec494cb1ef",
+    "signature": "3fXTfP1ZKyZLUYhWxfRjt9fcu42HhZUdsbShrpPEmP2v5dZcvVG4fswfgdCB8zLEfaXwvJxiLARttFeZB4iujEzZ",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 5628,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1781978363855,
+    "submittedAtIso": "2026-06-20T17:59:23.855Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427773639,
+        "timestamp": 1781978363855,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781978426488,
+        "latencyFromPrevMs": 62633,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the normal network conditions with a slot time of 433ms and a failure rate of 0%, the baseline estimate suggests using p50 as the baseline. However, since we are currently inside the Jito leader window, a leader pricing multiplier of 1.25x is applied to the estimated tip. The congestion multiplier is 1.054x, and the leader urgency multiplier is 1.25x. The selected tip of 5628 lamports is derived from applying these multipliers to the p50 baseline, resulting in a value slightly above the pre-computed baseline estimate of 4484 lamports. This amount is chosen to balance the need for a high landing probability with the current network conditions.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 5628,
+      "landingProbabilityEstimate": 0.9,
+      "reasoning": "Given the normal network conditions with a slot time of 433ms and a failure rate of 0%, the baseline estimate suggests using p50 as the baseline. However, since we are currently inside the Jito leader window, a leader pricing multiplier of 1.25x is applied to the estimated tip. The congestion multiplier is 1.054x, and the leader urgency multiplier is 1.25x. The selected tip of 5628 lamports is derived from applying these multipliers to the p50 baseline, resulting in a value slightly above the pre-computed baseline estimate of 4484 lamports. This amount is chosen to balance the need for a high landing probability with the current network conditions.",
+      "promptHash": "4b631ab3c72e957a8602b9730f74686f1f574e9d13ef8156f598cc64d3bc65ef",
+      "llmLatencyMs": 728,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the normal network conditions with a slot time of 433ms and a failure rate of 0%, the baseline estimate suggests using p50 as the baseline. However, since we are currently inside the Jito leader window, a leader pricing multiplier of 1.25x is applied to the estimated tip. The congestion multiplier is 1.054x, and the leader urgency multiplier is 1.25x. The selected tip of 5628 lamports is derived from applying these multipliers to the p50 baseline, resulting in a value slightly above the pre-computed baseline estimate of 4484 lamports. This amount is chosen to balance the need for a high landing probability with the current network conditions.",
+        "confidenceScore": 0.8,
+        "tipLamports": 5628,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 1.054,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.9,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "4b631ab3c72e957a8602b9730f74686f1f574e9d13ef8156f598cc64d3bc65ef",
+        "llmLatencyMs": 728,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T17:59:23.772Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T17:59:22.844Z",
+      "currentSlot": 427773640,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "HnfPZDrbJFooiP9vvgWrjx3baXVNAZCgisT58gyMCgML",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427773639,
+      "averageSlotTimeMs": 432.5,
+      "recentFailureRate": 0,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T17:59:22.844Z",
+        "currentSlot": 427773640,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "HnfPZDrbJFooiP9vvgWrjx3baXVNAZCgisT58gyMCgML",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T17:59:23.041Z",
+        "blockProductionRateMs": 431,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0,
+        "recentFailureRate": 0,
+        "bundleLandingRate": 1,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T17:59:23.041Z",
+      "blockProductionRateMs": 431,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T18:00:26.555Z",
+      "blockProductionRateMs": 434.6666666666667,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08666666666666671,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08666666666666671
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 3.6666666666666856,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.08666666666666671,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "AffdbPfGHxFE4eApfnkPK8o35nFzRaWqDFmN2q6xi2F2",
+    "slotAtSubmission": 427773639,
+    "explorerUrl": "https://explorer.solana.com/tx/3fXTfP1ZKyZLUYhWxfRjt9fcu42HhZUdsbShrpPEmP2v5dZcvVG4fswfgdCB8zLEfaXwvJxiLARttFeZB4iujEzZ?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/99e048e3f061151cdce9c6de596a9c1c8df81e025e867b3dd88e45ec494cb1ef",
+    "bundleTxSignature": "26cCewYnuy3VRpHtchrkL4VVYG8Ndf5BbGXY34AQXVq8fF9Hmzhb9q1YAnXLogKsHxVBUoT2w84BzCa95xQKY38S",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "5615923EF7A3",
+    "bundleId": "f2f5c4d8c1684cf81ecebb416922fb9d313a21011debea2ace579094e887cc8b",
+    "signature": "2HEPFXS4rSpgia185UKusJosGk69oEsH2JdFASjSNQsYmaUKdHZg5ReSfYaG8t2QuJFxxYGvExm7h7QKtcVs5Arf",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 3353,
+    "tipAccount": "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+    "submittedAt": 1781979159430,
+    "submittedAtIso": "2026-06-20T18:12:39.430Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427775648,
+        "timestamp": 1781979159430,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781979222047,
+        "latencyFromPrevMs": 62617,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the normal network conditions with a slot time of 431ms and a failure rate of 0%, the baseline estimate is around p75. However, since we are currently inside the Jito leader window, an urgency multiplier of 1.25x is applied to the estimated tip. The congestion multiplier is 1.052x, and the leader pricing multiplier is 1.100x. The selected tip of 3353 lamports is derived from applying these multipliers to the p50 baseline of 2323 lamports, resulting in a tip that balances cost and landing probability.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 3353,
+      "landingProbabilityEstimate": 0.9,
+      "reasoning": "Given the normal network conditions with a slot time of 431ms and a failure rate of 0%, the baseline estimate is around p75. However, since we are currently inside the Jito leader window, an urgency multiplier of 1.25x is applied to the estimated tip. The congestion multiplier is 1.052x, and the leader pricing multiplier is 1.100x. The selected tip of 3353 lamports is derived from applying these multipliers to the p50 baseline of 2323 lamports, resulting in a tip that balances cost and landing probability.",
+      "promptHash": "16841031c43a6b659a11d60ff8d2a421b7d5d5da98cec50166cfffb7efd69a35",
+      "llmLatencyMs": 765,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the normal network conditions with a slot time of 431ms and a failure rate of 0%, the baseline estimate is around p75. However, since we are currently inside the Jito leader window, an urgency multiplier of 1.25x is applied to the estimated tip. The congestion multiplier is 1.052x, and the leader pricing multiplier is 1.100x. The selected tip of 3353 lamports is derived from applying these multipliers to the p50 baseline of 2323 lamports, resulting in a tip that balances cost and landing probability.",
+        "confidenceScore": 0.8,
+        "tipLamports": 3353,
+        "selectedPercentile": 50,
+        "congestionMultiplier": 1.052,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.9,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "16841031c43a6b659a11d60ff8d2a421b7d5d5da98cec50166cfffb7efd69a35",
+        "llmLatencyMs": 765,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T18:12:39.377Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T18:12:38.398Z",
+      "currentSlot": 427775649,
+      "slotsUntilJitoLeader": 3,
+      "nextLeaderIdentity": "shftkxnsXmqAkmLgz9Mn7bNB5Fr6mKgFc58kFHfVikj",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427775648,
+      "averageSlotTimeMs": 431,
+      "recentFailureRate": 0,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T18:12:38.398Z",
+        "currentSlot": 427775649,
+        "slotsUntilJitoLeader": 3,
+        "nextLeaderIdentity": "shftkxnsXmqAkmLgz9Mn7bNB5Fr6mKgFc58kFHfVikj",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T18:12:38.607Z",
+        "blockProductionRateMs": 429,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0,
+        "recentFailureRate": 0,
+        "bundleLandingRate": 1,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T18:12:38.607Z",
+      "blockProductionRateMs": 429,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T18:13:42.077Z",
+      "blockProductionRateMs": 432.22222222222223,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08055555555555557,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08055555555555557
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 3.2222222222222285,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.08055555555555557,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "22xa3KasihV5E798seEAn8bpHMuNMLY1uSkBWL4Wm27U",
+    "slotAtSubmission": 427775648,
+    "explorerUrl": "https://explorer.solana.com/tx/2HEPFXS4rSpgia185UKusJosGk69oEsH2JdFASjSNQsYmaUKdHZg5ReSfYaG8t2QuJFxxYGvExm7h7QKtcVs5Arf?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/f2f5c4d8c1684cf81ecebb416922fb9d313a21011debea2ace579094e887cc8b",
+    "bundleTxSignature": "43NV7jW76s5urjGitbK8jG2zfmwQKcsCiK2m3GdPa3GiAynxCd3tCH96QdVer3bhckUBk82cyaDPKkYNU6bgboDQ",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "444963A85C0F",
+    "bundleId": "d6d1d0a7de2d17a7a69c9f1259e3bdde2561ac864b927d962e953593a1118720",
+    "signature": "5Hqt7MUPuEfUZuTJKDuPQ4vunHyvC1FJ8izWTrYYmq9G8yMmqg5w8nHSAoRWHG3nbftsrD7j3ViWD4div4xEfpEZ",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 3966,
+    "tipAccount": "ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49",
+    "submittedAt": 1781979226086,
+    "submittedAtIso": "2026-06-20T18:13:46.086Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427775816,
+        "timestamp": 1781979226086,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781979288856,
+        "latencyFromPrevMs": 62770,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the current network conditions with a slot time of 434ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a congested network. The selected percentile is p75, with a value of 5000 lamports, but the estimated tip is 3966 lamports. This amount was chosen to balance the need for a high enough tip to increase the landing probability in a congested network, while also considering the leader pricing multiplier of 1.100x. The expected landing probability is low due to the high failure rate, but submitting now with a higher tip increases the chances of success.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 3966,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the current network conditions with a slot time of 434ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a congested network. The selected percentile is p75, with a value of 5000 lamports, but the estimated tip is 3966 lamports. This amount was chosen to balance the need for a high enough tip to increase the landing probability in a congested network, while also considering the leader pricing multiplier of 1.100x. The expected landing probability is low due to the high failure rate, but submitting now with a higher tip increases the chances of success.",
+      "promptHash": "e02b86f19e75bac2c2f290b4166effdc3e267d954579e67f0e51aca39c16dccc",
+      "llmLatencyMs": 713,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the current network conditions with a slot time of 434ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a congested network. The selected percentile is p75, with a value of 5000 lamports, but the estimated tip is 3966 lamports. This amount was chosen to balance the need for a high enough tip to increase the landing probability in a congested network, while also considering the leader pricing multiplier of 1.100x. The expected landing probability is low due to the high failure rate, but submitting now with a higher tip increases the chances of success.",
+        "confidenceScore": 0.6,
+        "tipLamports": 3966,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.1,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "e02b86f19e75bac2c2f290b4166effdc3e267d954579e67f0e51aca39c16dccc",
+        "llmLatencyMs": 713,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T18:13:45.999Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T18:13:45.096Z",
+      "currentSlot": 427775818,
+      "slotsUntilJitoLeader": 2,
+      "nextLeaderIdentity": "EkvdKhULbMFqjKBKotAzGi3kwMvMpYNDKJXXQQmi6C1f",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427775816,
+      "averageSlotTimeMs": 433.5263157894737,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T18:13:45.096Z",
+        "currentSlot": 427775818,
+        "slotsUntilJitoLeader": 2,
+        "nextLeaderIdentity": "EkvdKhULbMFqjKBKotAzGi3kwMvMpYNDKJXXQQmi6C1f",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T18:13:45.284Z",
+        "blockProductionRateMs": 433.44444444444446,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.08361111111111114,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.08361111111111114
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T18:13:45.284Z",
+      "blockProductionRateMs": 433.44444444444446,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08361111111111114,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08361111111111114
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T18:14:48.885Z",
+      "blockProductionRateMs": 424.44444444444446,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.061111111111111144,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.061111111111111144
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -9,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.022499999999999992,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "DCpa9ckHAfGE4EZ31YWB4ixQLmvWNCUUjvKTN7hKbfRU",
+    "slotAtSubmission": 427775816,
+    "explorerUrl": "https://explorer.solana.com/tx/5Hqt7MUPuEfUZuTJKDuPQ4vunHyvC1FJ8izWTrYYmq9G8yMmqg5w8nHSAoRWHG3nbftsrD7j3ViWD4div4xEfpEZ?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/d6d1d0a7de2d17a7a69c9f1259e3bdde2561ac864b927d962e953593a1118720",
+    "bundleTxSignature": "2NE2tWPCM2ecMnzaykSYf4spjdswaBKwaRxjL9zQFXzgEAEUT1PBy8ZdbdvHcMh9J5n2aKf5B3KV45PHhybxJ9M5",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "30973308EE77",
+    "bundleId": "d817428900ab8b2fc14ad02a1044fcbbee32d29a5f7c51259464f9b293baba3d",
+    "signature": "5TVpCKYaMQ36Hau42SLbZo1oWasu5tchCLSwDNtCUcDHMjoqfnMZbfsK4GJPDwearCGkxKfD7kMxMCFd3wEFZ7HP",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 6653,
+    "tipAccount": "HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe",
+    "submittedAt": 1781979292928,
+    "submittedAtIso": "2026-06-20T18:14:52.928Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427775982,
+        "timestamp": 1781979292928,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781979355663,
+        "latencyFromPrevMs": 62735,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the congested network conditions with a slot time of 426ms and a failure rate of 100%, the p75 percentile of 6910 lamports was considered, but the pre-computed baseline estimate of 6653 lamports was chosen due to the applied congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high enough tip to increase the landing probability while avoiding excessive costs. The current network conditions and the fact that we are inside the Jito leader window justify this choice. The expected landing probability is low due to the high failure rate, but submitting now with this tip amount is the best course of action.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 6653,
+      "landingProbabilityEstimate": 0.1,
+      "reasoning": "Given the congested network conditions with a slot time of 426ms and a failure rate of 100%, the p75 percentile of 6910 lamports was considered, but the pre-computed baseline estimate of 6653 lamports was chosen due to the applied congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high enough tip to increase the landing probability while avoiding excessive costs. The current network conditions and the fact that we are inside the Jito leader window justify this choice. The expected landing probability is low due to the high failure rate, but submitting now with this tip amount is the best course of action.",
+      "promptHash": "f3388e8ea67c1bec2842577574d2f5aa82d8dcca1f7ea552c689a693026b57a1",
+      "llmLatencyMs": 757,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the congested network conditions with a slot time of 426ms and a failure rate of 100%, the p75 percentile of 6910 lamports was considered, but the pre-computed baseline estimate of 6653 lamports was chosen due to the applied congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high enough tip to increase the landing probability while avoiding excessive costs. The current network conditions and the fact that we are inside the Jito leader window justify this choice. The expected landing probability is low due to the high failure rate, but submitting now with this tip amount is the best course of action.",
+        "confidenceScore": 0.6,
+        "tipLamports": 6653,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.1,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "f3388e8ea67c1bec2842577574d2f5aa82d8dcca1f7ea552c689a693026b57a1",
+        "llmLatencyMs": 757,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T18:14:52.838Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T18:14:51.898Z",
+      "currentSlot": 427775984,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "G2TBEh2ahNGS9tGnuBNyDduNjyfUtGhMcssgRb8b6KfH",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427775982,
+      "averageSlotTimeMs": 426.2105263157895,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T18:14:51.898Z",
+        "currentSlot": 427775984,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "G2TBEh2ahNGS9tGnuBNyDduNjyfUtGhMcssgRb8b6KfH",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T18:14:52.080Z",
+        "blockProductionRateMs": 426.55555555555554,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.06638888888888886,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.06638888888888886
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T18:14:52.080Z",
+      "blockProductionRateMs": 426.55555555555554,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.06638888888888886,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.06638888888888886
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T18:15:55.700Z",
+      "blockProductionRateMs": 425,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.0625,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.0625
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -1.555555555555543,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.0038888888888888584,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "7VXfrXu3noYuMqNy6Jn4ayv2UQBwUwd1dp7S7dAFM585",
+    "slotAtSubmission": 427775982,
+    "explorerUrl": "https://explorer.solana.com/tx/5TVpCKYaMQ36Hau42SLbZo1oWasu5tchCLSwDNtCUcDHMjoqfnMZbfsK4GJPDwearCGkxKfD7kMxMCFd3wEFZ7HP?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/d817428900ab8b2fc14ad02a1044fcbbee32d29a5f7c51259464f9b293baba3d",
+    "bundleTxSignature": "fj1QxjHZdzXufXfHKQdUvA4rrxmtLKduqimjgMaYjV4XEdpNEG83Jbs3tkq7w2FVmjpeQSRvtcg9ETQDLQvmwcv",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "FF15FEFEC2C9",
+    "bundleId": "89379d492c61fa2befc703daf56cc28b96d80227f3944d3ade354e6dc7ea7942",
+    "signature": "295DoXnb6id6GMDcgsyNbwcUxDk2abTs8rTvDcdiZfezS4tAJuPbk84U1ZXuXverLVZEzxiNVXccGJK2r5gdy5Gs",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 10378,
+    "tipAccount": "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+    "submittedAt": 1781979359717,
+    "submittedAtIso": "2026-06-20T18:15:59.717Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427776151,
+        "timestamp": 1781979359717,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781979422483,
+        "latencyFromPrevMs": 62766,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the current network conditions with a slot time of 427ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a highly congested network. The selected tip of 10378 lamports is based on the estimated tip, which is approximately at the p95 percentile. This amount was chosen to increase the likelihood of the bundle being processed and confirmed despite the high failure rate. The leader urgency multiplier of 1.250x also supports this decision, as the bundle is currently inside the Jito leader window.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 10378,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the current network conditions with a slot time of 427ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a highly congested network. The selected tip of 10378 lamports is based on the estimated tip, which is approximately at the p95 percentile. This amount was chosen to increase the likelihood of the bundle being processed and confirmed despite the high failure rate. The leader urgency multiplier of 1.250x also supports this decision, as the bundle is currently inside the Jito leader window.",
+      "promptHash": "70bb66934d72450ed175c921ab5a558eb15749d7dc2521505ad8ffe3e359ee73",
+      "llmLatencyMs": 645,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the current network conditions with a slot time of 427ms and a failure rate of 100%, the congestion multiplier is 2.500x, indicating a highly congested network. The selected tip of 10378 lamports is based on the estimated tip, which is approximately at the p95 percentile. This amount was chosen to increase the likelihood of the bundle being processed and confirmed despite the high failure rate. The leader urgency multiplier of 1.250x also supports this decision, as the bundle is currently inside the Jito leader window.",
+        "confidenceScore": 0.8,
+        "tipLamports": 10378,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "70bb66934d72450ed175c921ab5a558eb15749d7dc2521505ad8ffe3e359ee73",
+        "llmLatencyMs": 645,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T18:15:59.643Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T18:15:58.714Z",
+      "currentSlot": 427776152,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "EkvdKhULbMFqjKBKotAzGi3kwMvMpYNDKJXXQQmi6C1f",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427776151,
+      "averageSlotTimeMs": 427.10526315789474,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T18:15:58.714Z",
+        "currentSlot": 427776152,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "EkvdKhULbMFqjKBKotAzGi3kwMvMpYNDKJXXQQmi6C1f",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T18:15:58.995Z",
+        "blockProductionRateMs": 428.44444444444446,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.07111111111111114,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.07111111111111114
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T18:15:58.995Z",
+      "blockProductionRateMs": 428.44444444444446,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.07111111111111114,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.07111111111111114
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T18:17:02.512Z",
+      "blockProductionRateMs": 427.22222222222223,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.06805555555555558,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.06805555555555558
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -1.2222222222222285,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.0030555555555555614,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "8UjiZkUfKT1XkXkzm7jynCZrEibfn2smqyvfRxhYbpFY",
+    "slotAtSubmission": 427776151,
+    "explorerUrl": "https://explorer.solana.com/tx/295DoXnb6id6GMDcgsyNbwcUxDk2abTs8rTvDcdiZfezS4tAJuPbk84U1ZXuXverLVZEzxiNVXccGJK2r5gdy5Gs?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/89379d492c61fa2befc703daf56cc28b96d80227f3944d3ade354e6dc7ea7942",
+    "bundleTxSignature": "2JJALY1wV7MAwBq7isE96GKmoL5ZPzGzuRrrVqTWXqMFu3QhLpHcKtKTAawmVonmBwxXM71cQQFk5G7rBgbgKvs1",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "42AC59D78BB1",
+    "bundleId": "518cf92df17c0f752768947afff65de6b23fec7b08ad53090129bac444d5d7a5",
+    "signature": "25cHuuar5GV1DLfF5pY1fzXHpaWZexvzXSDvemTB5BbadudKTEZrDQoMfjUTyAU8a3eRSPNNXduCxy6oQSG7WUYn",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 3372,
+    "tipAccount": "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+    "submittedAt": 1781979426587,
+    "submittedAtIso": "2026-06-20T18:17:06.587Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427776320,
+        "timestamp": 1781979426587,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1781979489299,
+        "latencyFromPrevMs": 62712,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the current network conditions with a slot time of 430ms and a failure rate of 100%, the p95 percentile of 100000 lamports was considered but the estimated tip of 3372 lamports was chosen due to the applied congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high tip to ensure bundle confirmation in congested conditions with the risk of overpaying. The selected tip is expected to provide a reasonable landing probability despite the high failure rate. The congestion multiplier and leader urgency multiplier were applied to determine the optimal tip.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 3372,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the current network conditions with a slot time of 430ms and a failure rate of 100%, the p95 percentile of 100000 lamports was considered but the estimated tip of 3372 lamports was chosen due to the applied congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high tip to ensure bundle confirmation in congested conditions with the risk of overpaying. The selected tip is expected to provide a reasonable landing probability despite the high failure rate. The congestion multiplier and leader urgency multiplier were applied to determine the optimal tip.",
+      "promptHash": "dc8bc7b3d52be1cc50d029e22495e7c1db58713244d82d028d3d0bdf43ccb858",
+      "llmLatencyMs": 728,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the current network conditions with a slot time of 430ms and a failure rate of 100%, the p95 percentile of 100000 lamports was considered but the estimated tip of 3372 lamports was chosen due to the applied congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high tip to ensure bundle confirmation in congested conditions with the risk of overpaying. The selected tip is expected to provide a reasonable landing probability despite the high failure rate. The congestion multiplier and leader urgency multiplier were applied to determine the optimal tip.",
+        "confidenceScore": 0.6,
+        "tipLamports": 3372,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "dc8bc7b3d52be1cc50d029e22495e7c1db58713244d82d028d3d0bdf43ccb858",
+        "llmLatencyMs": 728,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-20T18:17:06.496Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-20T18:17:05.526Z",
+      "currentSlot": 427776322,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427776320,
+      "averageSlotTimeMs": 429.6842105263158,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-20T18:17:05.526Z",
+        "currentSlot": 427776322,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-20T18:17:05.768Z",
+        "blockProductionRateMs": 429.1111111111111,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.07277777777777772,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.07277777777777772
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-20T18:17:05.768Z",
+      "blockProductionRateMs": 429.1111111111111,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.07277777777777772,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.07277777777777772
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-20T18:18:09.340Z",
+      "blockProductionRateMs": 484.22222222222223,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.21055555555555558,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.21055555555555558
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 55.11111111111114,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.13777777777777786,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "AefYkfwT6qyp3yaviZHK17HizDPNYtLNhQ3fJJ3L5L2d",
+    "slotAtSubmission": 427776320,
+    "explorerUrl": "https://explorer.solana.com/tx/25cHuuar5GV1DLfF5pY1fzXHpaWZexvzXSDvemTB5BbadudKTEZrDQoMfjUTyAU8a3eRSPNNXduCxy6oQSG7WUYn?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/518cf92df17c0f752768947afff65de6b23fec7b08ad53090129bac444d5d7a5",
+    "bundleTxSignature": "3jRGp5HGnQbdzT68ofqzrmxP4yca2miNmkESgVTPTya2ESCSP5Sdrcf4H2oyw29fvTgYBGCd27ppYgm6Y28yCw1V",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "3478C49493BB",
+    "bundleId": "75d9a499adb3305a5b07bfaec0403e9a6191397db246919f647958d04f3760cf",
+    "signature": "3PKGBbLKHtJcRV8Kg6MrqyTKT92c3VqxHAWdVrPJBynR2ymZSDZwasxfvF7uTJ1xPjm8Du2VUvBsdoTJtVhJVzEf",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 1514,
+    "tipAccount": "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5",
+    "submittedAt": 1782022556287,
+    "submittedAtIso": "2026-06-21T06:15:56.287Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427884878,
+        "timestamp": 1782022556287,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782022588514,
+        "latencyFromPrevMs": 32227,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the normal network conditions with a slot time of 400ms and a failure rate of 0%, the p50 baseline of 1211 lamports is adjusted by a congestion multiplier of 1.000x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 1514 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to ensure a high landing probability while considering the current network conditions and the fact that we are currently inside the Jito leader window. The selected tip of 1514 lamports provides a balance between cost and the likelihood of successful bundle submission.",
+    "agentConfidence": 0.9,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 1514,
+      "landingProbabilityEstimate": 0.95,
+      "reasoning": "Given the normal network conditions with a slot time of 400ms and a failure rate of 0%, the p50 baseline of 1211 lamports is adjusted by a congestion multiplier of 1.000x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 1514 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to ensure a high landing probability while considering the current network conditions and the fact that we are currently inside the Jito leader window. The selected tip of 1514 lamports provides a balance between cost and the likelihood of successful bundle submission.",
+      "promptHash": "0de1875da8571c3ac2850b5a240deb40629f142c2d0f54e1e32e23abea2147c3",
+      "llmLatencyMs": 940,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the normal network conditions with a slot time of 400ms and a failure rate of 0%, the p50 baseline of 1211 lamports is adjusted by a congestion multiplier of 1.000x and a leader pricing multiplier of 1.250x, resulting in an estimated tip of 1514 lamports, which corresponds to approximately the p75 percentile. This amount is chosen to ensure a high landing probability while considering the current network conditions and the fact that we are currently inside the Jito leader window. The selected tip of 1514 lamports provides a balance between cost and the likelihood of successful bundle submission.",
+        "confidenceScore": 0.9,
+        "tipLamports": 1514,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 1,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.95,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "0de1875da8571c3ac2850b5a240deb40629f142c2d0f54e1e32e23abea2147c3",
+        "llmLatencyMs": 940,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:15:56.225Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:15:55.100Z",
+      "currentSlot": 427884880,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "ALPHA6rdHZkx1om79xp47vX1iZXcbM3qfEwLyttZ1T7R",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427884878,
+      "averageSlotTimeMs": 400,
+      "recentFailureRate": 0,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:15:55.100Z",
+        "currentSlot": 427884880,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "ALPHA6rdHZkx1om79xp47vX1iZXcbM3qfEwLyttZ1T7R",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:15:55.282Z",
+        "blockProductionRateMs": 445,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0,
+        "recentFailureRate": 0,
+        "bundleLandingRate": 1,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:15:55.282Z",
+      "blockProductionRateMs": 445,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:16:28.558Z",
+      "blockProductionRateMs": 436.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.09194444444444443,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.09194444444444443
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -8.222222222222229,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.09194444444444443,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "5Gnwv8LUFJpUPUyfGjUNHU8X3URpNudgmpF6vNerDBC3",
+    "slotAtSubmission": 427884878,
+    "explorerUrl": "https://explorer.solana.com/tx/3PKGBbLKHtJcRV8Kg6MrqyTKT92c3VqxHAWdVrPJBynR2ymZSDZwasxfvF7uTJ1xPjm8Du2VUvBsdoTJtVhJVzEf?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/75d9a499adb3305a5b07bfaec0403e9a6191397db246919f647958d04f3760cf",
+    "bundleTxSignature": "5ynZUqKZFHNL1fdAhhhXtj7PWXPbZybqyr6NzN98K3H63xjsjYb8BfFA3K9NfQdeoStfyDj4WS8HjaisuEpf6W1m",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "9391C6C28081",
+    "bundleId": "58fa89776c13b875cc38b87cc13cf9177b9ff83e3685f01090d7bcc9fae54c56",
+    "signature": "2gNhuAdnTxZyxD9Mtw49fWk3FoP5MYLSwodb7SifZsYm1hhuwChFDdnf9CWFphF26LfVBD7LACUEcEKA6GbNcMc5",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 5541,
+    "tipAccount": "3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT",
+    "submittedAt": 1782022592837,
+    "submittedAtIso": "2026-06-21T06:16:32.837Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427884972,
+        "timestamp": 1782022592837,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782022625076,
+        "latencyFromPrevMs": 32239,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the congested network conditions with a slot time of 436ms and a failure rate of 100%, the p75 percentile of 7789 lamports is the baseline. However, considering the current Jito leader window and the high failure rate, a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x are applied, resulting in an estimated tip of 5541 lamports. This amount is chosen to balance the need for a high tip to ensure landing probability with the risk of overpaying. The selected percentile is p75, which provides a reasonable balance between cost and landing probability.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 5541,
+      "landingProbabilityEstimate": 0.4,
+      "reasoning": "Given the congested network conditions with a slot time of 436ms and a failure rate of 100%, the p75 percentile of 7789 lamports is the baseline. However, considering the current Jito leader window and the high failure rate, a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x are applied, resulting in an estimated tip of 5541 lamports. This amount is chosen to balance the need for a high tip to ensure landing probability with the risk of overpaying. The selected percentile is p75, which provides a reasonable balance between cost and landing probability.",
+      "promptHash": "b145d35f87dc7d8d8ee5ad4748ed01f3639c3dd84e3a1a7fd1a27d9970ce3a69",
+      "llmLatencyMs": 725,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the congested network conditions with a slot time of 436ms and a failure rate of 100%, the p75 percentile of 7789 lamports is the baseline. However, considering the current Jito leader window and the high failure rate, a congestion multiplier of 2.500x and a leader pricing multiplier of 1.250x are applied, resulting in an estimated tip of 5541 lamports. This amount is chosen to balance the need for a high tip to ensure landing probability with the risk of overpaying. The selected percentile is p75, which provides a reasonable balance between cost and landing probability.",
+        "confidenceScore": 0.8,
+        "tipLamports": 5541,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.4,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "b145d35f87dc7d8d8ee5ad4748ed01f3639c3dd84e3a1a7fd1a27d9970ce3a69",
+        "llmLatencyMs": 725,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:16:32.779Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:16:31.576Z",
+      "currentSlot": 427884974,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "krakeNd6ednDPEXxHAmoBs1qKVM8kLg79PvWF2mhXV1",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427884972,
+      "averageSlotTimeMs": 435.7894736842105,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:16:31.576Z",
+        "currentSlot": 427884974,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "krakeNd6ednDPEXxHAmoBs1qKVM8kLg79PvWF2mhXV1",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:16:32.053Z",
+        "blockProductionRateMs": 439,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.0975,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.0975
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:16:32.053Z",
+      "blockProductionRateMs": 439,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.0975,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.0975
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:17:05.104Z",
+      "blockProductionRateMs": 428.8888888888889,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.07222222222222228,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.07222222222222228
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -10.111111111111086,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.02527777777777772,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "YXux99TSCg2F2nP7GHe46XGZXRbVmaX3zHCk42v5WBP",
+    "slotAtSubmission": 427884972,
+    "explorerUrl": "https://explorer.solana.com/tx/2gNhuAdnTxZyxD9Mtw49fWk3FoP5MYLSwodb7SifZsYm1hhuwChFDdnf9CWFphF26LfVBD7LACUEcEKA6GbNcMc5?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/58fa89776c13b875cc38b87cc13cf9177b9ff83e3685f01090d7bcc9fae54c56",
+    "bundleTxSignature": "47LdjSRwFQeH16ZQXnVGJW4iSbQRGQ4zbrRYcn4QJosCtfVQsHome1hPFpp7Hy4x5DDgy5xcQHMSwZ2E2wbhiVc9",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "9AF08CAA1AD1",
+    "bundleId": "d60079d9806116b71bd858213f305e921cb57feae97044d914dbeaa87fadff69",
+    "signature": "4dzHy7HGgEsk9TFWV35fD9ZH6j5jXzXUurpbdKk4ES8qtZt7Ky5kQZqtFRC3betUH8zdSFR1TRQhcW1uuvywh163",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 13571,
+    "tipAccount": "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh",
+    "submittedAt": 1782022628998,
+    "submittedAtIso": "2026-06-21T06:17:08.998Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427885065,
+        "timestamp": 1782022628998,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782022661618,
+        "latencyFromPrevMs": 32620,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the highly congested network conditions with a slot time of 428ms and a failure rate of 100%, the p95 percentile of 13571 lamports was chosen to ensure a high likelihood of bundle confirmation. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x further support this decision, as they indicate a high level of network congestion and the need for a higher tip to secure confirmation. The selected tip amount is expected to provide a high landing probability despite the challenging network conditions.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 13571,
+      "landingProbabilityEstimate": 0.7,
+      "reasoning": "Given the highly congested network conditions with a slot time of 428ms and a failure rate of 100%, the p95 percentile of 13571 lamports was chosen to ensure a high likelihood of bundle confirmation. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x further support this decision, as they indicate a high level of network congestion and the need for a higher tip to secure confirmation. The selected tip amount is expected to provide a high landing probability despite the challenging network conditions.",
+      "promptHash": "de82d049ede078c83af8c4ea1f57d3c4e98e912b192f11e9bfe91761ad237646",
+      "llmLatencyMs": 647,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the highly congested network conditions with a slot time of 428ms and a failure rate of 100%, the p95 percentile of 13571 lamports was chosen to ensure a high likelihood of bundle confirmation. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x further support this decision, as they indicate a high level of network congestion and the need for a higher tip to secure confirmation. The selected tip amount is expected to provide a high landing probability despite the challenging network conditions.",
+        "confidenceScore": 0.8,
+        "tipLamports": 13571,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.7,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "de82d049ede078c83af8c4ea1f57d3c4e98e912b192f11e9bfe91761ad237646",
+        "llmLatencyMs": 647,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:17:08.944Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:17:08.119Z",
+      "currentSlot": 427885066,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "BuoZ7q6faiJNTN24r7Kcj8dp96axs5XPEKXmWGsh2pDE",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427885065,
+      "averageSlotTimeMs": 427.57894736842104,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:17:08.119Z",
+        "currentSlot": 427885066,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "BuoZ7q6faiJNTN24r7Kcj8dp96axs5XPEKXmWGsh2pDE",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:17:08.297Z",
+        "blockProductionRateMs": 426.8888888888889,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.06722222222222228,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.06722222222222228
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:17:08.297Z",
+      "blockProductionRateMs": 426.8888888888889,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.06722222222222228,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.06722222222222228
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:17:41.646Z",
+      "blockProductionRateMs": 433.55555555555554,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08388888888888886,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08388888888888886
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 6.666666666666629,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.01666666666666658,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "BCbUeFnHJJeed3iGhxQRwuNNLgdsXCaW3VPb2jwM8sep",
+    "slotAtSubmission": 427885065,
+    "explorerUrl": "https://explorer.solana.com/tx/4dzHy7HGgEsk9TFWV35fD9ZH6j5jXzXUurpbdKk4ES8qtZt7Ky5kQZqtFRC3betUH8zdSFR1TRQhcW1uuvywh163?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/d60079d9806116b71bd858213f305e921cb57feae97044d914dbeaa87fadff69",
+    "bundleTxSignature": "4PMKqbeG1FJ7cUR6924sxE5Mi4JzjYo4vohKCcVcBcEpRS3GcEBanPYwXiVfCakBE5cdFZ32kr1DjB2GMzJrkkFn",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "EADB87E29915",
+    "bundleId": "315c8ae325cf3aeb425dc23a4df75d106caee0d7e3d5cb5249280b6b3d4a18a6",
+    "signature": "58Cd21km7nLmxMeBwz5R9TMPwWRMvqrpYmpQcuqFy8S2Hfg88FazP93rRRRMWmtu9tp7NyHiuhDe9du3NmeTWp3u",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 263749,
+    "tipAccount": "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "submittedAt": 1782022665801,
+    "submittedAtIso": "2026-06-21T06:17:45.801Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427885155,
+        "timestamp": 1782022665801,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782022698159,
+        "latencyFromPrevMs": 32358,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the highly congested network conditions with a slot time of 431ms and a failure rate of 100%, the p95 percentile of 263749 lamports was chosen to ensure a higher landing probability. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x also support this decision. The selected tip amount is above the p75 minimum, adhering to rule 5, and is within the allowed range. The high failure rate and congested network conditions necessitate a higher tip to increase the chances of a successful submission.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 263749,
+      "landingProbabilityEstimate": 0.4,
+      "reasoning": "Given the highly congested network conditions with a slot time of 431ms and a failure rate of 100%, the p95 percentile of 263749 lamports was chosen to ensure a higher landing probability. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x also support this decision. The selected tip amount is above the p75 minimum, adhering to rule 5, and is within the allowed range. The high failure rate and congested network conditions necessitate a higher tip to increase the chances of a successful submission.",
+      "promptHash": "ec16a3e24ae34b512eb97941c989d7499355539ab05fd9b0971c25b6128568f6",
+      "llmLatencyMs": 923,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the highly congested network conditions with a slot time of 431ms and a failure rate of 100%, the p95 percentile of 263749 lamports was chosen to ensure a higher landing probability. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x also support this decision. The selected tip amount is above the p75 minimum, adhering to rule 5, and is within the allowed range. The high failure rate and congested network conditions necessitate a higher tip to increase the chances of a successful submission.",
+        "confidenceScore": 0.8,
+        "tipLamports": 263749,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.4,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "ec16a3e24ae34b512eb97941c989d7499355539ab05fd9b0971c25b6128568f6",
+        "llmLatencyMs": 923,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:17:45.741Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:17:44.659Z",
+      "currentSlot": 427885155,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427885155,
+      "averageSlotTimeMs": 431.2105263157895,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:17:44.659Z",
+        "currentSlot": 427885155,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:17:44.817Z",
+        "blockProductionRateMs": 432.77777777777777,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.08194444444444443,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.08194444444444443
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:17:44.817Z",
+      "blockProductionRateMs": 432.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08194444444444443,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08194444444444443
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:18:18.197Z",
+      "blockProductionRateMs": 433.8888888888889,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08472222222222228,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08472222222222228
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 1.1111111111111427,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.002777777777777851,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "4c8b9YjUW5cBzLG87Uygob1zANALZxTV544gPvhgbKT3",
+    "slotAtSubmission": 427885155,
+    "explorerUrl": "https://explorer.solana.com/tx/58Cd21km7nLmxMeBwz5R9TMPwWRMvqrpYmpQcuqFy8S2Hfg88FazP93rRRRMWmtu9tp7NyHiuhDe9du3NmeTWp3u?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/315c8ae325cf3aeb425dc23a4df75d106caee0d7e3d5cb5249280b6b3d4a18a6",
+    "bundleTxSignature": "4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k",
+    "rawBundleResults": [
+      {
+        "bundleId": "315c8ae325cf3aeb425dc23a4df75d106caee0d7e3d5cb5249280b6b3d4a18a6",
+        "rejected": {
+          "simulationFailure": {
+            "txSignature": "4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k",
+            "msg": "A transaction in the bundle failed to execute: [signature=4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k, error=Error processing Instruction 2: Program failed to complete]"
+          }
+        }
+      }
+    ],
+    "raw": {
+      "bundleResults": [
+        {
+          "bundleId": "315c8ae325cf3aeb425dc23a4df75d106caee0d7e3d5cb5249280b6b3d4a18a6",
+          "rejected": {
+            "simulationFailure": {
+              "txSignature": "4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k",
+              "msg": "A transaction in the bundle failed to execute: [signature=4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k, error=Error processing Instruction 2: Program failed to complete]"
+            }
+          }
+        }
+      ],
+      "bundleResult": {
+        "bundleId": "315c8ae325cf3aeb425dc23a4df75d106caee0d7e3d5cb5249280b6b3d4a18a6",
+        "rejected": {
+          "simulationFailure": {
+            "txSignature": "4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k",
+            "msg": "A transaction in the bundle failed to execute: [signature=4gzumkZs1ySPY8uzp1ubm3PkdWArJRqt5Z14qUMhRXLEDnNFxbL1N7SPPPCF9oEDX7Yj951MJcDBQqFomLRC9R9k, error=Error processing Instruction 2: Program failed to complete]"
+          }
+        }
+      }
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "FFF8FDF9CA40",
+    "bundleId": "a479e6127b57dc8179f0976329786e6cb4ac64a350e617eb23ed826a9a352c9d",
+    "signature": "4G3KVn7a8Gn4duEFT6uH56L3jgeioZptTpSsDhURL2KBF5K1rezwrCpq8ahLPfnXnZKxoAPvhoA4oZj9fD4qg8zr",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 10975,
+    "tipAccount": "Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY",
+    "submittedAt": 1782022702368,
+    "submittedAtIso": "2026-06-21T06:18:22.368Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427885246,
+        "timestamp": 1782022702368,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782022734715,
+        "latencyFromPrevMs": 32347,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the congested network conditions with a slot time of 437ms and a failure rate of 100%, the p95 percentile of 74131 lamports was considered. However, due to the current slot time and failure rate, a congestion multiplier of 2.500x was applied to the baseline estimate, resulting in an estimated tip of 10975 lamports. This amount is chosen to balance the need for a high tip to ensure bundle landing with the risk of overpaying. The selected percentile is p95, and the leader urgency multiplier is 1.000x since we are currently inside the Jito leader window. The expected landing probability is low due to the high failure rate, but the chosen tip should maximize the chances of success.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 10975,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the congested network conditions with a slot time of 437ms and a failure rate of 100%, the p95 percentile of 74131 lamports was considered. However, due to the current slot time and failure rate, a congestion multiplier of 2.500x was applied to the baseline estimate, resulting in an estimated tip of 10975 lamports. This amount is chosen to balance the need for a high tip to ensure bundle landing with the risk of overpaying. The selected percentile is p95, and the leader urgency multiplier is 1.000x since we are currently inside the Jito leader window. The expected landing probability is low due to the high failure rate, but the chosen tip should maximize the chances of success.",
+      "promptHash": "1c9e055541171702950eb13479735d2d53681db7211cdc11a04c92a0deb09a5e",
+      "llmLatencyMs": 854,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the congested network conditions with a slot time of 437ms and a failure rate of 100%, the p95 percentile of 74131 lamports was considered. However, due to the current slot time and failure rate, a congestion multiplier of 2.500x was applied to the baseline estimate, resulting in an estimated tip of 10975 lamports. This amount is chosen to balance the need for a high tip to ensure bundle landing with the risk of overpaying. The selected percentile is p95, and the leader urgency multiplier is 1.000x since we are currently inside the Jito leader window. The expected landing probability is low due to the high failure rate, but the chosen tip should maximize the chances of success.",
+        "confidenceScore": 0.6,
+        "tipLamports": 10975,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "1c9e055541171702950eb13479735d2d53681db7211cdc11a04c92a0deb09a5e",
+        "llmLatencyMs": 854,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:18:22.303Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:18:21.214Z",
+      "currentSlot": 427885248,
+      "slotsUntilJitoLeader": 4,
+      "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427885246,
+      "averageSlotTimeMs": 437,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:18:21.214Z",
+        "currentSlot": 427885248,
+        "slotsUntilJitoLeader": 4,
+        "nextLeaderIdentity": "JupmVLmA8RoyTUbTMMuTtoPWHEiNQobxgTeGTrPNkzT",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:18:21.447Z",
+        "blockProductionRateMs": 439.77777777777777,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.09944444444444443,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.09944444444444443
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:18:21.447Z",
+      "blockProductionRateMs": 439.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.09944444444444443,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.09944444444444443
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:18:54.748Z",
+      "blockProductionRateMs": 434.1111111111111,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08527777777777772,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08527777777777772
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -5.666666666666686,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.014166666666666716,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "DHaGceWskS3a8XfzfXquvv43ob6CxQFmmTuDMHsPqXqa",
+    "slotAtSubmission": 427885246,
+    "explorerUrl": "https://explorer.solana.com/tx/4G3KVn7a8Gn4duEFT6uH56L3jgeioZptTpSsDhURL2KBF5K1rezwrCpq8ahLPfnXnZKxoAPvhoA4oZj9fD4qg8zr?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/a479e6127b57dc8179f0976329786e6cb4ac64a350e617eb23ed826a9a352c9d",
+    "bundleTxSignature": "542L71yYpu6DSC9S6WGrDJyzqWGdKd821jHvqeduBEwvbEAnWJd56Hu3pHxB6kMQuinSgEDbJKNvEDkgtmV9CjDr",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "65037847BFB6",
+    "bundleId": "c012f9ccebf9245c9e2844968adc02edc6ebe3dc55925ff9db011870a270e472",
+    "signature": "2U8hEFKoKVn5KgcnbSNxbcxGts4i4ZUH3PjZXs3WBJ1xGyyVVCmBsqAogmXnvEM9qex986jHfFYZE2H5BtVNUe19",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 1342,
+    "tipAccount": "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+    "submittedAt": 1782023410729,
+    "submittedAtIso": "2026-06-21T06:30:10.729Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427887032,
+        "timestamp": 1782023410729,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782023442852,
+        "latencyFromPrevMs": 32123,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the normal network conditions with a slot time of 439ms and a failure rate of 0%, the baseline estimate is p50. However, since we are currently inside the Jito leader window, a leader pricing multiplier of 1.250x is applied. The congestion multiplier is 1.065x, but given the normal network conditions, the p50 baseline is adjusted by the leader urgency multiplier to ensure a higher landing probability. The selected tip of 1342 lamports is slightly above the baseline p50 of 1071 lamports, adjusted for the leader window and normal network conditions, aiming for a high landing probability.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 1342,
+      "landingProbabilityEstimate": 0.9,
+      "reasoning": "Given the normal network conditions with a slot time of 439ms and a failure rate of 0%, the baseline estimate is p50. However, since we are currently inside the Jito leader window, a leader pricing multiplier of 1.250x is applied. The congestion multiplier is 1.065x, but given the normal network conditions, the p50 baseline is adjusted by the leader urgency multiplier to ensure a higher landing probability. The selected tip of 1342 lamports is slightly above the baseline p50 of 1071 lamports, adjusted for the leader window and normal network conditions, aiming for a high landing probability.",
+      "promptHash": "13374ce638a213279bb28e09d2270745e9600fae1b9290503f882f9a52748a66",
+      "llmLatencyMs": 978,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the normal network conditions with a slot time of 439ms and a failure rate of 0%, the baseline estimate is p50. However, since we are currently inside the Jito leader window, a leader pricing multiplier of 1.250x is applied. The congestion multiplier is 1.065x, but given the normal network conditions, the p50 baseline is adjusted by the leader urgency multiplier to ensure a higher landing probability. The selected tip of 1342 lamports is slightly above the baseline p50 of 1071 lamports, adjusted for the leader window and normal network conditions, aiming for a high landing probability.",
+        "confidenceScore": 0.8,
+        "tipLamports": 1342,
+        "selectedPercentile": 50,
+        "congestionMultiplier": 1.065,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.9,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "13374ce638a213279bb28e09d2270745e9600fae1b9290503f882f9a52748a66",
+        "llmLatencyMs": 978,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:30:10.667Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:30:09.454Z",
+      "currentSlot": 427887034,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "J6etcxDdYjPHrtyvDXrbCkx3q9W1UjMj1vy1jBFPJEbK",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427887032,
+      "averageSlotTimeMs": 439,
+      "recentFailureRate": 0,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:30:09.454Z",
+        "currentSlot": 427887034,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "J6etcxDdYjPHrtyvDXrbCkx3q9W1UjMj1vy1jBFPJEbK",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:30:09.686Z",
+        "blockProductionRateMs": 439,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0,
+        "recentFailureRate": 0,
+        "bundleLandingRate": 1,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:30:09.686Z",
+      "blockProductionRateMs": 439,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:30:42.891Z",
+      "blockProductionRateMs": 484.1111111111111,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.2102777777777777,
+      "recentFailureRate": 0,
+      "bundleLandingRate": 1,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.2102777777777777
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 45.111111111111086,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.2102777777777777,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "Aqo76ys4RAVWFXmh1aR9nwsNE1GuvVViRTzQn5P4HThW",
+    "slotAtSubmission": 427887032,
+    "explorerUrl": "https://explorer.solana.com/tx/2U8hEFKoKVn5KgcnbSNxbcxGts4i4ZUH3PjZXs3WBJ1xGyyVVCmBsqAogmXnvEM9qex986jHfFYZE2H5BtVNUe19?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/c012f9ccebf9245c9e2844968adc02edc6ebe3dc55925ff9db011870a270e472",
+    "bundleTxSignature": "3eChM4Y8G4NW1QQy8URUAte9pQtKbWPtGS7DPVvKw1f4eQnCTLN8NVJG1bkP3mRWT7oYUppGEAR7b7cQsCgm2tXB",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "4B8F72E2BB07",
+    "bundleId": "40bf807893cca602ad896e512887bdb860a4540aa7db84067e649295f22abed3",
+    "signature": "3GvS5oDEGF8wd8qy6w4TjK7rgZNjiWxEhDgpn7creCGzB8YLqKvhK68Q2VMjWNAKiRmHBRGkaKRxHxd26DuYKTez",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 8856,
+    "tipAccount": "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "submittedAt": 1782023447088,
+    "submittedAtIso": "2026-06-21T06:30:47.088Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427887125,
+        "timestamp": 1782023447088,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782023479410,
+        "latencyFromPrevMs": 32322,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the congested network conditions with a slot time of 459ms and a failure rate of 100%, the p75 percentile of 12482 lamports was considered, but due to the current Jito leader window and high congestion, the estimated tip of 8856 lamports (approx p75) was chosen with a congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high tip to ensure landing probability in congested conditions while avoiding excessively high fees. The expected landing probability is low due to the high failure rate, but submitting now is preferred due to being inside the Jito leader window.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 8856,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the congested network conditions with a slot time of 459ms and a failure rate of 100%, the p75 percentile of 12482 lamports was considered, but due to the current Jito leader window and high congestion, the estimated tip of 8856 lamports (approx p75) was chosen with a congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high tip to ensure landing probability in congested conditions while avoiding excessively high fees. The expected landing probability is low due to the high failure rate, but submitting now is preferred due to being inside the Jito leader window.",
+      "promptHash": "94028b7e427eed100967ca8b87ccbadf834c9a79782ed7eb3eb55fb8c52bf797",
+      "llmLatencyMs": 886,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the congested network conditions with a slot time of 459ms and a failure rate of 100%, the p75 percentile of 12482 lamports was considered, but due to the current Jito leader window and high congestion, the estimated tip of 8856 lamports (approx p75) was chosen with a congestion multiplier of 2.500x and leader pricing multiplier of 1.250x. This amount was selected to balance the need for a high tip to ensure landing probability in congested conditions while avoiding excessively high fees. The expected landing probability is low due to the high failure rate, but submitting now is preferred due to being inside the Jito leader window.",
+        "confidenceScore": 0.6,
+        "tipLamports": 8856,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "94028b7e427eed100967ca8b87ccbadf834c9a79782ed7eb3eb55fb8c52bf797",
+        "llmLatencyMs": 886,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:30:47.034Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:30:45.909Z",
+      "currentSlot": 427887126,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "DTSUkYHd2e9P2HLyZfbLarsbDdPhQUhZnWjRYuJZQRC8",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427887125,
+      "averageSlotTimeMs": 459.1578947368421,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:30:45.909Z",
+        "currentSlot": 427887126,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "DTSUkYHd2e9P2HLyZfbLarsbDdPhQUhZnWjRYuJZQRC8",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:30:46.147Z",
+        "blockProductionRateMs": 437.55555555555554,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.09388888888888886,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.09388888888888886
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:30:46.147Z",
+      "blockProductionRateMs": 437.55555555555554,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.09388888888888886,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.09388888888888886
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:31:19.446Z",
+      "blockProductionRateMs": 510.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.27694444444444444,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.27694444444444444
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 73.22222222222223,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.18305555555555558,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "Aqo76ys4RAVWFXmh1aR9nwsNE1GuvVViRTzQn5P4HThW",
+    "slotAtSubmission": 427887125,
+    "explorerUrl": "https://explorer.solana.com/tx/3GvS5oDEGF8wd8qy6w4TjK7rgZNjiWxEhDgpn7creCGzB8YLqKvhK68Q2VMjWNAKiRmHBRGkaKRxHxd26DuYKTez?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/40bf807893cca602ad896e512887bdb860a4540aa7db84067e649295f22abed3",
+    "bundleTxSignature": "4aAbVd9tH2QEZk5M5PRU6L7wrivJmLRMjUmj9FWTV6muqMSa5ksE9ARjDuW58X8YT4iv5HmWU4mgAPnFb8USH2W",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "C774393F7EA8",
+    "bundleId": "34c80791d297fdb14d04a318ef5e9810d63b3a8d4f505c2b604123ce924e6a4e",
+    "signature": "dnmzcVo12ERWF19C3py5XDQFQosvmU7mdKPrhgd2KKypFRe96nL2PZE4fxcRd3Gr61f4t2nvEe9XFtJiZWeT4Rf",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 30000,
+    "tipAccount": "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "submittedAt": 1782023483802,
+    "submittedAtIso": "2026-06-21T06:31:23.802Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427887216,
+        "timestamp": 1782023483802,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782023515960,
+        "latencyFromPrevMs": 32158,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the highly congested network conditions with a slot time of 495ms and a failure rate of 100%, we've chosen the p95 percentile of 30000 lamports. This amount is selected due to the extreme network congestion and the fact that we are currently inside the Jito leader window, which necessitates a higher tip to ensure bundle confirmation. The congestion multiplier of 2.500x and the leader pricing multiplier of 1.250x also support this decision. The expected landing probability is low due to the high failure rate, but using a higher tip increases our chances of success.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 30000,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the highly congested network conditions with a slot time of 495ms and a failure rate of 100%, we've chosen the p95 percentile of 30000 lamports. This amount is selected due to the extreme network congestion and the fact that we are currently inside the Jito leader window, which necessitates a higher tip to ensure bundle confirmation. The congestion multiplier of 2.500x and the leader pricing multiplier of 1.250x also support this decision. The expected landing probability is low due to the high failure rate, but using a higher tip increases our chances of success.",
+      "promptHash": "ebc67d7d5931831e3e515a31d9cd55404462046414c8aa062b02378fddee9ef6",
+      "llmLatencyMs": 1072,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the highly congested network conditions with a slot time of 495ms and a failure rate of 100%, we've chosen the p95 percentile of 30000 lamports. This amount is selected due to the extreme network congestion and the fact that we are currently inside the Jito leader window, which necessitates a higher tip to ensure bundle confirmation. The congestion multiplier of 2.500x and the leader pricing multiplier of 1.250x also support this decision. The expected landing probability is low due to the high failure rate, but using a higher tip increases our chances of success.",
+        "confidenceScore": 0.8,
+        "tipLamports": 30000,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "ebc67d7d5931831e3e515a31d9cd55404462046414c8aa062b02378fddee9ef6",
+        "llmLatencyMs": 1072,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:31:23.729Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:31:22.462Z",
+      "currentSlot": 427887217,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "22rU5yUmdVThrkoPieVNphqEyAtMQKmZxjwcD8v4bJDU",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427887216,
+      "averageSlotTimeMs": 495.36842105263156,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:31:22.462Z",
+        "currentSlot": 427887217,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "22rU5yUmdVThrkoPieVNphqEyAtMQKmZxjwcD8v4bJDU",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:31:22.657Z",
+        "blockProductionRateMs": 492.44444444444446,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.23111111111111116,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.23111111111111116
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:31:22.657Z",
+      "blockProductionRateMs": 492.44444444444446,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.23111111111111116,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.23111111111111116
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:31:55.987Z",
+      "blockProductionRateMs": 431.55555555555554,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.07888888888888886,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.07888888888888886
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": -60.888888888888914,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": -0.15222222222222231,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "H567xCepLLfXStQPY5MoTJY4SEAT2TiFqr5EyT8mzKsA",
+    "slotAtSubmission": 427887216,
+    "explorerUrl": "https://explorer.solana.com/tx/dnmzcVo12ERWF19C3py5XDQFQosvmU7mdKPrhgd2KKypFRe96nL2PZE4fxcRd3Gr61f4t2nvEe9XFtJiZWeT4Rf?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/34c80791d297fdb14d04a318ef5e9810d63b3a8d4f505c2b604123ce924e6a4e",
+    "bundleTxSignature": "3bX2FfC9idvmzg9PpuuRwSquHcREMuFBUEoPG7aN6Sw1APNkPWfPGoR4FfvmW3nPUtj1dsQCZ5VjLcxb7FpchdWH",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "922375C33CB1",
+    "bundleId": "bccb126169f7efc04513631eefe06954f5c52017bd728cb425d7b584f0847a5b",
+    "signature": "3vBGZRDe2MCKDFujT6vmGMnAXqGaDpzEVAKoXuKYxM7eGR3oXbE6DDGGWTaPSvXG8QnbtfXZxVYFJo2NmtXUo7pi",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 2987,
+    "tipAccount": "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL",
+    "submittedAt": 1782023520024,
+    "submittedAtIso": "2026-06-21T06:32:00.024Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427887303,
+        "timestamp": 1782023520024,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782023552496,
+        "latencyFromPrevMs": 32472,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the congested network conditions with a slot time of 454ms and a failure rate of 100%, the p75 percentile of 2987 lamports was chosen as the baseline tip. This amount is selected due to the high failure rate and congested slot time, indicating a need for a higher tip to increase the landing probability. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x were considered, but the p75 percentile was chosen as it provides a balance between cost and the need for a higher tip in congested conditions. The expected landing probability is low due to the high failure rate, but submitting with a higher tip now is preferred over waiting for the leader window.",
+    "agentConfidence": 0.6,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 2987,
+      "landingProbabilityEstimate": 0.2,
+      "reasoning": "Given the congested network conditions with a slot time of 454ms and a failure rate of 100%, the p75 percentile of 2987 lamports was chosen as the baseline tip. This amount is selected due to the high failure rate and congested slot time, indicating a need for a higher tip to increase the landing probability. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x were considered, but the p75 percentile was chosen as it provides a balance between cost and the need for a higher tip in congested conditions. The expected landing probability is low due to the high failure rate, but submitting with a higher tip now is preferred over waiting for the leader window.",
+      "promptHash": "132d8b63f44c4ef6bfd7899b3bef52d68b7566c144489ec9a2e2e282b9bcfad0",
+      "llmLatencyMs": 803,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the congested network conditions with a slot time of 454ms and a failure rate of 100%, the p75 percentile of 2987 lamports was chosen as the baseline tip. This amount is selected due to the high failure rate and congested slot time, indicating a need for a higher tip to increase the landing probability. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x were considered, but the p75 percentile was chosen as it provides a balance between cost and the need for a higher tip in congested conditions. The expected landing probability is low due to the high failure rate, but submitting with a higher tip now is preferred over waiting for the leader window.",
+        "confidenceScore": 0.6,
+        "tipLamports": 2987,
+        "selectedPercentile": 75,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.2,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "132d8b63f44c4ef6bfd7899b3bef52d68b7566c144489ec9a2e2e282b9bcfad0",
+        "llmLatencyMs": 803,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:31:59.971Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:31:59.000Z",
+      "currentSlot": 427887304,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "CfgRXmp1LEYr97EaT2RyoL2cSvtWgJh52Bes89RxVSoW",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427887303,
+      "averageSlotTimeMs": 453.6842105263158,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:31:59.000Z",
+        "currentSlot": 427887304,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "CfgRXmp1LEYr97EaT2RyoL2cSvtWgJh52Bes89RxVSoW",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:31:59.168Z",
+        "blockProductionRateMs": 432,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.08,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.08
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:31:59.168Z",
+      "blockProductionRateMs": 432,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:32:32.532Z",
+      "blockProductionRateMs": 432.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08194444444444443,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08194444444444443
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 0.7777777777777715,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.0019444444444444292,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "H567xCepLLfXStQPY5MoTJY4SEAT2TiFqr5EyT8mzKsA",
+    "slotAtSubmission": 427887303,
+    "explorerUrl": "https://explorer.solana.com/tx/3vBGZRDe2MCKDFujT6vmGMnAXqGaDpzEVAKoXuKYxM7eGR3oXbE6DDGGWTaPSvXG8QnbtfXZxVYFJo2NmtXUo7pi?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/bccb126169f7efc04513631eefe06954f5c52017bd728cb425d7b584f0847a5b",
+    "bundleTxSignature": "2LjBPRZdjKWfwrvX9Rq7NfZA6B1cNb7bHHpLZLKr1p1vntCfbZ7dnMo7NyhFQLkp2fXYLGTUNumScAPQa4dV1zix",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
+  },
+  {
+    "runId": "99CC6B773399",
+    "bundleId": "52ef09e8d2f466f4c8fc097e8cfba2e414c89b0e6ba32ba3edf5a9c755e63a53",
+    "signature": "2a4dHxe4bVvv6jNrL9fN5tSp5z5ckwdDjzNKirNaq3SM2Fe9ZkAGnFCuHsdHkddhLU9CJzcMjjsZLvvv1Xq5iBoA",
+    "network": "mainnet-beta",
+    "dryRun": false,
+    "tipLamports": 90467,
+    "tipAccount": "ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt",
+    "submittedAt": 1782023556501,
+    "submittedAtIso": "2026-06-21T06:32:36.501Z",
+    "stages": [
+      {
+        "stage": "submitted",
+        "slot": 427887398,
+        "timestamp": 1782023556501,
+        "latencyFromPrevMs": null,
+        "commitmentSource": "rpc_signature_status"
+      },
+      {
+        "stage": "failed",
+        "slot": null,
+        "timestamp": 1782023589044,
+        "latencyFromPrevMs": 32543,
+        "commitmentSource": "rpc_signature_status"
+      }
+    ],
+    "finalStage": "failed",
+    "failure": "TIMEOUT",
+    "failureClass": "TIMEOUT",
+    "failureMessage": null,
+    "faultInjected": "none",
+    "agentReasoning": "Given the highly congested network conditions with a slot time of 433ms and a failure rate of 100%, the p95 percentile of 90467 lamports was chosen to ensure a high likelihood of landing. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x further support this decision. The selected tip amount is above the p75 minimum, adhering to rule 5. With this tip, the expected landing probability is estimated to be higher than with lower percentiles.",
+    "agentConfidence": 0.8,
+    "agentAction": "submit_now",
+    "agentDecision": {
+      "engine": "groq",
+      "model": "llama-3.3-70b-versatile",
+      "action": "submit_now",
+      "selectedTipLamports": 90467,
+      "landingProbabilityEstimate": 0.6,
+      "reasoning": "Given the highly congested network conditions with a slot time of 433ms and a failure rate of 100%, the p95 percentile of 90467 lamports was chosen to ensure a high likelihood of landing. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x further support this decision. The selected tip amount is above the p75 minimum, adhering to rule 5. With this tip, the expected landing probability is estimated to be higher than with lower percentiles.",
+      "promptHash": "b54058b8449e23eb949c3eb8aeff9dd8c409f302be58dbce8a22da79b473e8d4",
+      "llmLatencyMs": 695,
+      "guardrailAdjusted": false
+    },
+    "agentDecisionType": "tip_intelligence",
+    "agentDecisionTrace": [
+      {
+        "decisionType": "tip_intelligence",
+        "action": "submit_now",
+        "reasoning": "Given the highly congested network conditions with a slot time of 433ms and a failure rate of 100%, the p95 percentile of 90467 lamports was chosen to ensure a high likelihood of landing. The congestion multiplier of 2.500x and the leader urgency multiplier of 1.250x further support this decision. The selected tip amount is above the p75 minimum, adhering to rule 5. With this tip, the expected landing probability is estimated to be higher than with lower percentiles.",
+        "confidenceScore": 0.8,
+        "tipLamports": 90467,
+        "selectedPercentile": 95,
+        "congestionMultiplier": 2.5,
+        "leaderUrgencyMultiplier": 1.25,
+        "landingProbabilityEstimate": 0.6,
+        "engine": "groq",
+        "model": "llama-3.3-70b-versatile",
+        "promptHash": "b54058b8449e23eb949c3eb8aeff9dd8c409f302be58dbce8a22da79b473e8d4",
+        "llmLatencyMs": 695,
+        "guardrailAdjusted": false,
+        "retryCount": 0,
+        "createdAt": "2026-06-21T06:32:36.426Z"
+      }
+    ],
+    "leaderWindow": {
+      "observedAt": "2026-06-21T06:32:35.547Z",
+      "currentSlot": 427887399,
+      "slotsUntilJitoLeader": 0,
+      "nextLeaderIdentity": "HnfPZDrbJFooiP9vvgWrjx3baXVNAZCgisT58gyMCgML",
+      "isJitoLeaderWindow": true
+    },
+    "networkSnapshot": {
+      "currentSlot": 427887398,
+      "averageSlotTimeMs": 433.42105263157896,
+      "recentFailureRate": 1,
+      "leaderWindow": {
+        "observedAt": "2026-06-21T06:32:35.547Z",
+        "currentSlot": 427887399,
+        "slotsUntilJitoLeader": 0,
+        "nextLeaderIdentity": "HnfPZDrbJFooiP9vvgWrjx3baXVNAZCgisT58gyMCgML",
+        "isJitoLeaderWindow": true
+      },
+      "processedToConfirmedMsP50": null,
+      "processedToConfirmedMsP90": null,
+      "conditions": {
+        "capturedAt": "2026-06-21T06:32:35.731Z",
+        "blockProductionRateMs": 432.55555555555554,
+        "processedToConfirmedP50": null,
+        "processedToConfirmedP90": null,
+        "recentPrioritizationFees": {
+          "p25": 1000,
+          "p50": 1000,
+          "p75": 1000,
+          "p95": 1000,
+          "p99": 1000
+        },
+        "slotSkipRate": 0.08138888888888886,
+        "recentFailureRate": 1,
+        "bundleLandingRate": 0,
+        "feeDispersionRatio": 1,
+        "validatorLoadProxy": 0.08138888888888886
+      }
+    },
+    "networkConditionsAtSubmission": {
+      "capturedAt": "2026-06-21T06:32:35.731Z",
+      "blockProductionRateMs": 432.55555555555554,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08138888888888886,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08138888888888886
+    },
+    "networkConditionsAtConfirmation": {
+      "capturedAt": "2026-06-21T06:33:09.104Z",
+      "blockProductionRateMs": 433.77777777777777,
+      "processedToConfirmedP50": null,
+      "processedToConfirmedP90": null,
+      "recentPrioritizationFees": {
+        "p25": 1000,
+        "p50": 1000,
+        "p75": 1000,
+        "p95": 1000,
+        "p99": 1000
+      },
+      "slotSkipRate": 0.08444444444444443,
+      "recentFailureRate": 1,
+      "bundleLandingRate": 0,
+      "feeDispersionRatio": 1,
+      "validatorLoadProxy": 0.08444444444444443
+    },
+    "deltaFromSubmissionToConfirmation": {
+      "blockProductionRateDeltaMs": 1.2222222222222285,
+      "prioritizationFeeDelta": {
+        "p50": 0,
+        "p75": 0
+      },
+      "processedToConfirmedDeltaMs": null,
+      "validatorLoadProxyDelta": 0.0030555555555555752,
+      "bundleLandingRateDelta": 0
+    },
+    "triggerEvent": null,
+    "marinadeTriggerEvent": null,
+    "retryCount": 0,
+    "blockhashUsed": "D6x5W9LtW4omgff6qjpj6S5t81tQd6ooXi8oHPknLbHj",
+    "slotAtSubmission": 427887398,
+    "explorerUrl": "https://explorer.solana.com/tx/2a4dHxe4bVvv6jNrL9fN5tSp5z5ckwdDjzNKirNaq3SM2Fe9ZkAGnFCuHsdHkddhLU9CJzcMjjsZLvvv1Xq5iBoA?cluster=mainnet-beta",
+    "bundleExplorerUrl": "https://explorer.jito.wtf/bundle/52ef09e8d2f466f4c8fc097e8cfba2e414c89b0e6ba32ba3edf5a9c755e63a53",
+    "bundleTxSignature": "2nhjxj5DWwubWXeQ86uXQa32oHgDfnBpnVhcuhQR87yjas7BrauDapXR2HKSCSLVqvGnkpEJDrzbCp5UdefkDcoS",
+    "rawBundleResults": [],
+    "raw": {
+      "bundleResults": []
+    },
+    "latencyMs": {
+      "submittedToProcessed": null,
+      "processedToConfirmed": null,
+      "confirmedToFinalized": null,
+      "submittedToFinalized": null
+    }
   }
 ]
